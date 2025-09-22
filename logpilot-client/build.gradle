@@ -1,0 +1,54 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.google.protobuf'
+}
+
+dependencies {
+    api project(':logpilot-core')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE'
+    implementation 'io.grpc:grpc-protobuf:1.63.0'
+    implementation 'io.grpc:grpc-stub:1.63.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.wiremock:wiremock:3.0.1'
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.24.0'
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.63.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+
+            pom {
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+            }
+        }
+    }
+}

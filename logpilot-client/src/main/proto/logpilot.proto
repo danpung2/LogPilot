@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package logpilot;
+
+option java_package = "com.logpilot.grpc.proto";
+option java_outer_classname = "LogPilotProto";
+
+service LogPilotService {
+  rpc StoreLog(StoreLogRequest) returns (StoreLogResponse);
+  rpc StoreLogs(StoreLogsRequest) returns (StoreLogsResponse);
+  rpc GetLogs(GetLogsRequest) returns (GetLogsResponse);
+}
+
+message LogEntry {
+  string channel = 1;
+  LogLevel level = 2;
+  string message = 3;
+  map<string, string> meta = 4;
+  string timestamp = 5;
+}
+
+enum LogLevel {
+  DEBUG = 0;
+  INFO = 1;
+  WARN = 2;
+  ERROR = 3;
+}
+
+message StoreLogRequest {
+  LogEntry log_entry = 1;
+}
+
+message StoreLogResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message StoreLogsRequest {
+  repeated LogEntry log_entries = 1;
+}
+
+message StoreLogsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetLogsRequest {
+  string channel = 1;
+  string consumer_id = 2;
+  int32 limit = 3;
+}
+
+message GetLogsResponse {
+  repeated LogEntry log_entries = 1;
+}

@@ -1,0 +1,5 @@
+rootProject.name = 'logpilot-java'
+
+include 'logpilot-core'
+include 'logpilot-server'
+include 'logpilot-client'

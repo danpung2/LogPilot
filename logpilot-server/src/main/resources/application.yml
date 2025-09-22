@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: logpilot-server
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      adjust-dates-to-context-time-zone: false
+
+server:
+  port: ${LOGPILOT_HTTP_PORT:8080}
+
+grpc:
+  server:
+    port: ${LOGPILOT_GRPC_PORT:50051}
+
+logpilot:
+  server:
+    protocol: ${LOGPILOT_PROTOCOL:all} # all, rest, grpc
+  storage:
+    type: ${LOGPILOT_STORAGE_TYPE:sqlite}
+    directory: ${LOGPILOT_STORAGE_DIR:./data/logs}
+    sqlite:
+      path: ${LOGPILOT_SQLITE_PATH:./data/logpilot.db}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  server:
+    port: ${LOGPILOT_MANAGEMENT_PORT:8081}
+
+logging:
+  level:
+    com.logpilot: ${LOGPILOT_LOG_LEVEL:INFO}
+    net.devh.boot.grpc: ${LOGPILOT_GRPC_LOG_LEVEL:INFO}
+    org.springframework.boot.autoconfigure: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: rest
+
+logpilot:
+  server:
+    protocol: rest
+
+grpc:
+  server:
+    enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: grpc
+
+logpilot:
+  server:
+    protocol: grpc
+
+server:
+  port: -1
+
+---
+spring:
+  config:
+    activate:
+      on-profile: all
+
+logpilot:
+  server:
+    protocol: all
