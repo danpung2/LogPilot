@@ -94,6 +94,127 @@ System.out.println("✅ Log sent: " + response.getStatus());
 
 ---
 
+## 🐳 Docker Deployment
+
+LogPilot provides multiple Docker deployment options to suit different needs:
+
+### 🚀 All-in-One (REST + gRPC)
+
+Run both REST API and gRPC services in a single container:
+
+```bash
+# Build and run (default)
+./docker-build-run.sh
+
+# Other commands
+./docker-build-run.sh build      # Build image only
+./docker-build-run.sh run        # Run container only
+./docker-build-run.sh stop       # Stop container
+./docker-build-run.sh clean      # Clean up resources
+./docker-build-run.sh logs       # View logs
+```
+
+**Exposed Ports:**
+- REST API: `http://localhost:8080`
+- gRPC Service: `localhost:50051`
+- Health Check: `http://localhost:8080/actuator/health`
+
+### 🌐 REST-Only Mode
+
+Run only the REST API service:
+
+```bash
+# Build and run REST-only
+./docker-rest.sh
+
+# Test REST endpoints
+./docker-rest.sh test
+```
+
+**Features:**
+- Lightweight container with only REST API
+- Port: `8080`
+- Spring Profile: `rest`
+- Example API calls included in script
+
+### ⚡ gRPC-Only Mode
+
+Run only the gRPC service:
+
+```bash
+# Build and run gRPC-only
+./docker-grpc.sh
+
+# Test gRPC service
+./docker-grpc.sh test
+```
+
+**Features:**
+- Optimized container with only gRPC service
+- Port: `50051`
+- Spring Profile: `grpc`
+- Includes grpcurl for testing
+
+### 🔧 Docker Configuration
+
+Each deployment mode uses specific Dockerfiles:
+
+| Mode | Dockerfile | Script | Ports | Profile |
+|------|------------|--------|-------|---------|
+| All-in-One | `Dockerfile` | `docker-build-run.sh` | 8080, 50051 | `all` |
+| REST-Only | `Dockerfile.rest` | `docker-rest.sh` | 8080 | `rest` |
+| gRPC-Only | `Dockerfile.grpc` | `docker-grpc.sh` | 50051 | `grpc` |
+
+### 🧪 Testing Your Deployment
+
+#### REST API Testing
+```bash
+# Health check
+curl http://localhost:8080/actuator/health
+
+# Send log
+curl -X POST http://localhost:8080/api/logs \
+  -H "Content-Type: application/json" \
+  -d '{"channel":"test","level":"INFO","message":"Hello from Docker"}'
+
+# Get logs
+curl http://localhost:8080/api/logs?channel=test&limit=10
+```
+
+#### gRPC Testing
+```bash
+# Install grpcurl (if not already installed)
+brew install grpcurl  # macOS
+# or
+apt-get install grpcurl  # Linux
+
+# Health check
+grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
+
+# List available services
+grpcurl -plaintext localhost:50051 list
+```
+
+### 🛠️ Environment Variables
+
+You can customize the deployment using environment variables:
+
+```bash
+# Port configuration
+docker run -e LOGPILOT_HTTP_PORT=8080 \
+           -e LOGPILOT_GRPC_PORT=50051 \
+           -e LOGPILOT_PROTOCOL=all \
+           logpilot:latest
+
+# Storage configuration
+docker run -e LOGPILOT_STORAGE_TYPE=sqlite \
+           -e LOGPILOT_SQLITE_PATH=/data/logpilot.db \
+           -v /host/data:/data \
+           logpilot:latest
+```
+
+---
+
 ## 📦 Integration
 
 * Use any HTTP client (Axios, OkHttp, Fetch, etc.) for REST
