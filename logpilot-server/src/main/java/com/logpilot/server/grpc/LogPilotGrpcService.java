@@ -4,7 +4,7 @@ import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import com.logpilot.core.service.LogService;
 import com.logpilot.grpc.proto.LogPilotProto;
-import com.logpilot.grpc.proto.LogPilotServiceGrpc;
+import com.logpilot.grpc.proto.LogServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @GrpcService
 @ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'grpc' or '${logpilot.server.protocol:all}' == 'all'")
-public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImplBase {
+public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
 
     private static final Logger logger = LoggerFactory.getLogger(LogPilotGrpcService.class);
     private final LogService logService;
@@ -33,13 +33,13 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
     }
 
     @Override
-    public void storeLog(LogPilotProto.StoreLogRequest request, StreamObserver<LogPilotProto.StoreLogResponse> responseObserver) {
+    public void sendLog(LogPilotProto.LogRequest request, StreamObserver<LogPilotProto.LogResponse> responseObserver) {
         try {
-            LogEntry logEntry = convertToLogEntry(request.getLogEntry());
+            LogEntry logEntry = convertLogRequestToLogEntry(request);
             logService.storeLog(logEntry);
 
-            LogPilotProto.StoreLogResponse response = LogPilotProto.StoreLogResponse.newBuilder()
-                    .setSuccess(true)
+            LogPilotProto.LogResponse response = LogPilotProto.LogResponse.newBuilder()
+                    .setStatus("success")
                     .setMessage("Log stored successfully")
                     .build();
 
@@ -50,8 +50,8 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
         } catch (Exception e) {
             logger.error("Failed to store log entry via gRPC", e);
 
-            LogPilotProto.StoreLogResponse response = LogPilotProto.StoreLogResponse.newBuilder()
-                    .setSuccess(false)
+            LogPilotProto.LogResponse response = LogPilotProto.LogResponse.newBuilder()
+                    .setStatus("error")
                     .setMessage("Failed to store log: " + e.getMessage())
                     .build();
 
@@ -61,16 +61,16 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
     }
 
     @Override
-    public void storeLogs(LogPilotProto.StoreLogsRequest request, StreamObserver<LogPilotProto.StoreLogsResponse> responseObserver) {
+    public void sendLogs(LogPilotProto.SendLogsRequest request, StreamObserver<LogPilotProto.SendLogsResponse> responseObserver) {
         try {
-            List<LogEntry> logEntries = request.getLogEntriesList().stream()
-                    .map(this::convertToLogEntry)
+            List<LogEntry> logEntries = request.getLogRequestsList().stream()
+                    .map(this::convertLogRequestToLogEntry)
                     .toList();
 
             logService.storeLogs(logEntries);
 
-            LogPilotProto.StoreLogsResponse response = LogPilotProto.StoreLogsResponse.newBuilder()
-                    .setSuccess(true)
+            LogPilotProto.SendLogsResponse response = LogPilotProto.SendLogsResponse.newBuilder()
+                    .setStatus("success")
                     .setMessage("Logs stored successfully")
                     .build();
 
@@ -81,8 +81,8 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
         } catch (Exception e) {
             logger.error("Failed to store log entries via gRPC", e);
 
-            LogPilotProto.StoreLogsResponse response = LogPilotProto.StoreLogsResponse.newBuilder()
-                    .setSuccess(false)
+            LogPilotProto.SendLogsResponse response = LogPilotProto.SendLogsResponse.newBuilder()
+                    .setStatus("error")
                     .setMessage("Failed to store logs: " + e.getMessage())
                     .build();
 
@@ -92,12 +92,37 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
     }
 
     @Override
-    public void getLogs(LogPilotProto.GetLogsRequest request, StreamObserver<LogPilotProto.GetLogsResponse> responseObserver) {
+    public void listLogs(LogPilotProto.ListLogsRequest request, StreamObserver<LogPilotProto.ListLogsResponse> responseObserver) {
+        try {
+            // For now, implement basic functionality - can be enhanced later
+            List<LogEntry> logEntries = logService.getAllLogs(100); // Default limit
+
+            List<LogPilotProto.LogEntry> protoLogEntries = logEntries.stream()
+                    .map(this::convertToProtoLogEntry)
+                    .collect(Collectors.toList());
+
+            LogPilotProto.ListLogsResponse response = LogPilotProto.ListLogsResponse.newBuilder()
+                    .addAllLogs(protoLogEntries)
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+            logger.debug("Retrieved {} log entries via gRPC (listLogs)", logEntries.size());
+        } catch (Exception e) {
+            logger.error("Failed to list log entries via gRPC", e);
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void fetchLogs(LogPilotProto.FetchLogsRequest request, StreamObserver<LogPilotProto.FetchLogsResponse> responseObserver) {
         try {
             List<LogEntry> logEntries;
 
-            if (!request.getConsumerId().isEmpty()) {
-                logEntries = logService.getLogsForConsumer(request.getChannel(), request.getConsumerId(), request.getLimit());
+            if (!request.getChannel().isEmpty()) {
+                // Use 'since' as consumer_id for backward compatibility
+                logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(), request.getLimit());
             } else {
                 logEntries = logService.getAllLogs(request.getLimit());
             }
@@ -106,39 +131,33 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
                     .map(this::convertToProtoLogEntry)
                     .collect(Collectors.toList());
 
-            LogPilotProto.GetLogsResponse response = LogPilotProto.GetLogsResponse.newBuilder()
-                    .addAllLogEntries(protoLogEntries)
+            LogPilotProto.FetchLogsResponse response = LogPilotProto.FetchLogsResponse.newBuilder()
+                    .addAllLogs(protoLogEntries)
                     .build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-            logger.debug("Retrieved {} log entries via gRPC", logEntries.size());
+            logger.debug("Retrieved {} log entries via gRPC (fetchLogs)", logEntries.size());
         } catch (Exception e) {
-            logger.error("Failed to retrieve log entries via gRPC", e);
+            logger.error("Failed to fetch log entries via gRPC", e);
             responseObserver.onError(e);
         }
     }
 
-    private LogEntry convertToLogEntry(LogPilotProto.LogEntry protoLogEntry) {
+    private LogEntry convertLogRequestToLogEntry(LogPilotProto.LogRequest logRequest) {
         LogEntry logEntry = new LogEntry();
-        logEntry.setChannel(protoLogEntry.getChannel());
-        logEntry.setLevel(convertToLogLevel(protoLogEntry.getLevel()));
-        logEntry.setMessage(protoLogEntry.getMessage());
+        logEntry.setChannel(logRequest.getChannel());
+        logEntry.setLevel(convertStringToLogLevel(logRequest.getLevel()));
+        logEntry.setMessage(logRequest.getMessage());
 
-        if (!protoLogEntry.getMetaMap().isEmpty()) {
-            Map<String, Object> meta = new HashMap<>(protoLogEntry.getMetaMap());
+        if (!logRequest.getMetaMap().isEmpty()) {
+            Map<String, Object> meta = new HashMap<>(logRequest.getMetaMap());
             logEntry.setMeta(meta);
         }
 
-        if (!protoLogEntry.getTimestamp().isEmpty()) {
-            try {
-                LocalDateTime timestamp = LocalDateTime.parse(protoLogEntry.getTimestamp(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-                logEntry.setTimestamp(timestamp);
-            } catch (Exception e) {
-                logger.warn("Failed to parse timestamp: {}", protoLogEntry.getTimestamp(), e);
-            }
-        }
+        // Set current timestamp as LogRequest doesn't have timestamp
+        logEntry.setTimestamp(LocalDateTime.now());
 
         return logEntry;
     }
@@ -146,9 +165,9 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
     private LogPilotProto.LogEntry convertToProtoLogEntry(LogEntry logEntry) {
         LogPilotProto.LogEntry.Builder builder = LogPilotProto.LogEntry.newBuilder()
                 .setChannel(logEntry.getChannel())
-                .setLevel(convertToProtoLogLevel(logEntry.getLevel()))
+                .setLevel(logEntry.getLevel().toString())
                 .setMessage(logEntry.getMessage())
-                .setTimestamp(logEntry.getTimestamp().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                .setTimestamp(logEntry.getTimestamp().atZone(java.time.ZoneOffset.UTC).toInstant().toEpochMilli());
 
         if (logEntry.getMeta() != null) {
             Map<String, String> stringMeta = logEntry.getMeta().entrySet().stream()
@@ -162,22 +181,12 @@ public class LogPilotGrpcService extends LogPilotServiceGrpc.LogPilotServiceImpl
         return builder.build();
     }
 
-    private LogLevel convertToLogLevel(LogPilotProto.LogLevel protoLogLevel) {
-        return switch (protoLogLevel) {
-            case DEBUG -> LogLevel.DEBUG;
-            case INFO -> LogLevel.INFO;
-            case WARN -> LogLevel.WARN;
-            case ERROR -> LogLevel.ERROR;
-            default -> throw new IllegalArgumentException("Unknown log level: " + protoLogLevel);
-        };
-    }
-
-    private LogPilotProto.LogLevel convertToProtoLogLevel(LogLevel logLevel) {
-        return switch (logLevel) {
-            case DEBUG -> LogPilotProto.LogLevel.DEBUG;
-            case INFO -> LogPilotProto.LogLevel.INFO;
-            case WARN -> LogPilotProto.LogLevel.WARN;
-            case ERROR -> LogPilotProto.LogLevel.ERROR;
-        };
+    private LogLevel convertStringToLogLevel(String levelString) {
+        try {
+            return LogLevel.valueOf(levelString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.warn("Unknown log level: {}, defaulting to INFO", levelString);
+            return LogLevel.INFO;
+        }
     }
 }

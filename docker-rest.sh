@@ -1,0 +1,224 @@
+#!/bin/bash
+
+# LogPilot REST-only Docker Build and Run Script
+# This script builds the Docker image and runs the LogPilot application in REST-only mode
+
+set -e  # Exit on any error
+
+# Configuration
+IMAGE_NAME="logpilot-rest"
+TAG="latest"
+CONTAINER_NAME="logpilot-rest-app"
+REST_PORT="8080"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if Docker is running
+check_docker() {
+    if ! docker info >/dev/null 2>&1; then
+        print_error "Docker is not running. Please start Docker and try again."
+        exit 1
+    fi
+}
+
+# Function to stop and remove existing container
+cleanup_container() {
+    if docker ps -a --format 'table {{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+        print_info "Stopping and removing existing container: ${CONTAINER_NAME}"
+        docker stop ${CONTAINER_NAME} >/dev/null 2>&1 || true
+        docker rm ${CONTAINER_NAME} >/dev/null 2>&1 || true
+        print_success "Container cleanup completed"
+    fi
+}
+
+# Function to build Docker image
+build_image() {
+    print_info "Building REST-only Docker image: ${IMAGE_NAME}:${TAG}"
+
+    if docker build -f Dockerfile.rest -t ${IMAGE_NAME}:${TAG} .; then
+        print_success "REST-only Docker image built successfully"
+    else
+        print_error "Failed to build REST-only Docker image"
+        exit 1
+    fi
+}
+
+# Function to run container
+run_container() {
+    print_info "Starting REST-only container: ${CONTAINER_NAME}"
+    print_info "REST API will be available at: http://localhost:${REST_PORT}"
+
+    docker run -d \
+        --name ${CONTAINER_NAME} \
+        -p ${REST_PORT}:8080 \
+        -e SPRING_PROFILES_ACTIVE=rest \
+        -e LOGPILOT_PROTOCOL=rest \
+        ${IMAGE_NAME}:${TAG}
+
+    if [ $? -eq 0 ]; then
+        print_success "REST-only container started successfully"
+        print_info "Container name: ${CONTAINER_NAME}"
+        print_info "Use 'docker logs ${CONTAINER_NAME}' to view logs"
+        print_info "Use 'docker stop ${CONTAINER_NAME}' to stop the application"
+    else
+        print_error "Failed to start REST-only container"
+        exit 1
+    fi
+}
+
+# Function to wait for application to be ready
+wait_for_app() {
+    print_info "Waiting for REST API to be ready..."
+
+    # Wait up to 60 seconds for the application to start
+    for i in {1..60}; do
+        if curl -f http://localhost:${REST_PORT}/actuator/health >/dev/null 2>&1; then
+            print_success "REST API is ready!"
+            print_info "Health check: http://localhost:${REST_PORT}/actuator/health"
+            return 0
+        fi
+        echo -n "."
+        sleep 1
+    done
+
+    print_warning "Application may still be starting. Check logs with: docker logs ${CONTAINER_NAME}"
+}
+
+# Function to test REST API
+test_api() {
+    print_info "Testing REST API endpoints..."
+
+    # Test health endpoint
+    if curl -f http://localhost:${REST_PORT}/actuator/health >/dev/null 2>&1; then
+        print_success "Health endpoint is working"
+    else
+        print_warning "Health endpoint not responding"
+    fi
+
+    # Show some example API calls
+    echo ""
+    print_info "=== Example API Usage ==="
+    echo "  Send log via REST:"
+    echo "    curl -X POST http://localhost:${REST_PORT}/api/logs \\"
+    echo "      -H 'Content-Type: application/json' \\"
+    echo "      -d '{\"channel\":\"test\",\"level\":\"INFO\",\"message\":\"Hello from REST\"}'"
+    echo ""
+    echo "  Get logs via REST:"
+    echo "    curl http://localhost:${REST_PORT}/api/logs?channel=test&limit=10"
+    echo ""
+}
+
+# Function to show application info
+show_info() {
+    echo ""
+    print_info "=== LogPilot REST-only Application Info ==="
+    print_info "REST API: http://localhost:${REST_PORT}"
+    print_info "Health Check: http://localhost:${REST_PORT}/actuator/health"
+    print_info "Container: ${CONTAINER_NAME}"
+    print_info "Mode: REST-only (gRPC disabled)"
+    echo ""
+    print_info "=== Useful Commands ==="
+    echo "  View logs:     docker logs ${CONTAINER_NAME}"
+    echo "  Follow logs:   docker logs -f ${CONTAINER_NAME}"
+    echo "  Stop app:      docker stop ${CONTAINER_NAME}"
+    echo "  Remove app:    docker rm ${CONTAINER_NAME}"
+    echo "  Shell access:  docker exec -it ${CONTAINER_NAME} /bin/bash"
+    echo ""
+}
+
+# Main execution
+main() {
+    print_info "Starting LogPilot REST-only Docker build and run process..."
+
+    # Check if Docker is available
+    check_docker
+
+    # Parse command line arguments
+    case "${1:-build-run}" in
+        "build")
+            build_image
+            ;;
+        "run")
+            cleanup_container
+            run_container
+            wait_for_app
+            test_api
+            show_info
+            ;;
+        "build-run"|"")
+            build_image
+            cleanup_container
+            run_container
+            wait_for_app
+            test_api
+            show_info
+            ;;
+        "stop")
+            print_info "Stopping LogPilot REST-only application..."
+            docker stop ${CONTAINER_NAME} >/dev/null 2>&1 || true
+            print_success "Application stopped"
+            ;;
+        "clean")
+            print_info "Cleaning up LogPilot REST-only Docker resources..."
+            cleanup_container
+            docker rmi ${IMAGE_NAME}:${TAG} >/dev/null 2>&1 || true
+            print_success "Cleanup completed"
+            ;;
+        "logs")
+            docker logs ${CONTAINER_NAME}
+            ;;
+        "follow-logs")
+            docker logs -f ${CONTAINER_NAME}
+            ;;
+        "test")
+            test_api
+            ;;
+        "help"|"-h"|"--help")
+            echo "LogPilot REST-only Docker Build and Run Script"
+            echo ""
+            echo "Usage: $0 [COMMAND]"
+            echo ""
+            echo "Commands:"
+            echo "  build-run    Build image and run container (default)"
+            echo "  build        Build Docker image only"
+            echo "  run          Run container only"
+            echo "  stop         Stop the running container"
+            echo "  clean        Stop container and remove image"
+            echo "  logs         Show container logs"
+            echo "  follow-logs  Follow container logs"
+            echo "  test         Test REST API endpoints"
+            echo "  help         Show this help message"
+            echo ""
+            ;;
+        *)
+            print_error "Unknown command: $1"
+            print_info "Use '$0 help' for usage information"
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function with all arguments
+main "$@"

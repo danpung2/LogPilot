@@ -4,7 +4,8 @@ import com.logpilot.client.LogPilotClient;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import com.logpilot.grpc.proto.LogPilotProto.*;
-import com.logpilot.grpc.proto.LogPilotServiceGrpc;
+import static com.logpilot.grpc.proto.LogPilotProto.*;
+import com.logpilot.grpc.proto.LogServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,17 +26,16 @@ public class LogPilotGrpcClient implements LogPilotClient {
 
     private static final Logger logger = LoggerFactory.getLogger(LogPilotGrpcClient.class);
     private final ManagedChannel channel;
-    private final LogPilotServiceGrpc.LogPilotServiceBlockingStub blockingStub;
+    private final LogServiceGrpc.LogServiceBlockingStub blockingStub;
     private final ExecutorService executorService;
     private final int maxRetries;
 
     public LogPilotGrpcClient(String serverUrl, int timeout, int maxRetries) {
         this.maxRetries = maxRetries;
 
-        // Parse host and port from serverUrl
         String[] parts = serverUrl.replace("http://", "").replace("https://", "").split(":");
         String host = parts[0];
-        int port = parts.length > 1 ? Integer.parseInt(parts[1]) : 9090;
+        int port = parts.length > 1 ? Integer.parseInt(parts[1]) : 50051;
 
         this.channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
@@ -45,7 +44,7 @@ public class LogPilotGrpcClient implements LogPilotClient {
                 .keepAliveWithoutCalls(true)
                 .build();
 
-        this.blockingStub = LogPilotServiceGrpc.newBlockingStub(channel);
+        this.blockingStub = LogServiceGrpc.newBlockingStub(channel);
         this.executorService = Executors.newCachedThreadPool();
     }
 
@@ -62,14 +61,17 @@ public class LogPilotGrpcClient implements LogPilotClient {
     @Override
     public void log(LogEntry logEntry) {
         try {
-            com.logpilot.grpc.proto.LogPilotProto.LogEntry protoLogEntry = convertToProtoLogEntry(logEntry);
-            StoreLogRequest request = StoreLogRequest.newBuilder()
-                    .setLogEntry(protoLogEntry)
+            LogRequest request = LogRequest.newBuilder()
+                    .setChannel(logEntry.getChannel())
+                    .setLevel(logEntry.getLevel().toString())
+                    .setMessage(logEntry.getMessage())
+                    .putAllMeta(convertMetaToStringMap(logEntry.getMeta()))
+                    .setStorage("sqlite") // Default storage
                     .build();
 
             executeWithRetry(() -> {
-                StoreLogResponse response = blockingStub.storeLog(request);
-                if (!response.getSuccess()) {
+                LogResponse response = blockingStub.sendLog(request);
+                if (!"success".equals(response.getStatus())) {
                     throw new RuntimeException("Failed to store log: " + response.getMessage());
                 }
                 return null;
@@ -85,17 +87,23 @@ public class LogPilotGrpcClient implements LogPilotClient {
     @Override
     public void logBatch(List<LogEntry> logEntries) {
         try {
-            List<com.logpilot.grpc.proto.LogPilotProto.LogEntry> protoLogEntries = logEntries.stream()
-                    .map(this::convertToProtoLogEntry)
+            List<LogRequest> logRequests = logEntries.stream()
+                    .map(logEntry -> LogRequest.newBuilder()
+                            .setChannel(logEntry.getChannel())
+                            .setLevel(logEntry.getLevel().toString())
+                            .setMessage(logEntry.getMessage())
+                            .putAllMeta(convertMetaToStringMap(logEntry.getMeta()))
+                            .setStorage("sqlite") // Default storage
+                            .build())
                     .collect(Collectors.toList());
 
-            StoreLogsRequest request = StoreLogsRequest.newBuilder()
-                    .addAllLogEntries(protoLogEntries)
+            SendLogsRequest request = SendLogsRequest.newBuilder()
+                    .addAllLogRequests(logRequests)
                     .build();
 
             executeWithRetry(() -> {
-                StoreLogsResponse response = blockingStub.storeLogs(request);
-                if (!response.getSuccess()) {
+                SendLogsResponse response = blockingStub.sendLogs(request);
+                if (!"success".equals(response.getStatus())) {
                     throw new RuntimeException("Failed to store logs: " + response.getMessage());
                 }
                 return null;
@@ -131,16 +139,17 @@ public class LogPilotGrpcClient implements LogPilotClient {
     @Override
     public List<LogEntry> getLogs(String channel, String consumerId, int limit) {
         try {
-            GetLogsRequest request = GetLogsRequest.newBuilder()
+            FetchLogsRequest request = FetchLogsRequest.newBuilder()
+                    .setSince(consumerId != null ? consumerId : "")
                     .setChannel(channel)
-                    .setConsumerId(consumerId != null ? consumerId : "")
                     .setLimit(limit)
+                    .setStorage("sqlite") // Default storage
                     .build();
 
             return executeWithRetry(() -> {
-                GetLogsResponse response = blockingStub.getLogs(request);
-                return response.getLogEntriesList().stream()
-                        .map(this::convertToLogEntry)
+                FetchLogsResponse response = blockingStub.fetchLogs(request);
+                return response.getLogsList().stream()
+                        .map(this::convertProtoLogEntryToLogEntry)
                         .collect(Collectors.toList());
             });
         } catch (Exception e) {
@@ -152,16 +161,17 @@ public class LogPilotGrpcClient implements LogPilotClient {
     @Override
     public List<LogEntry> getAllLogs(int limit) {
         try {
-            GetLogsRequest request = GetLogsRequest.newBuilder()
+            FetchLogsRequest request = FetchLogsRequest.newBuilder()
+                    .setSince("")
                     .setChannel("")
-                    .setConsumerId("")
                     .setLimit(limit)
+                    .setStorage("sqlite") // Default storage
                     .build();
 
             return executeWithRetry(() -> {
-                GetLogsResponse response = blockingStub.getLogs(request);
-                return response.getLogEntriesList().stream()
-                        .map(this::convertToLogEntry)
+                FetchLogsResponse response = blockingStub.fetchLogs(request);
+                return response.getLogsList().stream()
+                        .map(this::convertProtoLogEntryToLogEntry)
                         .collect(Collectors.toList());
             });
         } catch (Exception e) {
@@ -170,30 +180,21 @@ public class LogPilotGrpcClient implements LogPilotClient {
         }
     }
 
-    private com.logpilot.grpc.proto.LogPilotProto.LogEntry convertToProtoLogEntry(LogEntry logEntry) {
-        com.logpilot.grpc.proto.LogPilotProto.LogEntry.Builder builder =
-            com.logpilot.grpc.proto.LogPilotProto.LogEntry.newBuilder()
-                .setChannel(logEntry.getChannel())
-                .setLevel(convertToProtoLogLevel(logEntry.getLevel()))
-                .setMessage(logEntry.getMessage())
-                .setTimestamp(logEntry.getTimestamp().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-        if (logEntry.getMeta() != null) {
-            Map<String, String> stringMeta = logEntry.getMeta().entrySet().stream()
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            entry -> entry.getValue().toString()
-                    ));
-            builder.putAllMeta(stringMeta);
+    private Map<String, String> convertMetaToStringMap(Map<String, Object> meta) {
+        if (meta == null) {
+            return new HashMap<>();
         }
-
-        return builder.build();
+        return meta.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().toString()
+                ));
     }
 
-    private LogEntry convertToLogEntry(com.logpilot.grpc.proto.LogPilotProto.LogEntry protoLogEntry) {
+    private LogEntry convertProtoLogEntryToLogEntry(com.logpilot.grpc.proto.LogPilotProto.LogEntry protoLogEntry) {
         LogEntry logEntry = new LogEntry();
         logEntry.setChannel(protoLogEntry.getChannel());
-        logEntry.setLevel(convertToLogLevel(protoLogEntry.getLevel()));
+        logEntry.setLevel(convertStringToLogLevel(protoLogEntry.getLevel()));
         logEntry.setMessage(protoLogEntry.getMessage());
 
         if (!protoLogEntry.getMetaMap().isEmpty()) {
@@ -201,35 +202,31 @@ public class LogPilotGrpcClient implements LogPilotClient {
             logEntry.setMeta(meta);
         }
 
-        if (!protoLogEntry.getTimestamp().isEmpty()) {
+        // Convert timestamp from long to LocalDateTime
+        if (protoLogEntry.getTimestamp() > 0) {
             try {
-                LocalDateTime timestamp = LocalDateTime.parse(protoLogEntry.getTimestamp(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                LocalDateTime timestamp = LocalDateTime.ofInstant(
+                    java.time.Instant.ofEpochMilli(protoLogEntry.getTimestamp()),
+                    java.time.ZoneOffset.UTC
+                );
                 logEntry.setTimestamp(timestamp);
             } catch (Exception e) {
                 logger.warn("Failed to parse timestamp: {}", protoLogEntry.getTimestamp(), e);
+                logEntry.setTimestamp(LocalDateTime.now());
             }
+        } else {
+            logEntry.setTimestamp(LocalDateTime.now());
         }
 
         return logEntry;
     }
 
-    private LogLevel convertToLogLevel(com.logpilot.grpc.proto.LogPilotProto.LogLevel protoLogLevel) {
-        switch (protoLogLevel) {
-            case DEBUG: return LogLevel.DEBUG;
-            case INFO: return LogLevel.INFO;
-            case WARN: return LogLevel.WARN;
-            case ERROR: return LogLevel.ERROR;
-            default: throw new IllegalArgumentException("Unknown log level: " + protoLogLevel);
-        }
-    }
-
-    private com.logpilot.grpc.proto.LogPilotProto.LogLevel convertToProtoLogLevel(LogLevel logLevel) {
-        switch (logLevel) {
-            case DEBUG: return com.logpilot.grpc.proto.LogPilotProto.LogLevel.DEBUG;
-            case INFO: return com.logpilot.grpc.proto.LogPilotProto.LogLevel.INFO;
-            case WARN: return com.logpilot.grpc.proto.LogPilotProto.LogLevel.WARN;
-            case ERROR: return com.logpilot.grpc.proto.LogPilotProto.LogLevel.ERROR;
-            default: throw new IllegalArgumentException("Unknown log level: " + logLevel);
+    private LogLevel convertStringToLogLevel(String levelString) {
+        try {
+            return LogLevel.valueOf(levelString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.warn("Unknown log level: {}, defaulting to INFO", levelString);
+            return LogLevel.INFO;
         }
     }
 
@@ -243,7 +240,7 @@ public class LogPilotGrpcClient implements LogPilotClient {
                 lastException = e;
                 if (attempt < maxRetries) {
                     logger.warn("gRPC attempt {} failed, retrying... Error: {}", attempt, e.getStatus());
-                    Thread.sleep(1000 * attempt); // Exponential backoff
+                    Thread.sleep(1000L * attempt);
                 }
             }
         }
