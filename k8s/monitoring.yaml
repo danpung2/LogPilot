@@ -1,0 +1,158 @@
+# ServiceMonitor for Prometheus monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: logpilot-metrics
+  namespace: logpilot
+  labels:
+    app: logpilot
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: logpilot-all
+  endpoints:
+  - port: management
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+---
+# PodMonitor for detailed pod metrics
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: logpilot-pod-metrics
+  namespace: logpilot
+  labels:
+    app: logpilot
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: logpilot-all
+  podMetricsEndpoints:
+  - port: management
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+---
+# PrometheusRule for alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: logpilot-alerts
+  namespace: logpilot
+  labels:
+    app: logpilot
+    component: monitoring
+spec:
+  groups:
+  - name: logpilot.rules
+    rules:
+    - alert: LogPilotHighMemoryUsage
+      expr: container_memory_usage_bytes{namespace="logpilot"} / container_spec_memory_limit_bytes > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "LogPilot high memory usage"
+        description: "LogPilot container {{ $labels.container }} in namespace {{ $labels.namespace }} is using more than 80% of its memory limit."
+
+    - alert: LogPilotHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{namespace="logpilot"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "LogPilot high CPU usage"
+        description: "LogPilot container {{ $labels.container }} in namespace {{ $labels.namespace }} is using more than 80% CPU."
+
+    - alert: LogPilotPodDown
+      expr: up{namespace="logpilot"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "LogPilot pod is down"
+        description: "LogPilot pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is down."
+
+    - alert: LogPilotHighErrorRate
+      expr: rate(http_requests_total{namespace="logpilot",status=~"5.."}[5m]) / rate(http_requests_total{namespace="logpilot"}[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "LogPilot high error rate"
+        description: "LogPilot is experiencing high error rate (>10%) in namespace {{ $labels.namespace }}."
+---
+# Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logpilot-dashboard
+  namespace: logpilot
+  labels:
+    app: logpilot
+    component: monitoring
+    grafana_dashboard: "1"
+data:
+  logpilot-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "LogPilot Monitoring Dashboard",
+        "tags": ["logpilot"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{namespace=\"logpilot\"}[5m])",
+                "legendFormat": "{{ method }} {{ status }}"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{namespace=\"logpilot\"}",
+                "legendFormat": "{{ container }}"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{namespace=\"logpilot\"}[5m])",
+                "legendFormat": "{{ container }}"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Log Storage Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "logpilot_storage_size_bytes{namespace=\"logpilot\"}",
+                "legendFormat": "Storage Size"
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }

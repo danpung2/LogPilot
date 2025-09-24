@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logpilot-all
+  namespace: logpilot
+  labels:
+    app: logpilot-all
+    version: v1
+    component: server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logpilot-all
+  template:
+    metadata:
+      labels:
+        app: logpilot-all
+        version: v1
+        component: server
+    spec:
+      containers:
+      - name: logpilot
+        image: logpilot:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: grpc
+          containerPort: 50051
+          protocol: TCP
+        - name: management
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "all"
+        - name: LOGPILOT_PROTOCOL
+          value: "all"
+        - name: LOGPILOT_STORAGE_TYPE
+          value: "sqlite"
+        - name: LOGPILOT_SQLITE_PATH
+          value: "/data/logpilot.db"
+        - name: LOGPILOT_STORAGE_DIR
+          value: "/data/logs"
+        - name: LOGPILOT_GRPC_PORT
+          value: "50051"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: management
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: management
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: management
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+      volumes:
+      - name: config
+        configMap:
+          name: logpilot-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: logpilot-data
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logpilot-data
+  namespace: logpilot
+  labels:
+    app: logpilot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

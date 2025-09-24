@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logpilot-config
+  namespace: logpilot
+  labels:
+    app: logpilot
+data:
+  application.yml: |
+    spring:
+      application:
+        name: logpilot-server
+      jackson:
+        serialization:
+          write-dates-as-timestamps: false
+        deserialization:
+          adjust-dates-to-context-time-zone: false
+
+    server:
+      port: 8080
+
+    grpc:
+      server:
+        port: 50051
+
+    logpilot:
+      server:
+        protocol: all # all, rest, grpc
+      storage:
+        type: sqlite
+        directory: /data/logs
+        sqlite:
+          path: /data/logpilot.db
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+      endpoint:
+        health:
+          show-details: when_authorized
+      server:
+        port: 8081
+
+    logging:
+      level:
+        com.logpilot: INFO
+        net.devh.boot.grpc: INFO
+        org.springframework.boot.autoconfigure: WARN
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logpilot-rest-config
+  namespace: logpilot
+  labels:
+    app: logpilot-rest
+data:
+  application.yml: |
+    spring:
+      application:
+        name: logpilot-server
+      profiles:
+        active: rest
+      jackson:
+        serialization:
+          write-dates-as-timestamps: false
+        deserialization:
+          adjust-dates-to-context-time-zone: false
+
+    server:
+      port: 8080
+
+    grpc:
+      server:
+        enabled: false
+
+    logpilot:
+      server:
+        protocol: rest
+      storage:
+        type: sqlite
+        directory: /data/logs
+        sqlite:
+          path: /data/logpilot.db
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+      endpoint:
+        health:
+          show-details: when_authorized
+      server:
+        port: 8081
+
+    logging:
+      level:
+        com.logpilot: INFO
+        net.devh.boot.grpc: INFO
+        org.springframework.boot.autoconfigure: WARN
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logpilot-grpc-config
+  namespace: logpilot
+  labels:
+    app: logpilot-grpc
+data:
+  application.yml: |
+    spring:
+      application:
+        name: logpilot-server
+      profiles:
+        active: grpc
+      jackson:
+        serialization:
+          write-dates-as-timestamps: false
+        deserialization:
+          adjust-dates-to-context-time-zone: false
+
+    server:
+      port: -1
+
+    grpc:
+      server:
+        port: 50051
+
+    logpilot:
+      server:
+        protocol: grpc
+      storage:
+        type: sqlite
+        directory: /data/logs
+        sqlite:
+          path: /data/logpilot.db
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+      endpoint:
+        health:
+          show-details: when_authorized
+      server:
+        port: 8081
+
+    logging:
+      level:
+        com.logpilot: INFO
+        net.devh.boot.grpc: INFO
+        org.springframework.boot.autoconfigure: WARN

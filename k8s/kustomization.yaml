@@ -1,0 +1,65 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: logpilot
+  namespace: logpilot
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: logpilot
+  app.kubernetes.io/version: v1.0.0
+  app.kubernetes.io/component: server
+  app.kubernetes.io/part-of: logpilot
+  app.kubernetes.io/managed-by: kustomize
+
+# Namespace for all resources
+namespace: logpilot
+
+# Resources to include
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - deployment-all.yaml
+  - service.yaml
+  - ingress.yaml
+
+# Images to replace
+images:
+  - name: logpilot
+    newTag: latest
+  - name: logpilot-rest
+    newTag: latest
+  - name: logpilot-grpc
+    newTag: latest
+
+# Config map generator
+configMapGenerator:
+  - name: logpilot-env-config
+    literals:
+      - LOGPILOT_STORAGE_TYPE=sqlite
+      - LOGPILOT_STORAGE_DIR=/data/logs
+      - LOGPILOT_SQLITE_PATH=/data/logpilot.db
+      - SPRING_PROFILES_ACTIVE=all
+      - LOGPILOT_PROTOCOL=all
+
+# Patches
+patches:
+  - target:
+      kind: Deployment
+      name: logpilot-all
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom
+        value:
+          - configMapRef:
+              name: logpilot-env-config
+
+# Replicas
+replicas:
+  - name: logpilot-all
+    count: 2
+  - name: logpilot-rest
+    count: 3
+  - name: logpilot-grpc
+    count: 2

@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logpilot-grpc
+  namespace: logpilot
+  labels:
+    app: logpilot-grpc
+    version: v1
+    component: grpc-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logpilot-grpc
+  template:
+    metadata:
+      labels:
+        app: logpilot-grpc
+        version: v1
+        component: grpc-server
+    spec:
+      containers:
+      - name: logpilot-grpc
+        image: logpilot-grpc:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: grpc
+          containerPort: 50051
+          protocol: TCP
+        - name: management
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "grpc"
+        - name: LOGPILOT_PROTOCOL
+          value: "grpc"
+        - name: LOGPILOT_STORAGE_TYPE
+          value: "sqlite"
+        - name: LOGPILOT_SQLITE_PATH
+          value: "/data/logpilot.db"
+        - name: LOGPILOT_STORAGE_DIR
+          value: "/data/logs"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check || exit 1"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check || exit 1"
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check || exit 1"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+      volumes:
+      - name: config
+        configMap:
+          name: logpilot-grpc-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: logpilot-grpc-data
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: logpilot-grpc-data
+  namespace: logpilot
+  labels:
+    app: logpilot-grpc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
