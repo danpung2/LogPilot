@@ -32,9 +32,7 @@ public class RestLogService implements LogService {
     @Override
     public void storeLogs(List<LogEntry> logEntries) {
         logger.debug("[REST] Storing {} log entries", logEntries.size());
-        for (LogEntry logEntry : logEntries) {
-            logStorage.store(logEntry);
-        }
+        logStorage.storeLogs(logEntries);
     }
 
     @Override

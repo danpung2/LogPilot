@@ -8,6 +8,8 @@ public interface LogStorage extends AutoCloseable {
 
     void store(LogEntry logEntry);
 
+    void storeLogs(List<LogEntry> logEntries);
+
     List<LogEntry> retrieve(String channel, String consumerId, int limit);
 
     List<LogEntry> retrieveAll(int limit);

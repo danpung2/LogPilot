@@ -25,6 +25,7 @@ public class SqliteLogStorage implements LogStorage {
         this.dbPath = dbPath;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
+        initialize();
     }
 
     @Override
@@ -88,6 +89,54 @@ public class SqliteLogStorage implements LogStorage {
         } catch (SQLException | JsonProcessingException e) {
             logger.error("Failed to store log entry", e);
             throw new RuntimeException("Failed to store log entry", e);
+        }
+    }
+
+    @Override
+    public void storeLogs(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+
+        String sql = "INSERT INTO logs (channel, level, message, meta, timestamp) VALUES (?, ?, ?, ?, ?)";
+
+        try {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                for (LogEntry logEntry : logEntries) {
+                    stmt.setString(1, logEntry.getChannel());
+                    stmt.setString(2, logEntry.getLevel().name());
+                    stmt.setString(3, logEntry.getMessage());
+
+                    if (logEntry.getMeta() != null && !logEntry.getMeta().isEmpty()) {
+                        stmt.setString(4, objectMapper.writeValueAsString(logEntry.getMeta()));
+                    } else {
+                        stmt.setNull(4, Types.VARCHAR);
+                    }
+
+                    stmt.setTimestamp(5, Timestamp.valueOf(logEntry.getTimestamp()));
+                    stmt.addBatch();
+                }
+
+                stmt.executeBatch();
+                connection.commit();
+                logger.debug("Stored {} log entries in batch", logEntries.size());
+            }
+        } catch (SQLException | JsonProcessingException e) {
+            try {
+                connection.rollback();
+                logger.error("Transaction rolled back due to error in batch insert", e);
+            } catch (SQLException rollbackException) {
+                logger.error("Failed to rollback transaction", rollbackException);
+            }
+            throw new RuntimeException("Failed to store log entries in batch", e);
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                logger.error("Failed to reset auto-commit", e);
+            }
         }
     }
 

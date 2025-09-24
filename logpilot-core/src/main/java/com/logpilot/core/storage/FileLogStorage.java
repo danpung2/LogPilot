@@ -36,6 +36,7 @@ public class FileLogStorage implements LogStorage {
         this.consumerOffsets = new ConcurrentHashMap<>();
         this.lock = new ReentrantReadWriteLock();
         this.offsetDir = Paths.get(storageDirectory, ".offsets");
+        initialize();
     }
 
     @Override
@@ -69,6 +70,53 @@ public class FileLogStorage implements LogStorage {
         } catch (IOException e) {
             logger.error("Failed to store log entry to file", e);
             throw new RuntimeException("Failed to store log entry to file", e);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void storeLogs(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+
+        lock.writeLock().lock();
+        try {
+            // 채널별로 로그 엔트리들을 그룹화
+            Map<String, List<LogEntry>> entriesByChannel = new HashMap<>();
+            for (LogEntry logEntry : logEntries) {
+                entriesByChannel.computeIfAbsent(logEntry.getChannel(), k -> new ArrayList<>())
+                               .add(logEntry);
+            }
+
+            // 채널별로 배치 저장
+            for (Map.Entry<String, List<LogEntry>> channelEntry : entriesByChannel.entrySet()) {
+                String channel = channelEntry.getKey();
+                List<LogEntry> channelEntries = channelEntry.getValue();
+
+                Path logFile = getLogFilePath(channel);
+
+                // 모든 로그 라인을 미리 생성
+                StringBuilder batchContent = new StringBuilder();
+                for (LogEntry logEntry : channelEntries) {
+                    String logLine = formatLogEntry(logEntry);
+                    batchContent.append(logLine).append(System.lineSeparator());
+                }
+
+                // 한 번의 파일 쓰기로 배치 저장
+                Files.write(logFile, batchContent.toString().getBytes(),
+                           StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+
+                logger.debug("Stored {} log entries to file: {} for channel: {}",
+                            channelEntries.size(), logFile.getFileName(), channel);
+            }
+
+            logger.debug("Stored total {} log entries across {} channels",
+                        logEntries.size(), entriesByChannel.size());
+        } catch (IOException e) {
+            logger.error("Failed to store log entries to files", e);
+            throw new RuntimeException("Failed to store log entries to files", e);
         } finally {
             lock.writeLock().unlock();
         }

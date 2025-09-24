@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,8 +93,7 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     @Override
     public void listLogs(LogPilotProto.ListLogsRequest request, StreamObserver<LogPilotProto.ListLogsResponse> responseObserver) {
         try {
-            // For now, implement basic functionality - can be enhanced later
-            List<LogEntry> logEntries = logService.getAllLogs(100); // Default limit
+            List<LogEntry> logEntries = logService.getAllLogs(100);
 
             List<LogPilotProto.LogEntry> protoLogEntries = logEntries.stream()
                     .map(this::convertToProtoLogEntry)
@@ -121,7 +119,6 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
             List<LogEntry> logEntries;
 
             if (!request.getChannel().isEmpty()) {
-                // Use 'since' as consumer_id for backward compatibility
                 logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(), request.getLimit());
             } else {
                 logEntries = logService.getAllLogs(request.getLimit());
@@ -156,7 +153,6 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
             logEntry.setMeta(meta);
         }
 
-        // Set current timestamp as LogRequest doesn't have timestamp
         logEntry.setTimestamp(LocalDateTime.now());
 
         return logEntry;
