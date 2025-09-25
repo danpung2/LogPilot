@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logpilot-consumer
+  namespace: logpilot
+  labels:
+    app: logpilot-consumer
+    component: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logpilot-consumer
+  template:
+    metadata:
+      labels:
+        app: logpilot-consumer
+        component: client
+    spec:
+      containers:
+      - name: consumer
+        image: logpilot-client:latest
+        imagePullPolicy: Never
+        env:
+        - name: LOGPILOT_SERVER_HOST
+          value: "logpilot-all.logpilot.svc.cluster.local"
+        - name: LOGPILOT_GRPC_PORT
+          value: "50051"
+        - name: LOGPILOT_HTTP_PORT
+          value: "8080"
+        - name: LOGPILOT_MODE
+          value: "consumer"
+        - name: LOGPILOT_CHANNEL
+          value: "test-channel"
+        command: ["java"]
+        args: ["-jar", "/app/app.jar", "--mode=consumer"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logpilot-producer
+  namespace: logpilot
+  labels:
+    app: logpilot-producer
+    component: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logpilot-producer
+  template:
+    metadata:
+      labels:
+        app: logpilot-producer
+        component: client
+    spec:
+      containers:
+      - name: producer
+        image: logpilot-client:latest
+        imagePullPolicy: Never
+        env:
+        - name: LOGPILOT_SERVER_HOST
+          value: "logpilot-all.logpilot.svc.cluster.local"
+        - name: LOGPILOT_GRPC_PORT
+          value: "50051"
+        - name: LOGPILOT_HTTP_PORT
+          value: "8080"
+        - name: LOGPILOT_MODE
+          value: "producer"
+        - name: LOGPILOT_CHANNEL
+          value: "test-channel"
+        command: ["java"]
+        args: ["-jar", "/app/app.jar", "--mode=producer"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logpilot-client-config
+  namespace: logpilot
+  labels:
+    app: logpilot-client
+data:
+  application.yml: |
+    logpilot:
+      client:
+        server:
+          host: logpilot-all.logpilot.svc.cluster.local
+          grpc-port: 50051
+          http-port: 8080
+        consumer:
+          channel: test-channel
+          consumer-id: k8s-consumer-1
+          poll-interval: 1000
+        producer:
+          channel: test-channel
+          batch-size: 10
+          flush-interval: 5000
+
+    logging:
+      level:
+        com.logpilot: DEBUG
+        root: INFO
