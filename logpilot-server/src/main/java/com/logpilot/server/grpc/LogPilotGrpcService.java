@@ -178,6 +178,10 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     }
 
     private LogLevel convertStringToLogLevel(String levelString) {
+        if (levelString == null) {
+            logger.warn("Null log level provided, defaulting to INFO");
+            return LogLevel.INFO;
+        }
         try {
             return LogLevel.valueOf(levelString.toUpperCase());
         } catch (IllegalArgumentException e) {

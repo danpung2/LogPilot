@@ -26,14 +26,22 @@ public class LogController {
 
     @PostMapping("/logs")
     public ResponseEntity<Void> storeLog(@Valid @RequestBody LogEntry logEntry) {
-        logService.storeLog(logEntry);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        try {
+            logService.storeLog(logEntry);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/logs/batch")
     public ResponseEntity<Void> storeLogs(@Valid @RequestBody List<LogEntry> logEntries) {
-        logService.storeLogs(logEntries);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        try {
+            logService.storeLogs(logEntries);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/logs/{channel}")
@@ -42,20 +50,27 @@ public class LogController {
             @RequestParam(required = false) String consumerId,
             @RequestParam(defaultValue = "100") int limit) {
 
-        List<LogEntry> logs;
-        if (consumerId != null) {
-            logs = logService.getLogsForConsumer(channel, consumerId, limit);
-        } else {
-            logs = logService.getAllLogs(limit);
+        try {
+            List<LogEntry> logs;
+            if (consumerId != null) {
+                logs = logService.getLogsForConsumer(channel, consumerId, limit);
+            } else {
+                logs = logService.getAllLogs(limit);
+            }
+            return ResponseEntity.ok(logs);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        return ResponseEntity.ok(logs);
     }
 
     @GetMapping("/logs")
     public ResponseEntity<List<LogEntry>> getAllLogs(
             @RequestParam(defaultValue = "100") int limit) {
-        List<LogEntry> logs = logService.getAllLogs(limit);
-        return ResponseEntity.ok(logs);
+        try {
+            List<LogEntry> logs = logService.getAllLogs(limit);
+            return ResponseEntity.ok(logs);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

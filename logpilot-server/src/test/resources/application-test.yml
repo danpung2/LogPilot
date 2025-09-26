@@ -1,0 +1,24 @@
+logpilot:
+  storage:
+    type: FILE
+    directory: /tmp/test-logs
+  server:
+    protocol: all
+    port: 0
+
+server:
+  port: 0
+
+grpc:
+  server:
+    port: 0
+
+management:
+  server:
+    port: 0
+
+logging:
+  level:
+    com.logpilot: DEBUG
+    org.springframework: WARN
+    org.hibernate: WARN

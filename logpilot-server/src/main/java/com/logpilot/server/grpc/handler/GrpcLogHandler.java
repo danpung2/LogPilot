@@ -20,18 +20,29 @@ public class GrpcLogHandler implements LogService {
 
     @Autowired
     public GrpcLogHandler(LogStorage logStorage) {
+        if (logStorage == null) {
+            throw new NullPointerException("LogStorage cannot be null");
+        }
         this.logStorage = logStorage;
     }
 
     @Override
     public void storeLog(LogEntry logEntry) {
-        logger.debug("[gRPC] Storing log entry for channel: {}", logEntry.getChannel());
+        if (logEntry != null) {
+            logger.debug("[gRPC] Storing log entry for channel: {}", logEntry.getChannel());
+        } else {
+            logger.debug("[gRPC] Storing null log entry");
+        }
         logStorage.store(logEntry);
     }
 
     @Override
     public void storeLogs(List<LogEntry> logEntries) {
-        logger.debug("[gRPC] Storing {} log entries", logEntries.size());
+        if (logEntries != null) {
+            logger.debug("[gRPC] Storing {} log entries", logEntries.size());
+        } else {
+            logger.debug("[gRPC] Storing null log entries list");
+        }
         logStorage.storeLogs(logEntries);
     }
 

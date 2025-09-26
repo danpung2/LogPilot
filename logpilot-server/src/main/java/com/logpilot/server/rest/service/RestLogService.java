@@ -20,18 +20,29 @@ public class RestLogService implements LogService {
 
     @Autowired
     public RestLogService(LogStorage logStorage) {
+        if (logStorage == null) {
+            throw new NullPointerException("LogStorage cannot be null");
+        }
         this.logStorage = logStorage;
     }
 
     @Override
     public void storeLog(LogEntry logEntry) {
-        logger.debug("[REST] Storing log entry for channel: {}", logEntry.getChannel());
+        if (logEntry != null) {
+            logger.debug("[REST] Storing log entry for channel: {}", logEntry.getChannel());
+        } else {
+            logger.debug("[REST] Storing null log entry");
+        }
         logStorage.store(logEntry);
     }
 
     @Override
     public void storeLogs(List<LogEntry> logEntries) {
-        logger.debug("[REST] Storing {} log entries", logEntries.size());
+        if (logEntries != null) {
+            logger.debug("[REST] Storing {} log entries", logEntries.size());
+        } else {
+            logger.debug("[REST] Storing null log entries list");
+        }
         logStorage.storeLogs(logEntries);
     }
 
