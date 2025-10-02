@@ -1,0 +1,362 @@
+{
+  "id": null,
+  "uid": "logpilot-performance",
+  "title": "LogPilot Performance Metrics",
+  "tags": [
+    "logpilot",
+    "performance"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Latency (P50, P95, P99)",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "logpilot:http_request_duration_seconds:p50",
+          "legendFormat": "P50",
+          "refId": "A"
+        },
+        {
+          "expr": "logpilot:http_request_duration_seconds:p95",
+          "legendFormat": "P95",
+          "refId": "B"
+        },
+        {
+          "expr": "logpilot:http_request_duration_seconds:p99",
+          "legendFormat": "P99",
+          "refId": "C"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Latency"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      },
+      "legend": {
+        "show": true,
+        "alignAsTable": true,
+        "avg": true,
+        "max": true,
+        "current": true
+      }
+    },
+    {
+      "id": 2,
+      "title": "gRPC Request Latency (P50, P95, P99)",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "logpilot:grpc_request_duration_seconds:p50",
+          "legendFormat": "P50",
+          "refId": "A"
+        },
+        {
+          "expr": "logpilot:grpc_request_duration_seconds:p95",
+          "legendFormat": "P95",
+          "refId": "B"
+        },
+        {
+          "expr": "logpilot:grpc_request_duration_seconds:p99",
+          "legendFormat": "P99",
+          "refId": "C"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Latency"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      },
+      "legend": {
+        "show": true,
+        "alignAsTable": true,
+        "avg": true,
+        "max": true,
+        "current": true
+      }
+    },
+    {
+      "id": 3,
+      "title": "JVM Memory Usage",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{namespace=\"logpilot\",area=\"heap\"}",
+          "legendFormat": "Heap Used - {{pod}}",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{namespace=\"logpilot\",area=\"heap\"}",
+          "legendFormat": "Heap Max - {{pod}}",
+          "refId": "B"
+        },
+        {
+          "expr": "jvm_memory_used_bytes{namespace=\"logpilot\",area=\"nonheap\"}",
+          "legendFormat": "Non-Heap Used - {{pod}}",
+          "refId": "C"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": "Memory"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      }
+    },
+    {
+      "id": 4,
+      "title": "JVM Heap Usage %",
+      "type": "gauge",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "avg(logpilot:jvm_heap_usage_percent)",
+          "legendFormat": "Heap %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 70,
+                "color": "yellow"
+              },
+              {
+                "value": 85,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "CPU Usage %",
+      "type": "gauge",
+      "gridPos": {
+        "x": 18,
+        "y": 8,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "avg(logpilot:cpu_usage_percent)",
+          "legendFormat": "CPU %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 70,
+                "color": "yellow"
+              },
+              {
+                "value": 85,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "GC Pause Time",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum{namespace=\"logpilot\"}[5m])",
+          "legendFormat": "{{pod}} - {{gc}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "percentunit",
+          "label": "GC Pause Ratio"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Thread Count",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "jvm_threads_current{namespace=\"logpilot\"}",
+          "legendFormat": "Current - {{pod}}",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_threads_peak{namespace=\"logpilot\"}",
+          "legendFormat": "Peak - {{pod}}",
+          "refId": "B"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Threads"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      }
+    },
+    {
+      "id": 8,
+      "title": "HTTP Request Rate",
+      "type": "graph",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (pod) (logpilot:http_request_rate)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "reqps",
+          "label": "req/sec"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      }
+    },
+    {
+      "id": 9,
+      "title": "gRPC Request Rate",
+      "type": "graph",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (pod) (logpilot:grpc_request_rate)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "reqps",
+          "label": "req/sec"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "xaxis": {
+        "mode": "time"
+      }
+    }
+  ]
+}

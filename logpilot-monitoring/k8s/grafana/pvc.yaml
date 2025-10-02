@@ -1,0 +1,18 @@
+---
+# PersistentVolumeClaim for Grafana data storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: logpilot
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Uncomment and configure for specific storage class
+  # storageClassName: standard

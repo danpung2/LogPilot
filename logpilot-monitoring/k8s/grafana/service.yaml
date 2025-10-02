@@ -1,0 +1,39 @@
+---
+# Grafana Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: logpilot
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - name: grafana
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: grafana
+---
+# Grafana Service (LoadBalancer) - Optional for external access
+# Uncomment if you want to expose Grafana externally
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: grafana-external
+#   namespace: logpilot
+#   labels:
+#     app: grafana
+#     component: monitoring
+# spec:
+#   type: LoadBalancer
+#   ports:
+#     - name: grafana
+#       port: 3000
+#       targetPort: 3000
+#       protocol: TCP
+#   selector:
+#     app: grafana

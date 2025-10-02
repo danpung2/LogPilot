@@ -1,0 +1,24 @@
+---
+# Grafana Dashboard Provisioning Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-config
+  namespace: logpilot
+  labels:
+    app: grafana
+    component: monitoring
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+
+    providers:
+      - name: 'LogPilot Dashboards'
+        orgId: 1
+        folder: 'LogPilot'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /etc/grafana/dashboards

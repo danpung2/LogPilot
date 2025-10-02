@@ -1,0 +1,316 @@
+---
+# Prometheus Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: logpilot
+  labels:
+    app: prometheus
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      scrape_timeout: 10s
+      evaluation_interval: 30s
+      external_labels:
+        cluster: 'logpilot-cluster'
+        environment: 'production'
+
+    # Alertmanager configuration
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+    # Load rules once and periodically evaluate them
+    rule_files:
+      - /etc/prometheus/rules/*.yaml
+
+    # Scrape configurations
+    scrape_configs:
+      # Prometheus itself
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # LogPilot All-in-One mode
+      - job_name: 'logpilot-all'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - logpilot
+        relabel_configs:
+          # Keep only pods with app=logpilot-all label
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: logpilot-all
+            action: keep
+          # Keep only pods with prometheus.io/scrape=true annotation
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          # Use custom scrape path if specified
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          # Use custom port if specified
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          # Add pod name as label
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+          # Add namespace as label
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          # Add deployment mode label
+          - source_labels: [__meta_kubernetes_pod_label_mode]
+            action: replace
+            target_label: mode
+
+      # LogPilot REST-only mode
+      - job_name: 'logpilot-rest'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - logpilot
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: logpilot-rest
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - replacement: rest
+            target_label: mode
+
+      # LogPilot gRPC-only mode
+      - job_name: 'logpilot-grpc'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - logpilot
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: logpilot-grpc
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - replacement: grpc
+            target_label: mode
+
+      # Kubernetes Nodes
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      # Kubernetes Pods
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          # Only scrape pods with prometheus.io/scrape=true annotation
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: pod
+
+      # Kubernetes Services
+      - job_name: 'kubernetes-services'
+        kubernetes_sd_configs:
+          - role: service
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
+            action: keep
+            regex: true
+          - source_labels: [__address__]
+            target_label: __param_target
+          - target_label: __address__
+            replacement: blackbox-exporter:9115
+          - source_labels: [__param_target]
+            target_label: instance
+          - action: labelmap
+            regex: __meta_kubernetes_service_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_service_name]
+            target_label: service
+
+  recording_rules.yaml: |
+    groups:
+      - name: logpilot.performance
+        interval: 30s
+        rules:
+          # HTTP Request Duration P95
+          - record: logpilot:http_request_duration_seconds:p95
+            expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{namespace="logpilot"}[5m]))
+
+          # HTTP Request Duration P99
+          - record: logpilot:http_request_duration_seconds:p99
+            expr: histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{namespace="logpilot"}[5m]))
+
+          # HTTP Request Duration P50
+          - record: logpilot:http_request_duration_seconds:p50
+            expr: histogram_quantile(0.50, rate(http_server_requests_seconds_bucket{namespace="logpilot"}[5m]))
+
+          # gRPC Request Duration P95
+          - record: logpilot:grpc_request_duration_seconds:p95
+            expr: histogram_quantile(0.95, rate(grpc_server_handling_seconds_bucket{namespace="logpilot"}[5m]))
+
+          # gRPC Request Duration P99
+          - record: logpilot:grpc_request_duration_seconds:p99
+            expr: histogram_quantile(0.99, rate(grpc_server_handling_seconds_bucket{namespace="logpilot"}[5m]))
+
+          # gRPC Request Duration P50
+          - record: logpilot:grpc_request_duration_seconds:p50
+            expr: histogram_quantile(0.50, rate(grpc_server_handling_seconds_bucket{namespace="logpilot"}[5m]))
+
+          # Log Processing Rate (logs/sec)
+          - record: logpilot:log_processing_rate
+            expr: rate(logpilot_logs_processed_total{namespace="logpilot"}[5m])
+
+          # HTTP Request Rate (req/sec)
+          - record: logpilot:http_request_rate
+            expr: rate(http_server_requests_seconds_count{namespace="logpilot"}[5m])
+
+          # HTTP Error Rate
+          - record: logpilot:http_error_rate
+            expr: |
+              rate(http_server_requests_seconds_count{namespace="logpilot",status=~"5.."}[5m])
+              /
+              rate(http_server_requests_seconds_count{namespace="logpilot"}[5m])
+
+          # gRPC Request Rate (req/sec)
+          - record: logpilot:grpc_request_rate
+            expr: rate(grpc_server_handled_total{namespace="logpilot"}[5m])
+
+          # gRPC Error Rate
+          - record: logpilot:grpc_error_rate
+            expr: |
+              rate(grpc_server_handled_total{namespace="logpilot",grpc_code!="OK"}[5m])
+              /
+              rate(grpc_server_handled_total{namespace="logpilot"}[5m])
+
+      - name: logpilot.resources
+        interval: 30s
+        rules:
+          # Memory Usage Percentage
+          - record: logpilot:memory_usage_percent
+            expr: |
+              container_memory_working_set_bytes{namespace="logpilot",container="logpilot"}
+              /
+              container_spec_memory_limit_bytes{namespace="logpilot",container="logpilot"}
+              * 100
+
+          # CPU Usage Percentage
+          - record: logpilot:cpu_usage_percent
+            expr: |
+              rate(container_cpu_usage_seconds_total{namespace="logpilot",container="logpilot"}[5m])
+              /
+              container_spec_cpu_quota{namespace="logpilot",container="logpilot"}
+              * 100000
+
+          # JVM Heap Usage Percentage
+          - record: logpilot:jvm_heap_usage_percent
+            expr: |
+              jvm_memory_used_bytes{namespace="logpilot",area="heap"}
+              /
+              jvm_memory_max_bytes{namespace="logpilot",area="heap"}
+              * 100
+
+          # GC Pause Time Ratio
+          - record: logpilot:gc_pause_ratio
+            expr: rate(jvm_gc_pause_seconds_sum{namespace="logpilot"}[5m])
+
+      - name: logpilot.business
+        interval: 30s
+        rules:
+          # Total Logs by Level
+          - record: logpilot:logs_total_by_level
+            expr: sum by (level) (logpilot_logs_processed_total{namespace="logpilot"})
+
+          # Total Logs by Channel
+          - record: logpilot:logs_total_by_channel
+            expr: sum by (channel) (logpilot_logs_processed_total{namespace="logpilot"})
+
+          # Error Log Rate
+          - record: logpilot:error_log_rate
+            expr: rate(logpilot_logs_processed_total{namespace="logpilot",level="ERROR"}[5m])
+
+          # Logs per Channel per Second
+          - record: logpilot:logs_rate_by_channel
+            expr: sum by (channel) (rate(logpilot_logs_processed_total{namespace="logpilot"}[5m]))

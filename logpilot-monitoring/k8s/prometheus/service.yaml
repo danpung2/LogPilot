@@ -1,0 +1,42 @@
+---
+# Prometheus Service (ClusterIP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: logpilot
+  labels:
+    app: prometheus
+    component: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  type: ClusterIP
+  ports:
+    - name: prometheus
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: prometheus
+---
+# Prometheus Service (LoadBalancer) - Optional for external access
+# Uncomment if you want to expose Prometheus externally
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: prometheus-external
+#   namespace: logpilot
+#   labels:
+#     app: prometheus
+#     component: monitoring
+# spec:
+#   type: LoadBalancer
+#   ports:
+#     - name: prometheus
+#       port: 9090
+#       targetPort: 9090
+#       protocol: TCP
+#   selector:
+#     app: prometheus
