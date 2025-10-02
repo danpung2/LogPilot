@@ -227,21 +227,21 @@ data:
           - record: logpilot:http_request_duration_seconds:p50
             expr: histogram_quantile(0.50, rate(http_server_requests_seconds_bucket{namespace="logpilot"}[5m]))
 
-          # gRPC Request Duration P95
+          # gRPC Request Duration P95 - Using processing_duration instead of handling
           - record: logpilot:grpc_request_duration_seconds:p95
-            expr: histogram_quantile(0.95, rate(grpc_server_handling_seconds_bucket{namespace="logpilot"}[5m]))
+            expr: grpc_server_processing_duration_seconds_max{namespace="logpilot"}
 
-          # gRPC Request Duration P99
+          # gRPC Request Duration P99 - Using max as approximation
           - record: logpilot:grpc_request_duration_seconds:p99
-            expr: histogram_quantile(0.99, rate(grpc_server_handling_seconds_bucket{namespace="logpilot"}[5m]))
+            expr: grpc_server_processing_duration_seconds_max{namespace="logpilot"}
 
-          # gRPC Request Duration P50
+          # gRPC Request Duration P50 - Using count/sum as approximation
           - record: logpilot:grpc_request_duration_seconds:p50
-            expr: histogram_quantile(0.50, rate(grpc_server_handling_seconds_bucket{namespace="logpilot"}[5m]))
+            expr: grpc_server_processing_duration_seconds_sum{namespace="logpilot"} / grpc_server_processing_duration_seconds_count{namespace="logpilot"}
 
-          # Log Processing Rate (logs/sec)
+          # Log Processing Rate (logs/sec) - Using HTTP requests as proxy
           - record: logpilot:log_processing_rate
-            expr: rate(logpilot_logs_processed_total{namespace="logpilot"}[5m])
+            expr: rate(http_server_requests_seconds_count{namespace="logpilot",uri="/api/logs"}[5m])
 
           # HTTP Request Rate (req/sec)
           - record: logpilot:http_request_rate
@@ -254,16 +254,13 @@ data:
               /
               rate(http_server_requests_seconds_count{namespace="logpilot"}[5m])
 
-          # gRPC Request Rate (req/sec)
+          # gRPC Request Rate (req/sec) - Using received messages as proxy
           - record: logpilot:grpc_request_rate
-            expr: rate(grpc_server_handled_total{namespace="logpilot"}[5m])
+            expr: rate(grpc_server_requests_received_messages_total{namespace="logpilot"}[5m])
 
-          # gRPC Error Rate
+          # gRPC Error Rate - Placeholder (proper metrics need application instrumentation)
           - record: logpilot:grpc_error_rate
-            expr: |
-              rate(grpc_server_handled_total{namespace="logpilot",grpc_code!="OK"}[5m])
-              /
-              rate(grpc_server_handled_total{namespace="logpilot"}[5m])
+            expr: scalar(vector(0))
 
       - name: logpilot.resources
         interval: 30s
@@ -299,18 +296,18 @@ data:
       - name: logpilot.business
         interval: 30s
         rules:
-          # Total Logs by Level
+          # Total Logs by Level - Using HTTP status as proxy
           - record: logpilot:logs_total_by_level
-            expr: sum by (level) (logpilot_logs_processed_total{namespace="logpilot"})
+            expr: sum by (status) (http_server_requests_seconds_count{namespace="logpilot",uri="/api/logs"})
 
-          # Total Logs by Channel
+          # Total Logs by Channel - Placeholder (needs custom metrics)
           - record: logpilot:logs_total_by_channel
-            expr: sum by (channel) (logpilot_logs_processed_total{namespace="logpilot"})
+            expr: scalar(vector(0))
 
-          # Error Log Rate
+          # Error Log Rate - Using 5xx responses as proxy
           - record: logpilot:error_log_rate
-            expr: rate(logpilot_logs_processed_total{namespace="logpilot",level="ERROR"}[5m])
+            expr: rate(http_server_requests_seconds_count{namespace="logpilot",uri="/api/logs",status=~"5.."}[5m])
 
-          # Logs per Channel per Second
+          # Logs per Channel per Second - Placeholder (needs custom metrics)
           - record: logpilot:logs_rate_by_channel
-            expr: sum by (channel) (rate(logpilot_logs_processed_total{namespace="logpilot"}[5m]))
+            expr: scalar(vector(0))

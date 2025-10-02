@@ -27,12 +27,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when_authorized
   server:
     port: ${LOGPILOT_MANAGEMENT_PORT:8081}
+  metrics:
+    export:
+      prometheus:
+        enabled: true
 
 logging:
   level:

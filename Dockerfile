@@ -22,9 +22,6 @@ RUN ./gradlew :logpilot-server:build -x test
 # Production image
 FROM eclipse-temurin:17-jre
 
-# Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 # Create app user
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
@@ -43,9 +40,8 @@ USER appuser
 # Expose ports (8080 for REST, 50051 for gRPC)
 EXPOSE 8080 50051
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+# Health check - Kubernetes will handle this via liveness/readiness probes
+# HEALTHCHECK removed to avoid dependency on curl
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

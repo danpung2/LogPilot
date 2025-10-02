@@ -18,10 +18,14 @@ spec:
         app: logpilot-all
         version: v1
         component: server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/actuator/prometheus"
     spec:
       containers:
       - name: logpilot
-        image: logpilot:latest
+        image: logpilot:v2
         imagePullPolicy: Never
         ports:
         - name: http
@@ -36,6 +40,10 @@ spec:
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "all"
+        - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+          value: "health,info,metrics,prometheus"
+        - name: MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED
+          value: "true"
         - name: LOGPILOT_PROTOCOL
           value: "all"
         - name: LOGPILOT_STORAGE_TYPE
