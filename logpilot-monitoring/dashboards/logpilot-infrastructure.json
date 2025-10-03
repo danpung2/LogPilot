@@ -199,7 +199,7 @@
       },
       "targets": [
         {
-          "expr": "container_memory_working_set_bytes{namespace=\"logpilot\",container=\"logpilot\"}",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"logpilot\",pod=~\"logpilot-all.*\"})",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -229,7 +229,7 @@
       },
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"logpilot\",container=\"logpilot\"}[5m]) * 100",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"logpilot\",pod=~\"logpilot-all.*\"}[5m])) * 100",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -377,12 +377,12 @@
       },
       "targets": [
         {
-          "expr": "sum by (node) (container_memory_working_set_bytes{namespace=\"logpilot\"})",
+          "expr": "sum by (node) (container_memory_working_set_bytes{namespace=\"logpilot\",pod=~\"logpilot-all.*\"})",
           "legendFormat": "Memory - {{node}}",
           "refId": "A"
         },
         {
-          "expr": "sum by (node) (rate(container_cpu_usage_seconds_total{namespace=\"logpilot\"}[5m]))",
+          "expr": "sum by (node) (rate(container_cpu_usage_seconds_total{namespace=\"logpilot\",pod=~\"logpilot-all.*\"}[5m]))",
           "legendFormat": "CPU - {{node}}",
           "refId": "B"
         }

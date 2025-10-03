@@ -6,13 +6,11 @@ import com.logpilot.core.storage.LogStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service("restLogService")
-@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'rest' or '${logpilot.server.protocol:all}' == 'all'")
 public class RestLogService implements LogService {
 
     private static final Logger logger = LoggerFactory.getLogger(RestLogService.class);
@@ -24,6 +22,7 @@ public class RestLogService implements LogService {
             throw new NullPointerException("LogStorage cannot be null");
         }
         this.logStorage = logStorage;
+        logger.info("RestLogService created with LogStorage: {}", logStorage.getClass().getSimpleName());
     }
 
     @Override

@@ -17,7 +17,7 @@ COPY logpilot-server/ logpilot-server/
 RUN chmod +x gradlew
 
 # Build the application
-RUN ./gradlew :logpilot-server:build -x test
+RUN ./gradlew clean :logpilot-server:build -x test
 
 # Production image
 FROM eclipse-temurin:17-jre
@@ -29,7 +29,7 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 WORKDIR /app
 
 # Copy jar from build stage
-COPY --from=build /app/logpilot-server/build/libs/*.jar app.jar
+COPY --from=build /app/logpilot-server/build/libs/logpilot-server-*.jar app.jar
 
 # Change ownership
 RUN chown -R appuser:appgroup /app

@@ -140,7 +140,7 @@ data:
           - replacement: grpc
             target_label: mode
 
-      # Kubernetes Nodes
+      # Kubernetes Nodes (kubelet metrics)
       - job_name: 'kubernetes-nodes'
         kubernetes_sd_configs:
           - role: node
@@ -158,6 +158,28 @@ data:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      # Kubernetes Nodes cAdvisor (container metrics)
+      - job_name: 'kubernetes-cadvisor'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+          - source_labels: [__meta_kubernetes_node_name]
+            action: replace
+            target_label: node
 
       # Kubernetes Pods
       - job_name: 'kubernetes-pods'
@@ -268,17 +290,17 @@ data:
           # Memory Usage Percentage
           - record: logpilot:memory_usage_percent
             expr: |
-              container_memory_working_set_bytes{namespace="logpilot",container="logpilot"}
+              sum by (pod) (container_memory_working_set_bytes{namespace="logpilot",pod=~"logpilot-all.*"})
               /
-              container_spec_memory_limit_bytes{namespace="logpilot",container="logpilot"}
+              sum by (pod) (container_spec_memory_limit_bytes{namespace="logpilot",pod=~"logpilot-all.*"})
               * 100
 
           # CPU Usage Percentage
           - record: logpilot:cpu_usage_percent
             expr: |
-              rate(container_cpu_usage_seconds_total{namespace="logpilot",container="logpilot"}[5m])
+              sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="logpilot",pod=~"logpilot-all.*"}[5m]))
               /
-              container_spec_cpu_quota{namespace="logpilot",container="logpilot"}
+              sum by (pod) (container_spec_cpu_quota{namespace="logpilot",pod=~"logpilot-all.*"})
               * 100000
 
           # JVM Heap Usage Percentage
@@ -296,18 +318,22 @@ data:
       - name: logpilot.business
         interval: 30s
         rules:
-          # Total Logs by Level - Using HTTP status as proxy
+          # Total Logs by Level - Using custom metrics
           - record: logpilot:logs_total_by_level
-            expr: sum by (status) (http_server_requests_seconds_count{namespace="logpilot",uri="/api/logs"})
+            expr: sum by (level) (logpilot_logs_received_total{namespace="logpilot"})
 
-          # Total Logs by Channel - Placeholder (needs custom metrics)
+          # Log Processing Rate - Total HTTP requests to /api/logs
+          - record: logpilot:log_processing_rate_total
+            expr: sum(rate(http_server_requests_seconds_count{namespace="logpilot",uri="/api/logs"}[5m]))
+
+          # Total Logs by Channel - Using custom metrics
           - record: logpilot:logs_total_by_channel
-            expr: scalar(vector(0))
+            expr: sum by (channel) (logpilot_logs_received_total{namespace="logpilot"})
 
-          # Error Log Rate - Using 5xx responses as proxy
+          # Error Log Rate - Using custom metrics
           - record: logpilot:error_log_rate
-            expr: rate(http_server_requests_seconds_count{namespace="logpilot",uri="/api/logs",status=~"5.."}[5m])
+            expr: sum(rate(logpilot_logs_received_total{namespace="logpilot",level="ERROR"}[5m]))
 
-          # Logs per Channel per Second - Placeholder (needs custom metrics)
+          # Logs per Channel per Second - Using custom metrics
           - record: logpilot:logs_rate_by_channel
-            expr: scalar(vector(0))
+            expr: sum by (channel) (rate(logpilot_logs_received_total{namespace="logpilot"}[5m]))

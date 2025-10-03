@@ -85,7 +85,7 @@ deploy_kubernetes_resources() {
 # Pod 상태 확인 및 대기
 wait_for_pods() {
     log_info "Pod가 준비될 때까지 기다립니다..."
-    kubectl wait --for=condition=ready pod -l app=logpilot-all -n logpilot --timeout=300s
+    kubectl wait --for=condition=ready pod -l app=logpilot-all -n logpilot --timeout=30s
     log_success "모든 Pod가 실행 중입니다."
 }
 

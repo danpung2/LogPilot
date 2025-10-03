@@ -27,7 +27,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (level) (logpilot:logs_total_by_level)",
+          "expr": "sum by (level) (logpilot:logs_total_by_level{level!=\"\"})",
           "legendFormat": "{{level}}",
           "refId": "A"
         }
@@ -110,7 +110,7 @@
     },
     {
       "id": 2,
-      "title": "Log Processing Rate by Level",
+      "title": "Log Ingestion Rate (requests/sec)",
       "type": "graph",
       "gridPos": {
         "x": 0,
@@ -120,15 +120,15 @@
       },
       "targets": [
         {
-          "expr": "sum by (level) (rate(logpilot_logs_processed_total{namespace=\"logpilot\"}[5m]))",
+          "expr": "sum by (level) (rate(logpilot_logs_received_total{namespace=\"logpilot\"}[5m]))",
           "legendFormat": "{{level}}",
           "refId": "A"
         }
       ],
       "yaxes": [
         {
-          "format": "short",
-          "label": "logs/sec"
+          "format": "reqps",
+          "label": "requests/sec"
         },
         {
           "format": "short"
@@ -151,7 +151,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (level) (logpilot:logs_total_by_level)",
+          "expr": "sum by (level) (logpilot:logs_total_by_level{level!=\"\"})",
           "legendFormat": "{{level}}",
           "refId": "A"
         }
@@ -169,55 +169,6 @@
         "displayLabels": [
           "name",
           "percent"
-        ]
-      },
-      "fieldConfig": {
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "ERROR"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "WARN"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "INFO"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              }
-            ]
-          }
         ]
       }
     },
@@ -264,7 +215,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, sum by (channel) (logpilot:logs_rate_by_channel))",
+          "expr": "topk(10, sum by (channel) (rate(logpilot_logs_received_total{namespace=\"logpilot\"}[5m])))",
           "legendFormat": "{{channel}}",
           "refId": "A"
         }
@@ -355,8 +306,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (storage) (rate(logpilot_logs_processed_total{namespace=\"logpilot\"}[5m]))",
-          "legendFormat": "{{storage}}",
+          "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"logpilot\",uri=\"/api/logs\",status=\"201\"}[5m]))",
+          "legendFormat": "Success",
           "refId": "A"
         }
       ],
@@ -388,7 +339,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(logpilot_logs_processed_total{namespace=\"logpilot\"}[1m]))",
+          "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"logpilot\",uri=\"/api/logs\"}[1m]))",
           "legendFormat": "logs/sec",
           "refId": "A",
           "format": "time_series"

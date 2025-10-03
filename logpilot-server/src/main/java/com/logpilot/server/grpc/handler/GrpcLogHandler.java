@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component("grpcLogHandler")
-@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'grpc' or '${logpilot.server.protocol:all}' == 'all'")
 public class GrpcLogHandler implements LogService {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcLogHandler.class);

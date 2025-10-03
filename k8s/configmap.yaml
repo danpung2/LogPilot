@@ -25,7 +25,8 @@ data:
 
     logpilot:
       server:
-        protocol: all # all, rest, grpc
+        # Options: all, rest, grpc
+        protocol: all
       storage:
         type: sqlite
         directory: /data/logs

@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: logpilot
-        image: logpilot:v2
+        image: logpilot:latest
         imagePullPolicy: Never
         ports:
         - name: http

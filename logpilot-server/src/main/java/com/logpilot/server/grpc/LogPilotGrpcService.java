@@ -6,35 +6,61 @@ import com.logpilot.core.service.LogService;
 import com.logpilot.grpc.proto.LogPilotProto;
 import com.logpilot.grpc.proto.LogServiceGrpc;
 import io.grpc.stub.StreamObserver;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @GrpcService
-@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'grpc' or '${logpilot.server.protocol:all}' == 'all'")
 public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
 
     private static final Logger logger = LoggerFactory.getLogger(LogPilotGrpcService.class);
     private final LogService logService;
+    private final MeterRegistry meterRegistry;
+    private final Map<String, Counter> levelCounters = new ConcurrentHashMap<>();
+    private final Map<String, Counter> channelCounters = new ConcurrentHashMap<>();
 
     @Autowired
-    public LogPilotGrpcService(@Qualifier("grpcLogHandler") LogService logService) {
+    public LogPilotGrpcService(@Qualifier("grpcLogHandler") LogService logService, MeterRegistry meterRegistry) {
         this.logService = logService;
+        this.meterRegistry = meterRegistry;
+    }
+
+    private void recordLogMetrics(LogEntry logEntry) {
+        if (logEntry == null) return;
+
+        String level = logEntry.getLevel() != null ? logEntry.getLevel().toString() : "UNKNOWN";
+        levelCounters.computeIfAbsent(level,
+            l -> Counter.builder("logpilot_logs_received_total")
+                .tag("level", l)
+                .description("Number of logs received by level")
+                .register(meterRegistry)
+        ).increment();
+
+        String channel = logEntry.getChannel() != null ? logEntry.getChannel() : "unknown";
+        channelCounters.computeIfAbsent(channel,
+            c -> Counter.builder("logpilot_logs_received_total")
+                .tag("channel", c)
+                .description("Number of logs received by channel")
+                .register(meterRegistry)
+        ).increment();
     }
 
     @Override
     public void sendLog(LogPilotProto.LogRequest request, StreamObserver<LogPilotProto.LogResponse> responseObserver) {
         try {
             LogEntry logEntry = convertLogRequestToLogEntry(request);
+            recordLogMetrics(logEntry);
             logService.storeLog(logEntry);
 
             LogPilotProto.LogResponse response = LogPilotProto.LogResponse.newBuilder()
@@ -66,6 +92,7 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
                     .map(this::convertLogRequestToLogEntry)
                     .toList();
 
+            logEntries.forEach(this::recordLogMetrics);
             logService.storeLogs(logEntries);
 
             LogPilotProto.SendLogsResponse response = LogPilotProto.SendLogsResponse.newBuilder()

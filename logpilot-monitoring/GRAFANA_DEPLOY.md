@@ -13,7 +13,7 @@ LogPilot 모니터링을 위한 Grafana 대시보드 시스템입니다.
 대시보드 JSON 파일들을 ConfigMap으로 생성합니다:
 
 ```bash
-sh logpilot-monitoring/scripts/create-dashboard-configmap.sh
+./logpilot-monitoring/scripts/create-dashboard-configmap.sh
 ```
 
 출력 예시:
