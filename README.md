@@ -14,7 +14,9 @@ It is designed for organizations and systems that require **scalable, reliable, 
 * ✅ Horizontal scalability and high-availability design
 * ✅ Consumer ID support for offset-based log streaming and continuation
 * ✅ Production-ready Docker & Kubernetes deployment
-* 🚧 Advanced features (high availability, webhook delivery, retention policies, log search API, metrics integration) coming soon
+* ✅ Prometheus & Grafana monitoring with 4 pre-built dashboards
+* ✅ Production-ready metrics and alerting
+* 🚧 Advanced features (webhook delivery, retention policies, log search API) coming soon
 
 ---
 
@@ -24,6 +26,8 @@ It is designed for organizations and systems that require **scalable, reliable, 
 * **Spring Boot 3.3.4**
 * **gRPC**
 * **GraalVM Native Image** (for fast startup & low memory footprint)
+* **Prometheus** 
+* **Grafana** 
 
 ---
 
@@ -217,70 +221,130 @@ docker run -e LOGPILOT_STORAGE_TYPE=sqlite \
 
 ## ☸️ Kubernetes Deployment
 
-LogPilot supports production-ready Kubernetes deployment with multiple deployment modes:
+LogPilot supports production-ready Kubernetes deployment with monitoring.
 
-### 🚀 Quick Start
+### 🚀 Quick Start (Minikube)
 
-Deploy LogPilot to your Kubernetes cluster in all-in-one mode:
-
-```bash
-# Deploy with default settings
-./k8s-deploy.sh deploy
-
-# Deploy with specific mode
-./k8s-deploy.sh -m rest deploy      # REST-only mode
-./k8s-deploy.sh -m grpc deploy      # gRPC-only mode
-./k8s-deploy.sh -m split deploy     # Separate REST and gRPC services
-```
-
-### 📋 Deployment Modes
-
-| Mode | Description | Use Case | Resources |
-|------|-------------|----------|-----------|
-| **all** | REST + gRPC in single pod | Development, small deployments | 2 replicas |
-| **rest** | REST API only | Web applications, HTTP clients | 3 replicas |
-| **grpc** | gRPC service only | High-performance clients | 2 replicas |
-| **split** | Separate REST and gRPC services | Production, independent scaling | 3+2 replicas |
-
-### 🔧 Advanced Deployment Options
+Deploy LogPilot to minikube in all-in-one mode:
 
 ```bash
-# Custom image tag
-./k8s-deploy.sh -t v1.0.0 deploy
-
-# Custom namespace
-./k8s-deploy.sh -n logpilot-prod deploy
-
-# Skip building (use existing images)
-./k8s-deploy.sh --no-build deploy
-
-# Skip ingress setup
-./k8s-deploy.sh --no-ingress deploy
-
-# Use specific kubectl context
-./k8s-deploy.sh -c my-cluster deploy
+# Deploy LogPilot (automatically starts minikube, builds image, deploys)
+./k8s-deploy.sh
 ```
 
-### 📁 Kubernetes Manifests
+**What it does:**
+- Starts minikube if not running
+- Builds Docker image and loads to minikube
+- Deploys namespace, ConfigMap, Deployment, Service
+- Waits for pods to be ready
+- Shows access URLs
 
-The `k8s/` directory contains all Kubernetes resources:
+**Access the service:**
+```bash
+# Get service URL
+minikube service logpilot-nodeport -n logpilot --url
 
+# Or use the helper script
+./k8s-port-forward.sh
 ```
-k8s/
-├── namespace.yaml          # Namespaces
-├── configmap.yaml         # Application configuration
-├── deployment-all.yaml    # All-in-one deployment
-├── deployment-rest.yaml   # REST-only deployment
-├── deployment-grpc.yaml   # gRPC-only deployment
-├── service.yaml           # Services (ClusterIP, LoadBalancer, NodePort)
-├── ingress.yaml           # Ingress with TLS and Gateway API
-├── monitoring.yaml        # Prometheus monitoring setup
-└── kustomization.yaml     # Kustomize configuration
+
+### 📊 Monitoring Setup (Prometheus & Grafana)
+
+LogPilot includes comprehensive monitoring with Prometheus and Grafana.
+
+#### Deploy Monitoring Stack
+
+```bash
+# 1. Deploy Prometheus
+kubectl apply -f logpilot-monitoring/k8s/prometheus/
+
+# 2. Create Grafana dashboards ConfigMap
+./logpilot-monitoring/scripts/create-dashboard-configmap.sh
+
+# 3. Deploy Grafana
+kubectl apply -f logpilot-monitoring/k8s/grafana/
+
+# 4. Wait for pods to be ready
+kubectl wait --for=condition=ready pod -l app=prometheus -n logpilot --timeout=60s
+kubectl wait --for=condition=ready pod -l app=grafana -n logpilot --timeout=60s
+```
+
+#### Access Grafana
+
+```bash
+# Port forward to Grafana
+kubectl port-forward svc/grafana -n logpilot 3000:3000
+
+# Open browser
+open http://localhost:3000
+
+# Default credentials
+# Username: admin
+# Password: admin
+```
+
+#### Available Dashboards
+
+LogPilot provides 4 pre-configured Grafana dashboards:
+
+1. **LogPilot Overview** - System overview with request rates, error rates, active pods
+2. **LogPilot Performance** - HTTP/gRPC latency, JVM metrics, GC stats
+3. **LogPilot Business** - Log volume by level/channel, error rates
+4. **LogPilot Infrastructure** - Container resources, network I/O, disk usage
+
+See [GRAFANA_DEFAULT_DASHBOARD.md](./GRAFANA_DEFAULT_DASHBOARD.md) for detailed dashboard documentation.
+
+#### Generate Test Traffic
+
+```bash
+# Generate HTTP and gRPC traffic for testing
+./logpilot-monitoring/scripts/wrk-load-test.sh
+```
+
+See [logpilot-monitoring/GENERATE_TRAFFIC.md](./logpilot-monitoring/GENERATE_TRAFFIC.md) for more options.
+
+### 🔧 Helper Scripts
+
+```bash
+# Port forwarding utilities
+./k8s-port-forward.sh          # Forward all LogPilot ports
+./k8s-tunnel.sh               # Create minikube tunnel
+
+# Prometheus standalone deployment
+./deploy-prometheus.sh        # Deploy only Prometheus
 ```
 
 ### 🌐 Access Methods
 
-#### Via Ingress (Recommended)
+#### Via Port Forward (Recommended for Development)
+```bash
+# LogPilot REST API
+kubectl port-forward svc/logpilot-nodeport 8080:8080 -n logpilot
+curl http://localhost:8080/actuator/health
+
+# LogPilot gRPC Service
+kubectl port-forward svc/logpilot-nodeport 50051:50051 -n logpilot
+grpcurl -plaintext localhost:50051 list
+
+# Prometheus
+kubectl port-forward svc/prometheus -n logpilot 9090:9090
+open http://localhost:9090
+
+# Grafana
+kubectl port-forward svc/grafana -n logpilot 3000:3000
+open http://localhost:3000
+```
+
+#### Via NodePort (Minikube)
+```bash
+# Get service URL
+minikube service logpilot-nodeport -n logpilot --url
+
+# Access via browser or curl
+curl $(minikube service logpilot-nodeport -n logpilot --url)/actuator/health
+```
+
+#### Via Ingress (Production)
 ```bash
 # REST API
 curl http://logpilot.local/actuator/health
@@ -289,124 +353,88 @@ curl http://logpilot.local/actuator/health
 curl https://logpilot.example.com/api/logs
 ```
 
-#### Via Port Forward
-```bash
-# REST API
-kubectl port-forward svc/logpilot-all 8080:8080 -n logpilot
-curl http://localhost:8080/actuator/health
+### 📊 Metrics & Alerts
 
-# gRPC Service
-kubectl port-forward svc/logpilot-all 50051:50051 -n logpilot
-grpcurl -plaintext localhost:50051 list
-
-# Management endpoints
-kubectl port-forward svc/logpilot-all 8081:8081 -n logpilot
-curl http://localhost:8081/actuator/prometheus
-```
-
-#### Via NodePort (Development)
-```bash
-# Access via node IP
-curl http://<node-ip>:30080/actuator/health
-grpcurl -plaintext <node-ip>:30051 list
-```
-
-### 📊 Monitoring & Observability
-
-LogPilot includes comprehensive monitoring setup:
-
-```bash
-# Deploy with monitoring
-kubectl apply -f k8s/monitoring.yaml
-
-# View metrics
-curl http://localhost:8081/actuator/prometheus
-
-# Grafana dashboard included
-# Import the dashboard from k8s/monitoring.yaml
-```
-
-**Metrics Available:**
-- HTTP request rates and latencies
+**Prometheus Metrics Available:**
+- HTTP request rates and latencies (P50, P95, P99)
 - gRPC service metrics
 - JVM metrics (memory, CPU, GC)
+- Container resource metrics (via cAdvisor)
 - Custom application metrics
-- Storage usage statistics
 
-**Alerts Configured:**
+**Pre-configured Alerts:**
 - High memory/CPU usage (>80%)
 - Pod down alerts
 - High error rate (>10%)
+
+**Recording Rules:**
+- `logpilot:http_request_rate`
+- `logpilot:grpc_request_rate`
+- `logpilot:http_request_duration_seconds:p95`
+- `logpilot:cpu_usage_percent`
+- `logpilot:memory_usage_percent`
+- `logpilot:jvm_heap_usage_percent`
+
+See [logpilot-monitoring/PROMETHEUS_DEPLOY.md](./logpilot-monitoring/PROMETHEUS_DEPLOY.md) for details.
 
 ### 🔄 Management Operations
 
 ```bash
 # Check deployment status
-./k8s-deploy.sh status
+kubectl get pods -n logpilot -o wide
+kubectl get svc -n logpilot
 
 # View logs
 kubectl logs -f deployment/logpilot-all -n logpilot
+kubectl logs -f deployment/prometheus -n logpilot
+kubectl logs -f deployment/grafana -n logpilot
 
 # Scale deployment
 kubectl scale deployment logpilot-all --replicas=5 -n logpilot
 
-# Rolling update
-kubectl set image deployment/logpilot-all logpilot=logpilot:v2.0.0 -n logpilot
-
-# Cleanup
-./k8s-deploy.sh cleanup
-```
-
-### 🎛️ Configuration
-
-Customize deployment via ConfigMaps:
-
-```yaml
-# Update k8s/configmap.yaml
-logpilot:
-  storage:
-    type: postgresql  # Change to PostgreSQL
-    postgresql:
-      host: postgres-service
-      database: logpilot
-      username: logpilot
+# Delete all resources
+kubectl delete namespace logpilot
 ```
 
 ### 🛡️ Security Features
 
-- **Non-root containers**: All containers run as non-root user
+- **Non-root containers**: All containers run as non-root user (uid 472 for Grafana, appuser for LogPilot)
 - **Resource limits**: Memory and CPU limits configured
 - **Health checks**: Liveness, readiness, and startup probes
-- **TLS support**: Ingress with automatic TLS certificates
-- **RBAC ready**: Service accounts and RBAC configurations
+- **RBAC**: Prometheus uses ServiceAccount with minimal permissions
+- **Persistent storage**: Data persisted in PVCs
 
-### 🏗️ Production Considerations
+### 🏗️ Production Deployment
 
-1. **Storage**: Use persistent volumes for data storage
-2. **Monitoring**: Deploy with Prometheus and Grafana
-3. **Scaling**: Use HorizontalPodAutoscaler for auto-scaling
-4. **Backup**: Regular backups of persistent data
-5. **Security**: Enable TLS, configure network policies
-6. **Resource requests/limits**: Properly sized for your workload
-
-### 🔧 Troubleshooting
+For production deployments (non-Minikube), manually apply the resources:
 
 ```bash
-# Check pod status
-kubectl get pods -n logpilot -o wide
+# 1. Create namespace
+kubectl apply -f k8s/namespace.yaml
 
-# View pod logs
-kubectl logs -f <pod-name> -n logpilot
+# 2. Apply ConfigMaps
+kubectl apply -f k8s/configmap.yaml
 
-# Describe pod for events
-kubectl describe pod <pod-name> -n logpilot
+# 3. Deploy application
+kubectl apply -f k8s/deployment-all.yaml
+kubectl apply -f k8s/service.yaml
 
-# Check service endpoints
-kubectl get endpoints -n logpilot
+# 4. Deploy monitoring
+kubectl apply -f logpilot-monitoring/k8s/prometheus/
+./logpilot-monitoring/scripts/create-dashboard-configmap.sh
+kubectl apply -f logpilot-monitoring/k8s/grafana/
 
-# Test connectivity
-kubectl exec -it <pod-name> -n logpilot -- curl localhost:8080/actuator/health
+# 5. Apply ingress (optional)
+kubectl apply -f k8s/ingress.yaml
 ```
+
+**Production Considerations:**
+1. **Storage**: Use production-grade StorageClass (not `standard`)
+2. **Monitoring**: Configure AlertManager for notifications
+3. **Scaling**: Use HorizontalPodAutoscaler
+4. **Backup**: Regular backups of PVCs
+5. **Security**: Enable TLS, configure NetworkPolicies
+6. **Resource sizing**: Adjust requests/limits based on workload
 
 ---
 
