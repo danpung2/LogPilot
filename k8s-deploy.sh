@@ -99,14 +99,59 @@ check_deployment_status() {
     echo
 }
 
+# jq 설치 여부 확인 및 자동 설치
+install_jq_if_missing() {
+    if ! command -v jq &> /dev/null; then
+        log_warning "jq가 설치되어 있지 않습니다. 자동으로 설치를 시도합니다..."
+
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            if command -v apt-get &> /dev/null; then
+                sudo apt-get update -y && sudo apt-get install -y jq
+            elif command -v yum &> /dev/null; then
+                sudo yum install -y jq
+            else
+                log_error "패키지 관리자를 찾을 수 없습니다. 수동으로 jq를 설치해주세요."
+                exit 1
+            fi
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            if command -v brew &> /dev/null; then
+                brew install jq
+            else
+                log_error "Homebrew가 설치되어 있지 않습니다. 먼저 Homebrew를 설치한 후 jq를 설치해주세요."
+                log_info "설치 명령어: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+                exit 1
+            fi
+        else
+            log_error "지원되지 않는 OS입니다. jq를 수동으로 설치해주세요."
+            exit 1
+        fi
+
+        log_success "jq가 성공적으로 설치되었습니다."
+    else
+        log_success "jq가 이미 설치되어 있습니다."
+    fi
+}
+
 # 서비스 접속 정보 출력
 show_access_info() {
     log_info "서비스 접속 정보:"
     echo
 
-    # NodePort URL 가져오기
-    local HTTP_URL=$(minikube service logpilot-nodeport -n logpilot --url | head -1)
-    local GRPC_URL=$(minikube service logpilot-nodeport -n logpilot --url | tail -1)
+    # jq 확인 및 설치
+    install_jq_if_missing
+
+    # minikube IP 가져오기
+    local MINIKUBE_IP=$(minikube ip)
+
+    # minikube IP 가져오기
+    local MINIKUBE_IP=$(minikube ip)
+
+    # NodePort 서비스 포트 추출
+    local HTTP_PORT=$(kubectl get svc logpilot-nodeport -n logpilot -o jsonpath='{.spec.ports[?(@.port==8080)].nodePort}')
+    local GRPC_PORT=$(kubectl get svc logpilot-nodeport -n logpilot -o jsonpath='{.spec.ports[?(@.port==50051)].nodePort}')
+
+    local HTTP_URL="http://${MINIKUBE_IP}:${HTTP_PORT}"
+    local GRPC_URL="${MINIKUBE_IP}:${GRPC_PORT}"
 
     echo -e "${GREEN}HTTP REST API:${NC} $HTTP_URL"
     echo -e "${GREEN}gRPC API:${NC} $GRPC_URL"
