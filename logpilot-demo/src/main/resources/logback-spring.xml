@@ -1,0 +1,21 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <springProperty scope="context" name="logpilot.server-url" source="logpilot.client.server-url"/>
+    <springProperty scope="context" name="logpilot.enable-batching" source="logpilot.client.enable-batching"/>
+    <springProperty scope="context" name="logpilot.batch-size" source="logpilot.client.batch-size"/>
+    <springProperty scope="context" name="logpilot.flush-interval" source="logpilot.client.flush-interval-millis"/>
+
+    <appender name="LOGPILOT" class="com.logpilot.logback.LogPilotAppender">
+        <serverUrl>${logpilot.server-url}</serverUrl>
+        <serviceName>demo-app</serviceName>
+        <enableBatching>${logpilot.enable-batching:-false}</enableBatching>
+        <batchSize>${logpilot.batch-size:-100}</batchSize>
+        <flushIntervalMillis>${logpilot.flush-interval:-5000}</flushIntervalMillis>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="LOGPILOT" />
+    </root>
+</configuration>

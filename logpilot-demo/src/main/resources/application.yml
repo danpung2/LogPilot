@@ -1,0 +1,9 @@
+server:
+  port: 8082
+
+logpilot:
+  client:
+    server-url: http://localhost:8080
+    enable-batching: true
+    batch-size: 50
+    flush-interval-millis: 2000

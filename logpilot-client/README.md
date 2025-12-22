@@ -46,6 +46,9 @@ LogPilotClient client = LogPilotClient.builder()
     .flushIntervalMillis(1000)     // Flush every 1 second (default: 5000ms)
     .build();
 
+// Note: If you are using 'logpilot-spring-boot-starter', 'enableBatching' is set to TRUE by default.
+// You can override it in application.yml: logpilot.client.enable-batching=false
+
 // Logs are queued and sent automatically in background
 client.log("high-volume-channel", LogLevel.INFO, "This is a batched log");
 ```

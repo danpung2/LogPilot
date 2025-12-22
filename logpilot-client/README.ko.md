@@ -46,6 +46,9 @@ LogPilotClient client = LogPilotClient.builder()
     .flushIntervalMillis(1000)     // 1초마다 전송 (기본값: 5000ms)
     .build();
 
+// 참고: 'logpilot-spring-boot-starter'를 사용하는 경우, 'enableBatching'은 기본적으로 TRUE로 설정됩니다.
+// application.yml에서 변경 가능합니다: logpilot.client.enable-batching=false
+
 // 로그가 큐에 쌓이고 백그라운드에서 자동으로 전송됨
 client.log("high-volume-channel", LogLevel.INFO, "This is a batched log");
 ```

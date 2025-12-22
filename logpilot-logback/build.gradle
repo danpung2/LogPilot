@@ -1,0 +1,8 @@
+plugins {
+    id 'java'
+}
+dependencies {
+    implementation project(':logpilot-client')
+    compileOnly 'ch.qos.logback:logback-classic' // Provided by the host application
+    implementation 'org.slf4j:slf4j-api'
+}
