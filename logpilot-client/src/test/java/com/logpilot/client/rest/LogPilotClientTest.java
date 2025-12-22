@@ -1,7 +1,6 @@
 package com.logpilot.client.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,10 +13,8 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -62,20 +59,21 @@ class LogPilotClientTest {
         // flush()는 내부 ExecutorService를 통해 비동기로 실행되므로,
         // Mockito의 timeout()을 사용하여 비동기 호출을 검증합니다.
         verify(httpClient, timeout(2000).times(1)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
-        
+
         // 내용 확인
         ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
         verify(httpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
-        
+
         HttpRequest request = captor.getValue();
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void testFlushOnClose() throws IOException, InterruptedException {
         client = new LogPilotRestClient(serverUrl, httpClient, scheduler, true, 10, 3);
 
         client.log("channel", LogLevel.INFO, "msg");
-        
+
         verify(httpClient, never()).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
 
         client.close();

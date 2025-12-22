@@ -3,8 +3,12 @@ package com.logpilot.client.grpc;
 import com.logpilot.client.LogPilotClient;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
-import com.logpilot.grpc.proto.LogPilotProto.*;
-import static com.logpilot.grpc.proto.LogPilotProto.*;
+import com.logpilot.grpc.proto.LogPilotProto.LogRequest;
+import com.logpilot.grpc.proto.LogPilotProto.LogResponse;
+import com.logpilot.grpc.proto.LogPilotProto.SendLogsRequest;
+import com.logpilot.grpc.proto.LogPilotProto.SendLogsResponse;
+import com.logpilot.grpc.proto.LogPilotProto.FetchLogsRequest;
+import com.logpilot.grpc.proto.LogPilotProto.FetchLogsResponse;
 import com.logpilot.grpc.proto.LogServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -187,8 +191,7 @@ public class LogPilotGrpcClient implements LogPilotClient {
         return meta.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue().toString()
-                ));
+                        entry -> entry.getValue().toString()));
     }
 
     private LogEntry convertProtoLogEntryToLogEntry(com.logpilot.grpc.proto.LogPilotProto.LogEntry protoLogEntry) {
@@ -206,9 +209,8 @@ public class LogPilotGrpcClient implements LogPilotClient {
         if (protoLogEntry.getTimestamp() > 0) {
             try {
                 LocalDateTime timestamp = LocalDateTime.ofInstant(
-                    java.time.Instant.ofEpochMilli(protoLogEntry.getTimestamp()),
-                    java.time.ZoneOffset.UTC
-                );
+                        java.time.Instant.ofEpochMilli(protoLogEntry.getTimestamp()),
+                        java.time.ZoneOffset.UTC);
                 logEntry.setTimestamp(timestamp);
             } catch (Exception e) {
                 logger.warn("Failed to parse timestamp: {}", protoLogEntry.getTimestamp(), e);

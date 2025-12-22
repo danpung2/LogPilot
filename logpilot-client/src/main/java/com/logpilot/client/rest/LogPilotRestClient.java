@@ -34,15 +34,8 @@ public class LogPilotRestClient implements LogPilotClient {
     private final int maxRetries;
     private final String apiKey;
 
-    public LogPilotRestClient(String serverUrl, int timeout, int maxRetries) {
-        this(serverUrl, timeout, maxRetries, false, 100, 5000, null);
-    }
-
-    public LogPilotRestClient(String serverUrl, int timeout, int maxRetries, boolean enableBatching, int batchSize, long flushIntervalMillis) {
-        this(serverUrl, timeout, maxRetries, enableBatching, batchSize, flushIntervalMillis, null);
-    }
-
-    public LogPilotRestClient(String serverUrl, int timeout, int maxRetries, boolean enableBatching, int batchSize, long flushIntervalMillis, String apiKey) {
+    public LogPilotRestClient(String serverUrl, int timeout, int maxRetries, boolean enableBatching, int batchSize,
+            long flushIntervalMillis, String apiKey) {
         this.serverUrl = serverUrl.endsWith("/") ? serverUrl.substring(0, serverUrl.length() - 1) : serverUrl;
         this.maxRetries = maxRetries;
         this.enableBatching = enableBatching;
@@ -58,7 +51,8 @@ public class LogPilotRestClient implements LogPilotClient {
         if (enableBatching) {
             this.logQueue = new LinkedBlockingQueue<>();
             this.scheduler = Executors.newSingleThreadScheduledExecutor();
-            this.scheduler.scheduleAtFixedRate(this::flush, flushIntervalMillis, flushIntervalMillis, TimeUnit.MILLISECONDS);
+            this.scheduler.scheduleAtFixedRate(this::flush, flushIntervalMillis, flushIntervalMillis,
+                    TimeUnit.MILLISECONDS);
         } else {
             this.logQueue = null;
             this.scheduler = null;
@@ -66,7 +60,8 @@ public class LogPilotRestClient implements LogPilotClient {
     }
 
     // 스케줄링 및 플러시 테스트를 위한 생성자
-    LogPilotRestClient(String serverUrl, HttpClient httpClient, ScheduledExecutorService scheduler, boolean enableBatching, int batchSize, int maxRetries) {
+    LogPilotRestClient(String serverUrl, HttpClient httpClient, ScheduledExecutorService scheduler,
+            boolean enableBatching, int batchSize, int maxRetries) {
         this.apiKey = null;
         this.serverUrl = serverUrl.endsWith("/") ? serverUrl.substring(0, serverUrl.length() - 1) : serverUrl;
         this.httpClient = httpClient;
@@ -78,9 +73,9 @@ public class LogPilotRestClient implements LogPilotClient {
         this.objectMapper.registerModule(new JavaTimeModule());
         this.executorService = Executors.newCachedThreadPool();
         this.logQueue = enableBatching ? new LinkedBlockingQueue<>() : null;
-        
-        if (enableBatching && scheduler != null) {
-        }
+
+        // Batching lifecycle is managed by the scheduler
+        // No additional initialization needed here
     }
 
     @Override
@@ -246,7 +241,8 @@ public class LogPilotRestClient implements LogPilotClient {
             if (response.statusCode() >= 400) {
                 throw new RuntimeException("HTTP " + response.statusCode() + ": " + response.body());
             }
-            return objectMapper.readValue(response.body(), new TypeReference<List<LogEntry>>() {});
+            return objectMapper.readValue(response.body(), new TypeReference<List<LogEntry>>() {
+            });
         });
     }
 
