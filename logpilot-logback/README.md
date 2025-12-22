@@ -21,6 +21,7 @@ implementation project(':logpilot-logback')
         <enableBatching>true</enableBatching>
         <batchSize>100</batchSize>
         <flushIntervalMillis>5000</flushIntervalMillis>
+        <apiKey>logpilot-secret-key-123</apiKey>
     </appender>
 
     <!-- Configure Root Logger -->

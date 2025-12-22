@@ -20,6 +20,7 @@ public class LogPilotClientAutoConfiguration {
                 .enableBatching(properties.isEnableBatching())
                 .batchSize(properties.getBatchSize())
                 .flushIntervalMillis(properties.getFlushIntervalMillis())
+                .apiKey(properties.getApiKey())
                 .build();
     }
 }

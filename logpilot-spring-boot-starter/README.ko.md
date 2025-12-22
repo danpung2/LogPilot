@@ -21,6 +21,7 @@ logpilot:
     enable-batching: true
     batch-size: 100
     flush-interval-millis: 5000
+    api-key: "logpilot-secret-key-123"
 ```
 
 ## 사용법 (Usage)

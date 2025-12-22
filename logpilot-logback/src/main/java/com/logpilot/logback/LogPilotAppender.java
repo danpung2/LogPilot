@@ -14,6 +14,7 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
     private boolean enableBatching = false;
     private int batchSize = 100;
     private long flushIntervalMillis = 5000;
+    private String apiKey;
 
     private LogPilotClient client;
 
@@ -30,6 +31,7 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
                     .enableBatching(enableBatching)
                     .batchSize(batchSize)
                     .flushIntervalMillis(flushIntervalMillis)
+                    .apiKey(apiKey)
                     .build();
             super.start();
         } catch (Exception e) {
@@ -99,5 +101,9 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
 
     public void setFlushIntervalMillis(long flushIntervalMillis) {
         this.flushIntervalMillis = flushIntervalMillis;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }

@@ -215,6 +215,7 @@ curl http://localhost:8081/actuator/prometheus
 | `LOGPILOT_SQLITE_IDLE_TIMEOUT` | `600000` | 유휴 타임아웃 (ms) |
 | `LOGPILOT_STORAGE_DIR` | `./data/logs` | 파일 저장소 디렉토리 |
 | `LOGPILOT_MANAGEMENT_PORT` | `8081` | Actuator/메트릭 포트 |
+| `LOGPILOT_API_KEY` | `logpilot-secret-key-123` | 서버 인증을 위한 API Key |
 
 ---
 

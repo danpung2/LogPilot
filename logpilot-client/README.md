@@ -44,6 +44,7 @@ LogPilotClient client = LogPilotClient.builder()
     .enableBatching(true)          // Enable batching
     .batchSize(500)                // Flush when 500 logs are queued (default: 100)
     .flushIntervalMillis(1000)     // Flush every 1 second (default: 5000ms)
+    .apiKey("logpilot-secret-key-123") // Server API Key
     .build();
 
 // Note: If you are using 'logpilot-spring-boot-starter', 'enableBatching' is set to TRUE by default.

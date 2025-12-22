@@ -200,6 +200,7 @@ Configure via environment variables or `application.yml`:
 | `LOGPILOT_SQLITE_IDLE_TIMEOUT` | `600000` | Idle timeout (ms) |
 | `LOGPILOT_STORAGE_DIR` | `./data/logs` | File storage directory |
 | `LOGPILOT_MANAGEMENT_PORT` | `8081` | Actuator/metrics port |
+| `LOGPILOT_API_KEY` | `logpilot-secret-key-123` | Server API Key for Authentication |
 
 ### 📡 API Reference
 

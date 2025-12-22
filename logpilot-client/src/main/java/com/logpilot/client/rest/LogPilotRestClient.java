@@ -32,16 +32,22 @@ public class LogPilotRestClient implements LogPilotClient {
     private final boolean enableBatching;
     private final int batchSize;
     private final int maxRetries;
+    private final String apiKey;
 
     public LogPilotRestClient(String serverUrl, int timeout, int maxRetries) {
-        this(serverUrl, timeout, maxRetries, false, 100, 5000);
+        this(serverUrl, timeout, maxRetries, false, 100, 5000, null);
     }
 
     public LogPilotRestClient(String serverUrl, int timeout, int maxRetries, boolean enableBatching, int batchSize, long flushIntervalMillis) {
+        this(serverUrl, timeout, maxRetries, enableBatching, batchSize, flushIntervalMillis, null);
+    }
+
+    public LogPilotRestClient(String serverUrl, int timeout, int maxRetries, boolean enableBatching, int batchSize, long flushIntervalMillis, String apiKey) {
         this.serverUrl = serverUrl.endsWith("/") ? serverUrl.substring(0, serverUrl.length() - 1) : serverUrl;
         this.maxRetries = maxRetries;
         this.enableBatching = enableBatching;
         this.batchSize = batchSize;
+        this.apiKey = apiKey;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(timeout))
                 .build();
@@ -61,6 +67,7 @@ public class LogPilotRestClient implements LogPilotClient {
 
     // 스케줄링 및 플러시 테스트를 위한 생성자
     LogPilotRestClient(String serverUrl, HttpClient httpClient, ScheduledExecutorService scheduler, boolean enableBatching, int batchSize, int maxRetries) {
+        this.apiKey = null;
         this.serverUrl = serverUrl.endsWith("/") ? serverUrl.substring(0, serverUrl.length() - 1) : serverUrl;
         this.httpClient = httpClient;
         this.scheduler = scheduler;
@@ -202,11 +209,16 @@ public class LogPilotRestClient implements LogPilotClient {
     }
 
     private void makeRequest(String json, String url) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+
+        if (apiKey != null) {
+            builder.header("X-API-KEY", apiKey);
+        }
+
+        HttpRequest request = builder.build();
 
         executeWithRetry(() -> {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -218,11 +230,16 @@ public class LogPilotRestClient implements LogPilotClient {
     }
 
     private List<LogEntry> sendGetRequest(String url) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Accept", "application/json")
-                .GET()
-                .build();
+                .GET();
+
+        if (apiKey != null) {
+            builder.header("X-API-KEY", apiKey);
+        }
+
+        HttpRequest request = builder.build();
 
         return executeWithRetry(() -> {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

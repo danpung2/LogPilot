@@ -24,6 +24,11 @@ public class LogPilotClientProperties {
      */
     private long flushIntervalMillis = 5000;
 
+    /**
+     * API Key for authentication
+     */
+    private String apiKey;
+
     // Getters and Setters
     public String getServerUrl() {
         return serverUrl;
@@ -55,5 +60,13 @@ public class LogPilotClientProperties {
 
     public void setFlushIntervalMillis(long flushIntervalMillis) {
         this.flushIntervalMillis = flushIntervalMillis;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }

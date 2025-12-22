@@ -47,9 +47,15 @@ public interface LogPilotClient extends AutoCloseable {
         private boolean enableBatching = false;
         private int batchSize = 100;
         private long flushIntervalMillis = 5000;
+        private String apiKey;
 
         public Builder serverUrl(String serverUrl) {
             this.serverUrl = serverUrl;
+            return this;
+        }
+
+        public Builder apiKey(String apiKey) {
+            this.apiKey = apiKey;
             return this;
         }
 
@@ -89,8 +95,8 @@ public interface LogPilotClient extends AutoCloseable {
             }
 
             return switch (clientType) {
-                case REST -> new LogPilotRestClient(serverUrl, timeout, maxRetries, enableBatching, batchSize, flushIntervalMillis);
-                case GRPC -> new LogPilotGrpcClient(serverUrl, timeout, maxRetries);
+                case REST -> new LogPilotRestClient(serverUrl, timeout, maxRetries, enableBatching, batchSize, flushIntervalMillis, apiKey);
+                case GRPC -> new LogPilotGrpcClient(serverUrl, timeout, maxRetries); // gRPC API key support TO-DO
             };
         }
     }

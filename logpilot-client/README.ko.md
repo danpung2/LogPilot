@@ -44,6 +44,7 @@ LogPilotClient client = LogPilotClient.builder()
     .enableBatching(true)          // 배치 활성화
     .batchSize(500)                // 500개 로그가 쌓이면 전송 (기본값: 100)
     .flushIntervalMillis(1000)     // 1초마다 전송 (기본값: 5000ms)
+    .apiKey("logpilot-secret-key-123") // 서버 API Key
     .build();
 
 // 참고: 'logpilot-spring-boot-starter'를 사용하는 경우, 'enableBatching'은 기본적으로 TRUE로 설정됩니다.

@@ -17,6 +17,7 @@ grpc:
 logpilot:
   server:
     protocol: ${LOGPILOT_PROTOCOL:all} # all, rest, grpc
+    api-key: ${LOGPILOT_API_KEY:logpilot-secret-key-123}
   storage:
     type: ${LOGPILOT_STORAGE_TYPE:sqlite}
     directory: ${LOGPILOT_STORAGE_DIR:./data/logs}
