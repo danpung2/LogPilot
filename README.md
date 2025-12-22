@@ -195,6 +195,9 @@ Configure via environment variables or `application.yml`:
 | `LOGPILOT_STORAGE_TYPE` | `sqlite` | Storage backend: `sqlite` or `file` |
 | `LOGPILOT_SQLITE_PATH` | `./data/logpilot.db` | SQLite database path |
 | `LOGPILOT_SQLITE_POOL_SIZE` | `10` | HikariCP max pool size |
+| `LOGPILOT_RATE_LIMIT_CAPACITY` | `100` | Rate limit bucket capacity |
+| `LOGPILOT_RATE_LIMIT_REFILL_TOKENS` | `100` | Tokens added per refill duration |
+| `LOGPILOT_RATE_LIMIT_REFILL_DURATION` | `60` | Duration for refill (seconds) |
 | `LOGPILOT_SQLITE_MIN_IDLE` | `2` | HikariCP min idle connections |
 | `LOGPILOT_SQLITE_CONN_TIMEOUT` | `30000` | Connection timeout (ms) |
 | `LOGPILOT_SQLITE_IDLE_TIMEOUT` | `600000` | Idle timeout (ms) |

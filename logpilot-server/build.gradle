@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
     // Micrometer Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'

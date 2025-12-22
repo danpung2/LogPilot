@@ -18,6 +18,10 @@ logpilot:
   server:
     protocol: ${LOGPILOT_PROTOCOL:all} # all, rest, grpc
     api-key: ${LOGPILOT_API_KEY:logpilot-secret-key-123}
+    rate-limit:
+      capacity: ${LOGPILOT_RATE_LIMIT_CAPACITY:100}
+      refill-tokens: ${LOGPILOT_RATE_LIMIT_REFILL_TOKENS:100}
+      refill-duration-seconds: ${LOGPILOT_RATE_LIMIT_REFILL_DURATION:60}
   storage:
     type: ${LOGPILOT_STORAGE_TYPE:sqlite}
     directory: ${LOGPILOT_STORAGE_DIR:./data/logs}

@@ -222,6 +222,9 @@ curl http://localhost:8081/actuator/prometheus
 | `LOGPILOT_STORAGE_TYPE` | `sqlite` | 저장소 백엔드: `sqlite` 또는 `file` |
 | `LOGPILOT_SQLITE_PATH` | `./data/logpilot.db` | SQLite 데이터베이스 경로 |
 | `LOGPILOT_SQLITE_POOL_SIZE` | `10` | HikariCP 최대 풀 크기 |
+| `LOGPILOT_RATE_LIMIT_CAPACITY` | `100` | Rate limit 버킷 용량 |
+| `LOGPILOT_RATE_LIMIT_REFILL_TOKENS` | `100` | 리필 시 충전되는 토큰 수 |
+| `LOGPILOT_RATE_LIMIT_REFILL_DURATION` | `60` | 리필 간격 (초) |
 | `LOGPILOT_SQLITE_MIN_IDLE` | `2` | HikariCP 최소 유휴 연결 수 |
 | `LOGPILOT_SQLITE_CONN_TIMEOUT` | `30000` | 연결 타임아웃 (ms) |
 | `LOGPILOT_SQLITE_IDLE_TIMEOUT` | `600000` | 유휴 타임아웃 (ms) |
