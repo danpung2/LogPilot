@@ -148,7 +148,7 @@ Grafana에 자동으로 프로비저닝되는 대시보드:
 
 ### Prometheus 데이터소스 변경
 
-`k8s/grafana/configmap-datasource.yaml` 수정:
+`logpilot-monitoring/k8s/grafana/configmap-datasource.yaml` 수정:
 
 ```yaml
 data:

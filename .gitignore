@@ -86,3 +86,6 @@ spring.log
 # Temporary files
 tmp/
 temp/
+
+# Internal Documents
+PLAN.md

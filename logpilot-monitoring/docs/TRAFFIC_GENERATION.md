@@ -1,17 +1,17 @@
-# 테스트 트래픽 생성 가이드
+# Test Traffic Generation Guide
 
-## 📋 개요
+## 📋 Overview
 
-Prometheus와 Grafana에서 유의미한 데이터를 확인하기 위해 LogPilot에 인위적인 트래픽을 발생시키는 방법입니다.
+Methods to generate artificial traffic for LogPilot to verify data in Prometheus and Grafana.
 
 ---
 
-## 🚀 방법 1: 간단한 HTTP 트래픽 생성
+## 🚀 Method 1: Simple HTTP Traffic Generation
 
-### curl을 사용한 반복 요청
+### Repeat Requests using curl
 
 ```bash
-# 기본 반복 요청 (100회)
+# Basic repeat requests (100 times)
 for i in {1..100}; do
   curl -X POST http://localhost:8080/api/logs \
     -H "Content-Type: application/json" \
@@ -25,10 +25,10 @@ for i in {1..100}; do
 done
 ```
 
-### 다양한 로그 레벨 생성
+### Mixed Log Levels
 
 ```bash
-# INFO, WARN, ERROR 레벨을 랜덤하게 생성
+# Randomly generate INFO, WARN, ERROR levels
 for i in {1..200}; do
   LEVEL=$(shuf -n 1 -e INFO INFO INFO WARN ERROR)
   curl -X POST http://localhost:8080/api/logs \
@@ -45,9 +45,9 @@ done
 
 ---
 
-## 🚀 방법 2: Apache Bench를 사용한 부하 테스트
+## 🚀 Method 2: Load Testing with Apache Bench
 
-### Apache Bench 설치
+### Install Apache Bench
 
 ```bash
 # macOS
@@ -60,20 +60,20 @@ sudo apt-get install apache2-utils
 sudo yum install httpd-tools
 ```
 
-### 간단한 GET 요청 부하
+### Simple GET Load
 
 ```bash
-# 1000개 요청, 동시 접속 10
+# 1000 requests, 10 concurrent
 ab -n 1000 -c 10 http://localhost:8080/actuator/health
 
-# 5000개 요청, 동시 접속 50, 결과 저장
+# 5000 requests, 50 concurrent, save results
 ab -n 5000 -c 50 -g results.tsv http://localhost:8080/actuator/prometheus
 ```
 
-### POST 요청 부하
+### POST Load
 
 ```bash
-# POST 데이터 파일 생성
+# Create POST data file
 cat > post_data.json <<EOF
 {
   "level": "INFO",
@@ -83,77 +83,67 @@ cat > post_data.json <<EOF
 }
 EOF
 
-# POST 요청 부하 테스트
+# Run load test
 ab -n 2000 -c 20 -p post_data.json -T application/json \
   http://localhost:8080/api/logs
 ```
 
 ---
 
-## 🚀 방법 3: wrk를 사용한 고성능 부하 테스트
+## 🚀 Method 3: High-Performance Load Testing with wrk
 
-### wrk 설치
+### Install wrk
 
 ```bash
 # macOS
 brew install wrk
 
-# Ubuntu/Debian (빌드 필요)
+# Ubuntu/Debian (build required)
 git clone https://github.com/wg/wrk.git
 cd wrk
 make
 sudo cp wrk /usr/local/bin/
 ```
 
-### 기본 부하 테스트
+### Basic Load Test
 
 ```bash
-# 30초 동안, 10개 스레드, 100개 연결
+# 30 seconds, 10 threads, 100 connections
 wrk -t10 -c100 -d30s http://localhost:8080/actuator/health
-
-# 결과 예시:
-# Running 30s test @ http://localhost:8080/actuator/health
-#   10 threads and 100 connections
-#   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    10.23ms    5.45ms  89.12ms   78.23%
-#     Req/Sec     1.02k   156.78    1.50k    68.00%
-#   306789 requests in 30.10s, 45.67MB read
-# Requests/sec:  10193.35
-# Transfer/sec:      1.52MB
 ```
 
-### Lua 스크립트를 사용한 POST 요청
+### POST Requests using Lua Script
 
 ```bash
-# POST 스크립트 생성
+# Create POST script
 cat > post.lua <<'EOF'
 wrk.method = "POST"
 wrk.body = '{"level":"INFO","message":"wrk test","channel":"wrk-test","timestamp":"2024-01-01T00:00:00Z"}'
 wrk.headers["Content-Type"] = "application/json"
 EOF
 
-# POST 요청 부하 테스트
+# Run load test
 wrk -t10 -c100 -d60s -s post.lua http://localhost:8080/api/logs
 ```
 
-### 다양한 데이터를 생성하는 Lua 스크립트
+### Lua Script for Random Data
 
 ```bash
 cat > random_logs.lua <<'EOF'
--- 요청 초기화
+-- Initialize request
 request = function()
   wrk.method = "POST"
   wrk.headers["Content-Type"] = "application/json"
 
-  -- 랜덤 로그 레벨
+  -- Random log level
   local levels = {"INFO", "INFO", "INFO", "WARN", "ERROR", "DEBUG"}
   local level = levels[math.random(#levels)]
 
-  -- 랜덤 채널
+  -- Random channel
   local channels = {"channel-1", "channel-2", "channel-3", "channel-4", "channel-5"}
   local channel = channels[math.random(#channels)]
 
-  -- 랜덤 메시지
+  -- Random message
   local messages = {
     "User login successful",
     "Database query executed",
@@ -164,7 +154,7 @@ request = function()
   }
   local message = messages[math.random(#messages)]
 
-  -- JSON 생성
+  -- Create JSON
   wrk.body = string.format([[
     {
       "level": "%s",
@@ -178,18 +168,18 @@ request = function()
 end
 EOF
 
-# 실행
+# Run
 wrk -t10 -c100 -d120s -s random_logs.lua http://localhost:8080/api/logs
 ```
 
 ---
 
-## 🚀 방법 4: 지속적인 백그라운드 트래픽 생성
+## 🚀 Method 4: Continuous Background Traffic Generation
 
-### 무한 루프 스크립트
+### Infinite Loop Script
 
 ```bash
-# 백그라운드 트래픽 생성 스크립트 작성
+# Create script
 cat > generate_traffic.sh <<'EOF'
 #!/bin/bash
 
@@ -208,12 +198,12 @@ MESSAGES=(
 )
 
 while true; do
-  # 랜덤 값 선택
+  # Select random values
   LEVEL=${LEVELS[$RANDOM % ${#LEVELS[@]}]}
   CHANNEL=${CHANNELS[$RANDOM % ${#CHANNELS[@]}]}
   MESSAGE=${MESSAGES[$RANDOM % ${#MESSAGES[@]}]}
 
-  # 요청 전송
+  # Send request
   curl -X POST http://localhost:8080/api/logs \
     -H "Content-Type: application/json" \
     -d "{
@@ -224,7 +214,7 @@ while true; do
     }" \
     -s -o /dev/null
 
-  # 랜덤 대기 시간 (0.1초 ~ 1초)
+  # Random sleep (0.1s ~ 1s)
   sleep 0.$((RANDOM % 10))
 done
 EOF
@@ -232,31 +222,31 @@ EOF
 chmod +x generate_traffic.sh
 ```
 
-### 백그라운드 실행
+### Run in Background
 
 ```bash
-# 백그라운드로 실행
+# Run in background
 ./generate_traffic.sh &
 
-# PID 저장
+# Save PID
 echo $! > traffic_gen.pid
 
-# 중지할 때
+# Stop
 kill $(cat traffic_gen.pid)
 rm traffic_gen.pid
 ```
 
 ---
 
-## 🚀 방법 5: Kubernetes Pod에서 직접 트래픽 생성
+## 🚀 Method 5: Generate Traffic from Kubernetes Pod
 
-### LogPilot Pod 내부에서 실행
+### Execute inside LogPilot Pod
 
 ```bash
-# LogPilot Pod 이름 확인
+# Get Pod name
 POD_NAME=$(kubectl get pods -n logpilot -l app=logpilot -o jsonpath='{.items[0].metadata.name}')
 
-# Pod 내부에서 트래픽 생성
+# Execute inside Pod
 kubectl exec -n logpilot $POD_NAME -- sh -c '
 for i in $(seq 1 100); do
   curl -X POST http://localhost:8080/api/logs \
@@ -267,10 +257,10 @@ done
 '
 ```
 
-### 별도의 트래픽 생성 Pod 배포
+### Deploy Separate Traffic Generator Pod
 
 ```bash
-# 트래픽 생성 Pod 생성
+# Create Pod manifest
 cat > traffic-generator.yaml <<'EOF'
 apiVersion: v1
 kind: Pod
@@ -296,24 +286,23 @@ spec:
   restartPolicy: Never
 EOF
 
-# 배포
+# Deploy
 kubectl apply -f traffic-generator.yaml
 
-# 로그 확인
+# Check logs
 kubectl logs -f traffic-generator -n logpilot
 
-# 삭제
+# Delete
 kubectl delete pod traffic-generator -n logpilot
 ```
 
 ---
 
-## 📊 트래픽 생성 시나리오
+## 📊 Traffic Scenarios
 
-### 시나리오 1: 정상 운영 환경 시뮬레이션
+### Scenario 1: Normal Operation Simulation
 
 ```bash
-# 백그라운드로 정상 트래픽 (INFO 70%, WARN 20%, ERROR 10%)
 cat > normal_traffic.sh <<'EOF'
 #!/bin/bash
 while true; do
@@ -339,10 +328,9 @@ chmod +x normal_traffic.sh
 ./normal_traffic.sh &
 ```
 
-### 시나리오 2: 장애 상황 시뮬레이션
+### Scenario 2: Error Spike Simulation
 
 ```bash
-# 급격한 ERROR 증가
 cat > spike_errors.sh <<'EOF'
 #!/bin/bash
 echo "Generating error spike..."
@@ -360,10 +348,9 @@ chmod +x spike_errors.sh
 ./spike_errors.sh
 ```
 
-### 시나리오 3: 다양한 채널 활성화
+### Scenario 3: Multi-Channel Activity
 
 ```bash
-# 여러 채널에서 동시 트래픽
 cat > multi_channel.sh <<'EOF'
 #!/bin/bash
 for channel in user auth payment notification analytics; do
@@ -387,133 +374,74 @@ chmod +x multi_channel.sh
 
 ---
 
-## 🔍 메트릭 확인
+## 🔍 Verifying Metrics
 
-### Prometheus에서 확인
+### Check in Prometheus
 
-트래픽 생성 후 Prometheus UI (http://localhost:9090)에서:
+UI: http://localhost:9090
 
 ```promql
-# HTTP 요청률 확인
+# HTTP Request Rate
 rate(http_server_requests_seconds_count{namespace="logpilot"}[1m])
 
-# 로그 처리율 확인
+# Log Processing Rate
 rate(logpilot_logs_processed_total{namespace="logpilot"}[1m])
 
-# 레벨별 로그 수
+# Log Count by Level
 sum by (level) (logpilot_logs_processed_total{namespace="logpilot"})
 ```
 
-### Grafana에서 확인
+### Check in Grafana
 
-Grafana UI (http://localhost:3000)에서:
+UI: http://localhost:3000
 
-1. **LogPilot Overview** 대시보드
-   - Total Requests 증가 확인
-   - Log Processing Rate 그래프 확인
-
-2. **LogPilot Business Metrics** 대시보드
-   - Logs by Level 분포 확인
-   - Top Channels 확인
-   - Log Timeline Heatmap 확인
-
-3. **LogPilot Performance Metrics** 대시보드
-   - HTTP Request Rate 증가 확인
-   - Response Time 변화 확인
+1. **LogPilot Overview**: Check Total Requests & Log Processing Rate.
+2. **LogPilot Business Metrics**: Check Logs by Level & Top Channels.
+3. **LogPilot Performance Metrics**: Check HTTP Request Rate & Response Times.
 
 ---
 
-## 🎯 권장 테스트 순서
+## 🎯 Recommended Test Sequence
 
-### 1단계: 기본 트래픽 생성 (5분)
-
-```bash
-# 간단한 curl 반복 (100회)
-for i in {1..100}; do
-  curl -X POST http://localhost:8080/api/logs \
-    -H "Content-Type: application/json" \
-    -d '{"level":"INFO","message":"Test '$i'","channel":"test"}'
-  sleep 1
-done
-```
-
-### 2단계: 다양한 로그 레벨 생성 (10분)
-
-```bash
-# 다양한 레벨의 로그 생성 스크립트 실행
-for i in {1..300}; do
-  LEVEL=$(shuf -n 1 -e INFO INFO INFO WARN ERROR)
-  curl -X POST http://localhost:8080/api/logs \
-    -H "Content-Type: application/json" \
-    -d '{"level":"'$LEVEL'","message":"Test","channel":"test"}' \
-    -s -o /dev/null
-  sleep 2
-done
-```
-
-### 3단계: 부하 테스트 (5분)
-
-```bash
-# wrk로 부하 생성
-wrk -t10 -c50 -d300s -s random_logs.lua http://localhost:8080/api/logs
-```
-
-### 4단계: Grafana 대시보드 확인
-
-- 모든 대시보드에 데이터가 표시되는지 확인
-- 그래프가 정상적으로 업데이트되는지 확인
-- 알림 임계값 테스트
+1. **Basic Traffic (5m)**: Simple curl loop to verify connectivity.
+2. **Mixed Levels (10m)**: Use script to generate various log levels.
+3. **Load Test (5m)**: Use `wrk` to stress test.
+4. **Dashboard Verification**: Ensure all panels display data correctly.
 
 ---
 
-## 📝 참고사항
+## 📝 Notes
 
-### Port-forward 설정
+### Port-forwarding
 
-LogPilot이 Kubernetes에 배포된 경우:
+If LogPilot is in K8s:
 
 ```bash
-# LogPilot Service로 Port-forward
 kubectl port-forward svc/logpilot 8080:8080 -n logpilot
-
-# 그 다음 위의 스크립트들을 실행
 ```
 
-### 트래픽 생성 중지
+### Stopping Traffic
 
 ```bash
-# 실행 중인 모든 백그라운드 curl 프로세스 중지
 pkill -f "curl.*localhost:8080"
-
-# wrk 중지
 pkill wrk
-
-# ab 중지
 pkill ab
 ```
 
-### 리소스 모니터링
-
-트래픽 생성 중 시스템 리소스 확인:
+### Resource Monitoring
 
 ```bash
-# Pod 리소스 사용량
-kubectl top pods -n logpilot
-
-# 실시간 모니터링
 watch kubectl top pods -n logpilot
 ```
 
 ---
 
-## 🎯 목표 메트릭 값
+## 🎯 Target Metrics
 
-유의미한 대시보드를 위한 권장 메트릭:
+For meaningful dashboard visualization:
 
 - **HTTP Request Rate**: 10+ req/sec
 - **Log Processing Rate**: 50+ logs/sec
 - **Error Rate**: 5-10%
-- **다양한 채널**: 최소 5개 이상
-- **로그 레벨 분포**: INFO 60%, WARN 25%, ERROR 10%, DEBUG 5%
-
-이러한 값들이 달성되면 Grafana 대시보드에서 의미 있는 시각화를 확인할 수 있습니다.
+- **Active Channels**: 5+
+- **Log Level Distribution**: INFO 60%, WARN 25%, ERROR 10%, DEBUG 5%

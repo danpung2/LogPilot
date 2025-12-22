@@ -148,7 +148,7 @@ logpilot:gc_pause_ratio
 
 ### Scrape Interval 변경
 
-`k8s/prometheus/configmap.yaml` 수정:
+`logpilot-monitoring/k8s/prometheus/configmap.yaml` 수정:
 
 ```yaml
 global:
@@ -166,7 +166,7 @@ kubectl rollout restart deployment/prometheus -n logpilot
 
 ### Recording Rules 추가/수정
 
-`k8s/prometheus/configmap.yaml`의 `recording_rules.yaml` 섹션 수정:
+`logpilot-monitoring/k8s/prometheus/configmap.yaml`의 `recording_rules.yaml` 섹션 수정:
 
 ```yaml
 groups:
@@ -215,7 +215,7 @@ scrape_configs:
 
 ### 데이터 보관 기간 변경
 
-`k8s/prometheus/deployment.yaml` 수정:
+`logpilot-monitoring/k8s/prometheus/deployment.yaml` 수정:
 
 ```yaml
 args:
@@ -234,7 +234,7 @@ kubectl apply -f logpilot-monitoring/k8s/prometheus/deployment.yaml
 
 ### 스토리지 용량 변경
 
-`k8s/prometheus/pvc.yaml` 수정:
+`logpilot-monitoring/k8s/prometheus/pvc.yaml` 수정:
 
 ```yaml
 spec:
@@ -296,7 +296,7 @@ rate(logpilot_logs_processed_total{namespace="logpilot",level="ERROR"}[5m])
 - Nodes 조회
 - ConfigMaps 조회
 
-필요시 `k8s/prometheus/rbac.yaml`에서 권한 조정 가능합니다.
+필요시 `logpilot-monitoring/k8s/prometheus/rbac.yaml`에서 권한 조정 가능합니다.
 
 ### 2. Basic Auth 추가 (선택)
 

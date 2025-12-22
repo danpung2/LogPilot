@@ -1,6 +1,6 @@
-# LogPilot 테스트 케이스
+# LogPilot Test Cases
 
-## 📊 테스트 실행 결과
+## 📊 Test Execution Results
 
 ```bash
 ./gradlew :logpilot-core:test
@@ -16,231 +16,225 @@
 BUILD SUCCESSFUL in 2s
 ```
 
-**✅ Core 모듈: 111개 테스트 모두 통과**
-**✅ Server 모듈: 144개 테스트 모두 통과**
-**✅ 전체: 255개 테스트 모두 통과**
+**✅ Core Module: All 111 tests passed**
+**✅ Server Module: All 144 tests passed**
+**✅ Total: All 255 tests passed**
 
-## 🧪 테스트 파일별 상세 케이스
+## 🧪 Detailed Test Cases by File
 
-### 1. LogEntry 모델 테스트 (`LogEntryTest.java`)
+### 1. LogEntry Model Tests (`LogEntryTest.java`)
 
-#### 🎯 테스트 목적
-LogEntry 클래스의 생성자, 빌더 패턴, 필드 접근자, equals/hashCode, toString 메서드 검증
+#### 🎯 Test Purpose
+Verify LogEntry class constructors, builder pattern, field accessors, equals/hashCode, and toString methods.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `constructor_ShouldCreateLogEntryWithRequiredFields` | 기본 생성자로 LogEntry 생성 | 필수 필드 설정 및 타임스탬프 자동 생성 |
-| `constructor_WithMeta_ShouldCreateLogEntryWithAllFields` | 메타데이터를 포함한 생성자 | 메타데이터 올바른 저장 |
-| `defaultConstructor_ShouldCreateEmptyLogEntryWithTimestamp` | 파라미터 없는 기본 생성자 | 타임스탬프만 설정된 빈 객체 생성 |
-| `settersAndGetters_ShouldWorkCorrectly` | Setter/Getter 메서드 동작 | 모든 필드의 설정/조회 |
-| `builder_ShouldCreateLogEntryCorrectly` | 빌더 패턴으로 객체 생성 | 모든 필드를 빌더로 설정 |
-| `builder_WithoutTimestamp_ShouldUseCurrentTime` | 타임스탬프 없이 빌더 사용 | 현재 시간 자동 설정 |
-| `builder_WithoutOptionalFields_ShouldCreateMinimalEntry` | 필수 필드만으로 빌더 사용 | 선택 필드는 null, 필수 필드만 설정 |
-| `equals_WithSameValues_ShouldReturnTrue` | 동일한 값을 가진 객체 비교 | equals 메서드 정상 동작 |
-| `equals_WithDifferentValues_ShouldReturnFalse` | 다른 값을 가진 객체 비교 | 차이점 정확 감지 |
-| `equals_WithNull_ShouldReturnFalse` | null과 비교 | null 안전성 |
-| `equals_WithSameReference_ShouldReturnTrue` | 같은 참조 비교 | 자기 자신과의 비교 |
-| `equals_WithDifferentClass_ShouldReturnFalse` | 다른 클래스와 비교 | 타입 안전성 |
-| `hashCode_WithSameValues_ShouldBeEqual` | 동일한 값의 해시코드 | 일관된 해시코드 생성 |
-| `hashCode_WithDifferentValues_ShouldBeDifferent` | 다른 값의 해시코드 | 해시코드 충돌 방지 |
-| `toString_ShouldContainAllFields` | toString 메서드 출력 | 모든 필드 정보 포함 |
-| `toString_WithNullMeta_ShouldHandleGracefully` | null 메타데이터 toString | null 안전성 |
-
----
-
-### 2. LogLevel 열거형 테스트 (`LogLevelTest.java`)
-
-#### 🎯 테스트 목적
-LogLevel enum의 모든 값, valueOf, ordinal, compareTo 메서드 검증
-
-#### 📋 테스트 케이스
-
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `enum_ShouldContainAllExpectedValues` | 모든 enum 값 존재 확인 | DEBUG, INFO, WARN, ERROR 순서 |
-| `valueOf_WithValidValues_ShouldReturnCorrectEnum` | 유효한 문자열로 변환 | 정확한 enum 반환 |
-| `valueOf_WithInvalidValue_ShouldThrowException` | 잘못된 문자열 처리 | IllegalArgumentException 발생 |
-| `valueOf_WithNull_ShouldThrowException` | null 처리 | NullPointerException 발생 |
-| `name_ShouldReturnCorrectStrings` | name() 메서드 반환값 | 정확한 문자열 반환 |
-| `toString_ShouldReturnCorrectStrings` | toString() 메서드 반환값 | name()과 동일한 결과 |
-| `ordinal_ShouldReturnCorrectOrder` | 순서값 확인 | DEBUG=0, INFO=1, WARN=2, ERROR=3 |
-| `compareTo_ShouldOrderCorrectly` | 비교 연산 | 올바른 순서 비교 |
-| `equals_ShouldWorkCorrectly` | equals 메서드 | 동일성 및 차이점 확인 |
-| `hashCode_ShouldBeConsistent` | hashCode 일관성 | 동일 값의 동일 해시코드 |
-
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `constructor_ShouldCreateLogEntryWithRequiredFields` | Create LogEntry with default constructor | Required fields set and timestamp auto-generated |
+| `constructor_WithMeta_ShouldCreateLogEntryWithAllFields` | Constructor with metadata | Correct storage of metadata |
+| `defaultConstructor_ShouldCreateEmptyLogEntryWithTimestamp` | Default no-arg constructor | Create empty object with only timestamp set |
+| `settersAndGetters_ShouldWorkCorrectly` | Setter/Getter methods | Setting/getting all fields |
+| `builder_ShouldCreateLogEntryCorrectly` | Create object via Builder pattern | All fields set via Builder |
+| `builder_WithoutTimestamp_ShouldUseCurrentTime` | Builder without timestamp | Auto-set current time |
+| `builder_WithoutOptionalFields_ShouldCreateMinimalEntry` | Builder with only required fields | Optional fields null, required fields set |
+| `equals_WithSameValues_ShouldReturnTrue` | Compare objects with same values | equals method works correctly |
+| `equals_WithDifferentValues_ShouldReturnFalse` | Compare objects with different values | Detect differences accurately |
+| `equals_WithNull_ShouldReturnFalse` | Compare with null | Null safety |
+| `equals_WithSameReference_ShouldReturnTrue` | Compare same reference | Comparison with self |
+| `equals_WithDifferentClass_ShouldReturnFalse` | Compare with different class | Type safety |
+| `hashCode_WithSameValues_ShouldBeEqual` | HashCode of same values | Consistent hashCode generation |
+| `hashCode_WithDifferentValues_ShouldBeDifferent` | HashCode of different values | HashCode collision prevention |
+| `toString_ShouldContainAllFields` | toString method output | Includes all field info |
+| `toString_WithNullMeta_ShouldHandleGracefully` | toString with null metadata | Null safety |
 
 ---
 
-### 3. SQLite 스토리지 테스트 (`SqliteLogStorageTest.java`)
+### 2. LogLevel Enum Tests (`LogLevelTest.java`)
 
-#### 🎯 테스트 목적
-SQLite 기반 로그 저장소의 CRUD 연산, 트랜잭션, 컨슈머 오프셋 관리 검증
+#### 🎯 Test Purpose
+Verify all values of LogLevel enum, valueOf, ordinal, and compareTo methods.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `initialize_ShouldCreateDatabase` | 데이터베이스 초기화 | 테이블 생성 및 연결 설정 |
-| `store_WithValidLogEntry_ShouldStoreSuccessfully` | 단일 로그 저장 | 기본 저장 기능 |
-| `store_WithMetadata_ShouldStoreMetadata` | 메타데이터 포함 저장 | JSON 메타데이터 직렬화/역직렬화 |
-| `store_WithNullMetadata_ShouldStoreWithoutMeta` | null 메타데이터 처리 | null 값 안전 저장 |
-| `storeLogs_WithValidEntries_ShouldStoreBatch` | 배치 저장 기능 | 트랜잭션 기반 배치 처리 |
-| `storeLogs_WithEmptyList_ShouldNotFail` | 빈 리스트 처리 | 예외 없는 빈 데이터 처리 |
-| `retrieve_WithNewConsumer_ShouldReturnAllLogs` | 신규 컨슈머 조회 | 모든 로그 반환 |
-| `retrieve_WithExistingConsumer_ShouldReturnOnlyNewLogs` | 기존 컨슈머 조회 | 오프셋 기반 새 로그만 반환 |
-| `retrieve_WithLimit_ShouldRespectLimit` | 제한 개수 조회 | LIMIT 쿼리 적용 |
-| `retrieve_WithDifferentChannels_ShouldFilterByChannel` | 채널별 필터링 | 채널 기반 데이터 분리 |
-| `retrieveAll_ShouldReturnAllLogsInDescendingOrder` | 전체 로그 조회 | 최신순 정렬 |
-| `retrieveAll_WithLimit_ShouldRespectLimit` | 제한된 전체 조회 | 개수 제한 적용 |
-| `retrieveAll_WithNoLogs_ShouldReturnEmptyList` | 빈 데이터베이스 조회 | 빈 리스트 반환 |
-| `multipleConsumers_ShouldHaveIndependentOffsets` | 다중 컨슈머 오프셋 관리 | 독립적인 오프셋 유지 |
-| `close_ShouldCloseConnection` | 연결 정리 | 리소스 해제 |
-| `storageTimestampPersistence_ShouldMaintainTimestamp` | 타임스탬프 정밀도 | 타임스탬프 정확한 저장/복원 |
-
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `enum_ShouldContainAllExpectedValues` | Check existence of all enum values | Order: DEBUG, INFO, WARN, ERROR |
+| `valueOf_WithValidValues_ShouldReturnCorrectEnum` | Convert valid string | Return correct enum |
+| `valueOf_WithInvalidValue_ShouldThrowException` | Handle invalid string | Throw IllegalArgumentException |
+| `valueOf_WithNull_ShouldThrowException` | Handle null | Throw NullPointerException |
+| `name_ShouldReturnCorrectStrings` | name() return value | Return correct string |
+| `toString_ShouldReturnCorrectStrings` | toString() return value | Same result as name() |
+| `ordinal_ShouldReturnCorrectOrder` | Check ordinal values | DEBUG=0, INFO=1, WARN=2, ERROR=3 |
+| `compareTo_ShouldOrderCorrectly` | Comparison operation | Correct order comparison |
+| `equals_ShouldWorkCorrectly` | equals method | Check equality and difference |
+| `hashCode_ShouldBeConsistent` | hashCode consistency | Same hashCode for same value |
 
 ---
 
-### 4. 파일 스토리지 테스트 (`FileLogStorageTest.java`)
+### 3. SQLite Storage Tests (`SqliteLogStorageTest.java`)
 
-#### 🎯 테스트 목적
-파일 기반 로그 저장소의 파일 I/O, 채널별 분리, 컨슈머 오프셋 관리 검증
+#### 🎯 Test Purpose
+Verify CRUD operations, transactions, and consumer offset management in SQLite-based log storage.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `initialize_ShouldCreateStorageDirectory` | 디렉토리 초기화 | 저장 디렉토리 및 오프셋 디렉토리 생성 |
-| `store_WithValidLogEntry_ShouldCreateLogFile` | 로그 파일 생성 | JSON 형식 로그 파일 작성 |
-| `store_WithSpecialCharactersInChannel_ShouldSanitizeFilename` | 특수문자 파일명 처리 | 안전한 파일명으로 변환 |
-| `store_WithMetadata_ShouldStoreMetadataAsJson` | 메타데이터 JSON 저장 | 중첩 객체 포함 JSON 직렬화 |
-| `storeLogs_WithMultipleEntries_ShouldStoreBatch` | 배치 파일 저장 | 채널별 파일 분리 저장 |
-| `storeLogs_WithEmptyList_ShouldNotFail` | 빈 배치 처리 | 예외 없는 빈 데이터 처리 |
-| `retrieve_WithNewConsumer_ShouldReturnAllLogs` | 신규 컨슈머 파일 읽기 | 전체 파일 내용 반환 |
-| `retrieve_WithExistingConsumer_ShouldReturnOnlyNewLogs` | 기존 컨슈머 오프셋 | 라인 번호 기반 오프셋 관리 |
-| `retrieve_WithLimit_ShouldRespectLimit` | 제한 개수 파일 읽기 | 지정된 개수만큼 반환 |
-| `retrieve_WithNonexistentChannel_ShouldReturnEmptyList` | 존재하지 않는 채널 | 빈 리스트 반환 |
-| `retrieveAll_ShouldReturnLogsFromAllChannels` | 모든 채널 통합 조회 | 여러 파일 통합 읽기 |
-| `retrieveAll_WithLimit_ShouldRespectLimit` | 제한된 통합 조회 | 파일 간 개수 제한 |
-| `retrieveAll_WithNoLogs_ShouldReturnEmptyList` | 빈 디렉토리 처리 | 빈 리스트 반환 |
-| `multipleConsumers_ShouldHaveIndependentOffsets` | 다중 컨슈머 오프셋 | 독립적인 오프셋 파일 관리 |
-| `consumerOffsetPersistence_ShouldSurviveRestart` | 오프셋 영속성 | 재시작 후 오프셋 복원 |
-| `timestampPersistence_ShouldMaintainTimestamp` | 타임스탬프 정밀도 | ISO 형식 타임스탬프 보존 |
-| `concurrentAccess_ShouldHandleMultipleOperations` | 동시 접근 처리 | 락 기반 안전한 동시 처리 |
-| `malformedLogLine_ShouldBeSkippedGracefully` | 손상된 로그 처리 | 잘못된 JSON 라인 건너뛰기 |
-| `close_ShouldSaveConsumerOffsets` | 종료 시 오프셋 저장 | 모든 오프셋 파일 저장 |
-
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `initialize_ShouldCreateDatabase` | Initialize database | Create tables and establish connection |
+| `store_WithValidLogEntry_ShouldStoreSuccessfully` | Store single log | Basic storage function |
+| `store_WithMetadata_ShouldStoreMetadata` | Store with metadata | JSON metadata serialization/deserialization |
+| `store_WithNullMetadata_ShouldStoreWithoutMeta` | Handle null metadata | Safe storage of null value |
+| `storeLogs_WithValidEntries_ShouldStoreBatch` | Batch storage function | Transaction-based batch processing |
+| `storeLogs_WithEmptyList_ShouldNotFail` | Handle empty list | Process empty data without exception |
+| `retrieve_WithNewConsumer_ShouldReturnAllLogs` | Retrieve for new consumer | Return all logs |
+| `retrieve_WithExistingConsumer_ShouldReturnOnlyNewLogs` | Retrieve for existing consumer | Return only new logs based on offset |
+| `retrieve_WithLimit_ShouldRespectLimit` | Retrieve with limit | Apply LIMIT query |
+| `retrieve_WithDifferentChannels_ShouldFilterByChannel` | Filter by channel | Separate data based on channel |
+| `retrieveAll_ShouldReturnAllLogsInDescendingOrder` | Retrieve all logs | Sort by latest |
+| `retrieveAll_WithLimit_ShouldRespectLimit` | Retrieve all with limit | Apply count limit |
+| `retrieveAll_WithNoLogs_ShouldReturnEmptyList` | Retrieve empty database | Return empty list |
+| `multipleConsumers_ShouldHaveIndependentOffsets` | Manage multiple consumer offsets | Maintain independent offsets |
+| `close_ShouldCloseConnection` | Cleanup connection | Release resources |
+| `storageTimestampPersistence_ShouldMaintainTimestamp` | Timestamp precision | Accurate timestamp storage/restoration |
 
 ---
 
-### 5. LogService 서비스 테스트 (`LogServiceTest.java`)
+### 4. File Storage Tests (`FileLogStorageTest.java`)
 
-#### 🎯 테스트 목적
-LogService 인터페이스의 비즈니스 로직, 유효성 검사, Mock 객체를 활용한 동작 검증
+#### 🎯 Test Purpose
+Verify file I/O, channel separation, and consumer offset management in File-based log storage.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `storeLog_WithValidLogEntry_ShouldCallStorage` | 유효한 로그 저장 | Storage 호출 확인 |
-| `storeLog_WithNullLogEntry_ShouldThrowException` | null 로그 입력 | IllegalArgumentException 발생 |
-| `storeLogs_WithValidEntries_ShouldCallStorage` | 유효한 배치 저장 | Storage 배치 호출 확인 |
-| `storeLogs_WithEmptyList_ShouldCallStorageWithEmptyList` | 빈 리스트 저장 | 빈 리스트도 Storage 전달 |
-| `storeLogs_WithNullList_ShouldThrowException` | null 배치 입력 | IllegalArgumentException 발생 |
-| `getLogsForConsumer_WithValidParameters_ShouldCallStorage` | 유효한 컨슈머 조회 | Storage 조회 호출 및 결과 반환 |
-| `getLogsForConsumer_WithNullChannel_ShouldThrowException` | null 채널 입력 | IllegalArgumentException 발생 |
-| `getLogsForConsumer_WithEmptyChannel_ShouldThrowException` | 빈 채널 입력 | IllegalArgumentException 발생 |
-| `getLogsForConsumer_WithNullConsumerId_ShouldThrowException` | null 컨슈머 ID | IllegalArgumentException 발생 |
-| `getLogsForConsumer_WithEmptyConsumerId_ShouldThrowException` | 빈 컨슈머 ID | IllegalArgumentException 발생 |
-| `getLogsForConsumer_WithNegativeLimit_ShouldThrowException` | 음수 제한값 | IllegalArgumentException 발생 |
-| `getLogsForConsumer_WithZeroLimit_ShouldCallStorage` | 0 제한값 처리 | 0도 유효한 값으로 처리 |
-| `getAllLogs_WithValidLimit_ShouldCallStorage` | 유효한 전체 조회 | Storage 전체 조회 호출 |
-| `getAllLogs_WithNegativeLimit_ShouldThrowException` | 음수 제한값 | IllegalArgumentException 발생 |
-| `getAllLogs_WithZeroLimit_ShouldCallStorage` | 0 제한값 처리 | 0도 유효한 값으로 처리 |
-| `getAllLogs_WithLargeLimit_ShouldCallStorage` | 큰 제한값 처리 | Integer.MAX_VALUE 처리 |
-
-
----
-
-### 6. LogPilotProperties 설정 테스트 (`LogPilotPropertiesTest.java`)
-
-#### 🎯 테스트 목적
-애플리케이션 설정 클래스의 기본값, Setter/Getter, 중첩 클래스 동작 검증
-
-#### 📋 테스트 케이스
-
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `defaultValues_ShouldBeSet` | 기본 설정값 확인 | 모든 기본값 올바른 설정 |
-| `setStorage_ShouldUpdateStorageConfiguration` | 스토리지 설정 변경 | Storage 객체 교체 |
-| `setServer_ShouldUpdateServerConfiguration` | 서버 설정 변경 | Server 객체 교체 |
-| `setGrpc_ShouldUpdateGrpcConfiguration` | gRPC 설정 변경 | Grpc 객체 교체 |
-| `storageClass_ShouldSupportAllOperations` | Storage 클래스 기능 | 모든 필드 설정/조회 |
-| `sqliteClass_ShouldSupportPathConfiguration` | SQLite 설정 기능 | 데이터베이스 경로 설정 |
-| `serverClass_ShouldSupportPortConfiguration` | Server 설정 기능 | 포트 번호 설정 |
-| `grpcClass_ShouldSupportPortConfiguration` | gRPC 설정 기능 | gRPC 포트 설정 |
-| `storageType_ShouldContainAllExpectedValues` | StorageType enum 값 | FILE, SQLITE 존재 |
-| `storageType_ValueOf_ShouldWorkCorrectly` | StorageType 문자열 변환 | 올바른 enum 변환 |
-| `storageType_ValueOf_WithInvalidValue_ShouldThrowException` | 잘못된 StorageType | 예외 발생 확인 |
-| `nestedClasses_ShouldHaveIndependentInstances` | 중첩 클래스 독립성 | 인스턴스 간 독립성 |
-| `chainedConfiguration_ShouldWork` | 연쇄 설정 기능 | 복합 설정 체인 |
-| `nullSafety_ShouldHandleNullAssignments` | null 안전성 | null 할당 처리 |
-
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `initialize_ShouldCreateStorageDirectory` | Initialize directory | Create storage and offset directories |
+| `store_WithValidLogEntry_ShouldCreateLogFile` | Create log file | Write JSON format log file |
+| `store_WithSpecialCharactersInChannel_ShouldSanitizeFilename` | Handle special chars in filename | Convert to safe filename |
+| `store_WithMetadata_ShouldStoreMetadataAsJson` | Store metadata as JSON | JSON serialization including nested objects |
+| `storeLogs_WithMultipleEntries_ShouldStoreBatch` | Store batch files | Separate storage by channel files |
+| `storeLogs_WithEmptyList_ShouldNotFail` | Handle empty batch | Process empty data without exception |
+| `retrieve_WithNewConsumer_ShouldReturnAllLogs` | Read file for new consumer | Return full file content |
+| `retrieve_WithExistingConsumer_ShouldReturnOnlyNewLogs` | Existing consumer offset | Offset management based on line number |
+| `retrieve_WithLimit_ShouldRespectLimit` | Read file with limit | Return specified count |
+| `retrieve_WithNonexistentChannel_ShouldReturnEmptyList` | Non-existent channel | Return empty list |
+| `retrieveAll_ShouldReturnLogsFromAllChannels` | Integrate retrieval from all channels | Read multiple files integrated |
+| `retrieveAll_WithLimit_ShouldRespectLimit` | Integrated retrieval with limit | Count limit across files |
+| `retrieveAll_WithNoLogs_ShouldReturnEmptyList` | Handle empty directory | Return empty list |
+| `multipleConsumers_ShouldHaveIndependentOffsets` | Multiple consumer offsets | Manage independent offset files |
+| `consumerOffsetPersistence_ShouldSurviveRestart` | Offset persistence | Restore offset after restart |
+| `timestampPersistence_ShouldMaintainTimestamp` | Timestamp precision | Preserve ISO format timestamp |
+| `concurrentAccess_ShouldHandleMultipleOperations` | Concurrent access handling | Safe concurrent processing via locks |
+| `malformedLogLine_ShouldBeSkippedGracefully` | Handle malformed log | Skip invalid JSON lines |
+| `close_ShouldSaveConsumerOffsets` | Save offsets on close | Save all offset files |
 
 ---
 
-### 7. LogStorageFactory 팩토리 테스트 (`LogStorageFactoryTest.java`)
+### 5. LogService Tests (`LogServiceTest.java`)
 
-#### 🎯 테스트 목적
-팩토리 패턴을 통한 스토리지 인스턴스 생성, 디렉토리 생성, 초기화 과정 검증
+#### 🎯 Test Purpose
+Verify business logic, validation, and operations using Mock objects for LogService interface.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `createLogStorage_WithNullProperties_ShouldThrowException` | null 설정 입력 | IllegalArgumentException 발생 |
-| `createLogStorage_WithSqliteType_ShouldReturnSqliteStorage` | SQLite 스토리지 생성 | SqliteLogStorage 인스턴스 반환 |
-| `createLogStorage_WithFileType_ShouldReturnFileStorage` | 파일 스토리지 생성 | FileLogStorage 인스턴스 반환 |
-| `createLogStorage_WithSqliteType_ShouldCreateParentDirectories` | SQLite 부모 디렉토리 생성 | 중첩 디렉토리 자동 생성 |
-| `createLogStorage_WithFileType_ShouldCreateDirectory` | 파일 스토리지 디렉토리 생성 | 저장 디렉토리 자동 생성 |
-| `createLogStorage_ShouldInitializeStorage` | 스토리지 초기화 | initialize() 메서드 호출 확인 |
-| `createLogStorage_WithExistingSqliteParentDirectory_ShouldNotFail` | 기존 SQLite 디렉토리 처리 | 기존 디렉토리 무시하고 정상 처리 |
-| `createLogStorage_WithExistingFileDirectory_ShouldNotFail` | 기존 파일 디렉토리 처리 | 기존 디렉토리 무시하고 정상 처리 |
-| `createLogStorage_WithDifferentConfigurations_ShouldRespectSettings` | 다양한 설정 처리 | 각기 다른 설정으로 독립 인스턴스 생성 |
-| `createLogStorage_SqliteWithNullPath_ShouldUseDefaultPath` | SQLite 기본 경로 사용 | 기본 설정값으로 생성 |
-| `createLogStorage_FileWithNullDirectory_ShouldUseDefaultDirectory` | 파일 기본 디렉토리 사용 | 기본 설정값으로 생성 |
-| `createLogStorage_SqliteWithFileInRootDirectory_ShouldWork` | 루트 디렉토리 SQLite 파일 | 단순 경로 처리 |
-
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `storeLog_WithValidLogEntry_ShouldCallStorage` | Store valid log | Verify Storage call |
+| `storeLog_WithNullLogEntry_ShouldThrowException` | Input null log | Throw IllegalArgumentException |
+| `storeLogs_WithValidEntries_ShouldCallStorage` | Store valid batch | Verify Storage batch call |
+| `storeLogs_WithEmptyList_ShouldCallStorageWithEmptyList` | Store empty list | Pass empty list to Storage |
+| `storeLogs_WithNullList_ShouldThrowException` | Input null batch | Throw IllegalArgumentException |
+| `getLogsForConsumer_WithValidParameters_ShouldCallStorage` | Retrieve valid consumer | Call Storage retrieval and return result |
+| `getLogsForConsumer_WithNullChannel_ShouldThrowException` | Input null channel | Throw IllegalArgumentException |
+| `getLogsForConsumer_WithEmptyChannel_ShouldThrowException` | Input empty channel | Throw IllegalArgumentException |
+| `getLogsForConsumer_WithNullConsumerId_ShouldThrowException` | Null consumer ID | Throw IllegalArgumentException |
+| `getLogsForConsumer_WithEmptyConsumerId_ShouldThrowException` | Empty consumer ID | Throw IllegalArgumentException |
+| `getLogsForConsumer_WithNegativeLimit_ShouldThrowException` | Negative limit | Throw IllegalArgumentException |
+| `getLogsForConsumer_WithZeroLimit_ShouldCallStorage` | Handle zero limit | Treat 0 as valid value |
+| `getAllLogs_WithValidLimit_ShouldCallStorage` | Retrieve all valid | Call Storage retrieve all |
+| `getAllLogs_WithNegativeLimit_ShouldThrowException` | Negative limit | Throw IllegalArgumentException |
+| `getAllLogs_WithZeroLimit_ShouldCallStorage` | Handle zero limit | Treat 0 as valid value |
+| `getAllLogs_WithLargeLimit_ShouldCallStorage` | Handle large limit | Handle Integer.MAX_VALUE |
 
 ---
 
-### 8. 통합 테스트 (`LogPilotCoreIntegrationTest.java`)
+### 6. LogPilotProperties Configuration Tests (`LogPilotPropertiesTest.java`)
 
-#### 🎯 테스트 목적
-전체 시스템의 end-to-end 워크플로우, 대용량 데이터 처리, 복잡한 시나리오 검증
+#### 🎯 Test Purpose
+Verify default values, Setter/Getter, and nested class behavior of application configuration class.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `endToEndWorkflow_WithSqliteStorage_ShouldWorkCorrectly` | SQLite 전체 워크플로우 | 완전한 CRUD 사이클 |
-| `endToEndWorkflow_WithFileStorage_ShouldWorkCorrectly` | 파일 전체 워크플로우 | 완전한 CRUD 사이클 |
-| `multipleChannels_WithMultipleConsumers_ShouldWorkIndependently` | 다중 채널/컨슈머 시나리오 | 독립적인 채널 및 컨슈머 관리 |
-| `largeBatchProcessing_ShouldHandleCorrectly` | 대용량 배치 처리 | 1000개 로그 효율적 처리 (5초 이내) |
-| `metadataHandling_ShouldPreserveComplexData` | 복잡한 메타데이터 처리 | 중첩 객체, 배열, 다양한 타입 보존 |
-| `timestampPrecision_ShouldBePreserved` | 타임스탬프 정밀도 | 초 단위 정밀도 보존 |
-| `storageTypeSwitch_ShouldWorkWithSameData` | 스토리지 타입 간 호환성 | SQLite-File 간 동일한 데이터 처리 |
-| `edgeCases_ShouldBeHandledGracefully` | 엣지 케이스 처리 | 빈 메시지, 긴 메시지, 특수문자, 특수 채널명 |
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `defaultValues_ShouldBeSet` | Check default configuration values | All default values set correctly |
+| `setStorage_ShouldUpdateStorageConfiguration` | Change storage config | Replace Storage object |
+| `setServer_ShouldUpdateServerConfiguration` | Change server config | Replace Server object |
+| `setGrpc_ShouldUpdateGrpcConfiguration` | Change gRPC config | Replace Grpc object |
+| `storageClass_ShouldSupportAllOperations` | Storage class functionality | Set/get all fields |
+| `sqliteClass_ShouldSupportPathConfiguration` | SQLite config functionality | Set database path |
+| `serverClass_ShouldSupportPortConfiguration` | Server config functionality | Set port number |
+| `grpcClass_ShouldSupportPortConfiguration` | gRPC config functionality | Set gRPC port |
+| `storageType_ShouldContainAllExpectedValues` | StorageType enum values | Assume FILE, SQLITE exist |
+| `storageType_ValueOf_ShouldWorkCorrectly` | StorageType string conversion | Correct enum conversion |
+| `storageType_ValueOf_WithInvalidValue_ShouldThrowException` | Invalid StorageType | Verify exception thrown |
+| `nestedClasses_ShouldHaveIndependentInstances` | Nested class independence | Independence between instances |
+| `chainedConfiguration_ShouldWork` | Chained configuration | Complex config chain |
+| `nullSafety_ShouldHandleNullAssignments` | Null safety | Handle null assignment |
 
-#### 🔍 상세 검증 항목
+---
 
-**대용량 처리 성능:**
-- 1,000개 로그 엔트리 배치 처리
-- 5초 이내 처리 완료
-- 페이지네이션 (100개씩 조회)
+### 7. LogStorageFactory Tests (`LogStorageFactoryTest.java`)
 
-**복잡한 메타데이터:**
+#### 🎯 Test Purpose
+Verify storage instance creation, directory creation, and initialization process via Factory pattern.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `createLogStorage_WithNullProperties_ShouldThrowException` | Input null properties | Throw IllegalArgumentException |
+| `createLogStorage_WithSqliteType_ShouldReturnSqliteStorage` | Create SQLite storage | Return SqliteLogStorage instance |
+| `createLogStorage_WithFileType_ShouldReturnFileStorage` | Create File storage | Return FileLogStorage instance |
+| `createLogStorage_WithSqliteType_ShouldCreateParentDirectories` | Create SQLite parent directory | Auto-create nested directories |
+| `createLogStorage_WithFileType_ShouldCreateDirectory` | Create File storage directory | Auto-create storage directory |
+| `createLogStorage_ShouldInitializeStorage` | Initialize storage | Verify initialize() method call |
+| `createLogStorage_WithExistingSqliteParentDirectory_ShouldNotFail` | Handle existing SQLite directory | Ignore existing dir and process normally |
+| `createLogStorage_WithExistingFileDirectory_ShouldNotFail` | Handle existing File directory | Ignore existing dir and process normally |
+| `createLogStorage_WithDifferentConfigurations_ShouldRespectSettings` | Handle various configs | Create independent instances per config |
+| `createLogStorage_SqliteWithNullPath_ShouldUseDefaultPath` | Use SQLite default path | Create with default settings |
+| `createLogStorage_FileWithNullDirectory_ShouldUseDefaultDirectory` | Use File default directory | Create with default settings |
+| `createLogStorage_SqliteWithFileInRootDirectory_ShouldWork` | Root directory SQLite file | Simple path handling |
+
+---
+
+### 8. Integration Tests (`LogPilotCoreIntegrationTest.java`)
+
+#### 🎯 Test Purpose
+Verify end-to-end workflow, large data processing, and complex scenarios of the entire system.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `endToEndWorkflow_WithSqliteStorage_ShouldWorkCorrectly` | SQLite Full Workflow | Complete CRUD cycle |
+| `endToEndWorkflow_WithFileStorage_ShouldWorkCorrectly` | File Full Workflow | Complete CRUD cycle |
+| `multipleChannels_WithMultipleConsumers_ShouldWorkIndependently` | Multi-channel/consumer scenario | Independent channel and consumer management |
+| `largeBatchProcessing_ShouldHandleCorrectly` | Large batch processing | Efficient processing of 1000 logs (within 5s) |
+| `metadataHandling_ShouldPreserveComplexData` | Complex metadata handling | Preserve nested objects, arrays, various types |
+| `timestampPrecision_ShouldBePreserved` | Timestamp precision | Preserve second-level precision |
+| `storageTypeSwitch_ShouldWorkWithSameData` | Compatibility between storage types | Identical data processing between SQLite-File |
+| `edgeCases_ShouldBeHandledGracefully` | Edge case handling | Empty message, long message, special chars, special channel names |
+
+#### 🔍 Detailed Verification Items
+
+**Large Scale Processing Performance:**
+- Batch processing of 1,000 log entries
+- Completion within 5 seconds
+- Pagination (Retrieve 100 at a time)
+
+**Complex Metadata:**
 ```json
 {
   "userId": 12345,
@@ -255,18 +249,17 @@ LogService 인터페이스의 비즈니스 로직, 유효성 검사, Mock 객체
 }
 ```
 
-**엣지 케이스:**
-- 빈 메시지 (`""`)
-- 매우 긴 메시지 (10,000자 `"A"` 반복)
-- 특수문자 (`"äöü 中文 🚀 \n\t\r"`)
-- 특수문자 채널명 (`"special/channel:name*with<chars>"`)
-
+**Edge Cases:**
+- Empty message (`""`)
+- Very long message (10,000 `"A"`s)
+- Special characters (`"äöü 中文 🚀 \n\t\r"`)
+- Special char channel name (`"special/channel:name*with<chars>"`)
 
 ---
 
-# LogPilot Server 모듈 테스트 케이스
+# LogPilot Server Module Test Cases
 
-## 📊 Server 모듈 테스트 실행 결과
+## 📊 Server Module Test Results
 
 ```bash
 ./gradlew :logpilot-server:test
@@ -276,339 +269,337 @@ BUILD SUCCESSFUL
 Execution time: ~30 seconds
 ```
 
-## 🧪 Server 모듈 테스트 파일별 상세 케이스
+## 🧪 Server Module Detailed Test Cases by File
 
-### 1. 애플리케이션 테스트 (`LogPilotServerApplicationTest.java`)
+### 1. Application Tests (`LogPilotServerApplicationTest.java`)
 
-#### 🎯 테스트 목적
-Spring Boot 애플리케이션의 시작, 컨텍스트 로딩, 메인 메서드 검증
+#### 🎯 Test Purpose
+Verify Spring Boot application startup, context loading, and main method.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `contextLoads` | Spring 애플리케이션 컨텍스트 로딩 | 정상적인 컨텍스트 초기화 |
-| `mainMethod_WithArgs_ShouldNotThrow` | 메인 메서드 실행 (인수 포함) | 예외 없는 정상 실행 |
-| `mainMethod_WithNullArgs_ShouldNotThrow` | 메인 메서드 실행 (null 인수) | null 안전성 |
-| `applicationClass_ShouldHaveCorrectAnnotations` | 애플리케이션 클래스 어노테이션 | @SpringBootApplication 등 필수 어노테이션 |
-
----
-
-### 2. 서버 설정 테스트 (`ServerConfigTest.java`)
-
-#### 🎯 테스트 목적
-Spring Bean 설정, LogStorage 팩토리 동작, 의존성 주입 검증
-
-#### 📋 테스트 케이스
-
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `serverConfig_ShouldHaveCorrectAnnotations` | 설정 클래스 어노테이션 | @Configuration, @EnableConfigurationProperties |
-| `logStorage_WithSqliteProperties_ShouldReturnSqliteLogStorage` | SQLite 스토리지 빈 생성 | 적절한 타입의 인스턴스 반환 |
-| `logStorage_WithFileProperties_ShouldReturnFileLogStorage` | 파일 스토리지 빈 생성 | 적절한 타입의 인스턴스 반환 |
-| `logStorage_WithNullProperties_ShouldThrowException` | null 설정 처리 | IllegalArgumentException 발생 |
-| `logStorage_WithDefaultProperties_ShouldReturnValidStorage` | 기본 설정값 처리 | 유효한 스토리지 인스턴스 생성 |
-| `logStorageBean_ShouldHaveCorrectAnnotations` | 빈 메서드 어노테이션 | @Bean 어노테이션 확인 |
-| `logStorage_ShouldCreateFunctionalStorage` | 생성된 스토리지 기능성 | 실제 동작 가능한 인스턴스 |
-| `logStorage_WithDifferentConfigurations_ShouldCreateDifferentInstances` | 다른 설정별 인스턴스 | 설정에 따른 다른 타입 생성 |
-| `logStorage_ShouldCreateNewInstanceEachTime` | 인스턴스 생성 정책 | 호출마다 새 인스턴스 생성 |
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `contextLoads` | Spring Application Context Loading | Normal context initialization |
+| `mainMethod_WithArgs_ShouldNotThrow` | Main method execution (with args) | Normal execution without exception |
+| `mainMethod_WithNullArgs_ShouldNotThrow` | Main method execution (null args) | Null safety |
+| `applicationClass_ShouldHaveCorrectAnnotations` | Application class annotations | Mandatory annotations like @SpringBootApplication |
 
 ---
 
-### 3. 조건부 어노테이션 테스트 (`ConditionalAnnotationsTest.java`)
+### 2. Server Configuration Tests (`ServerConfigTest.java`)
 
-#### 🎯 테스트 목적
-프로토콜별 조건부 빈 활성화 어노테이션 검증
+#### 🎯 Test Purpose
+Verify Spring Bean configuration, LogStorage factory behavior, and dependency injection.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `conditionalOnGrpcProtocol_ShouldHaveCorrectAnnotations` | gRPC 조건부 어노테이션 | @ConditionalOnProperty 설정 |
-| `conditionalOnRestProtocol_ShouldHaveCorrectAnnotations` | REST 조건부 어노테이션 | @ConditionalOnProperty 설정 |
-| `conditionalAnnotations_ShouldHaveDifferentHavingValues` | 어노테이션별 차이점 | 서로 다른 havingValue 설정 |
-| `conditionalAnnotations_ShouldTargetSameElements` | 적용 대상 일관성 | ElementType.TYPE, METHOD 공통 |
-| `conditionalAnnotations_ShouldHaveRuntimeRetention` | 런타임 유지 정책 | RetentionPolicy.RUNTIME |
-| `conditionalAnnotations_ShouldBeMetaAnnotatedWithConditionalOnProperty` | 메타 어노테이션 | @ConditionalOnProperty 상속 |
-| `conditionalAnnotations_ShouldBeApplicableToClasses` | 클래스 적용 가능성 | TYPE 타겟 포함 |
-| `conditionalAnnotations_ShouldBeApplicableToMethods` | 메서드 적용 가능성 | METHOD 타겟 포함 |
-
----
-
-### 4. REST 컨트롤러 테스트 (`LogControllerTest.java`)
-
-#### 🎯 테스트 목적
-REST API 엔드포인트, HTTP 요청/응답 처리, 에러 핸들링 검증
-
-#### 📋 테스트 케이스
-
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `logController_ShouldHaveCorrectAnnotations` | 컨트롤러 어노테이션 | @RestController, @RequestMapping |
-| `storeLog_WithValidLogEntry_ShouldReturnCreated` | 단일 로그 저장 API | 201 Created 응답 |
-| `storeLog_WithInvalidJson_ShouldReturnBadRequest` | 잘못된 JSON 처리 | 400 Bad Request 응답 |
-| `storeLog_WithEmptyBody_ShouldReturnBadRequest` | 빈 요청 본문 처리 | 400 Bad Request 응답 |
-| `storeLogs_WithValidLogEntries_ShouldReturnCreated` | 배치 로그 저장 API | 201 Created 응답 |
-| `storeLogs_WithEmptyList_ShouldReturnCreated` | 빈 배치 처리 | 201 Created 응답 |
-| `getLogs_WithChannelAndConsumerId_ShouldReturnLogs` | 채널별 로그 조회 | 200 OK 및 로그 데이터 |
-| `getLogs_WithChannelOnly_ShouldReturnAllLogs` | 채널 전체 로그 조회 | 모든 로그 반환 |
-| `getLogs_WithDefaultLimit_ShouldUseDefaultValue` | 기본 제한값 사용 | 기본값 적용 |
-| `getLogs_WithCustomLimit_ShouldUseCustomValue` | 사용자 정의 제한값 | 커스텀 값 적용 |
-| `getAllLogs_ShouldReturnAllLogs` | 전체 로그 조회 API | 모든 채널 로그 반환 |
-| `getAllLogs_WithCustomLimit_ShouldUseCustomValue` | 전체 로그 제한 조회 | 제한값 적용 |
-| `getAllLogs_WithDefaultLimit_ShouldUseDefaultValue` | 전체 로그 기본 제한 | 기본값 적용 |
-| `storeLog_WhenServiceThrowsException_ShouldReturnInternalServerError` | 서비스 예외 처리 | 500 Internal Server Error |
-| `storeLogs_WhenServiceThrowsException_ShouldReturnInternalServerError` | 배치 서비스 예외 처리 | 500 Internal Server Error |
-| `getLogs_WhenServiceThrowsException_ShouldReturnInternalServerError` | 조회 서비스 예외 처리 | 500 Internal Server Error |
-| `storeLog_WithComplexLogEntry_ShouldHandleCorrectly` | 복잡한 로그 엔트리 | 메타데이터 포함 처리 |
-| `getLogs_WithSpecialCharactersInChannel_ShouldHandleCorrectly` | 특수문자 채널명 | 인코딩 처리 |
-| `getLogs_WithLargeLimit_ShouldAcceptValue` | 큰 제한값 처리 | 큰 숫자 허용 |
-| `getLogs_WithZeroLimit_ShouldAcceptValue` | 0 제한값 처리 | 0값 허용 |
-| `storeLog_WithMissingRequiredFields_ShouldReturnBadRequest` | 필수 필드 누락 | 400 Bad Request |
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `serverConfig_ShouldHaveCorrectAnnotations` | Config class annotations | @Configuration, @EnableConfigurationProperties |
+| `logStorage_WithSqliteProperties_ShouldReturnSqliteLogStorage` | Create SQLite storage bean | Return appropriate type instance |
+| `logStorage_WithFileProperties_ShouldReturnFileLogStorage` | Create File storage bean | Return appropriate type instance |
+| `logStorage_WithNullProperties_ShouldThrowException` | Handle null properties | Throw IllegalArgumentException |
+| `logStorage_WithDefaultProperties_ShouldReturnValidStorage` | Handle default properties | Create valid storage instance |
+| `logStorageBean_ShouldHaveCorrectAnnotations` | Bean method annotations | Verification of @Bean annotation |
+| `logStorage_ShouldCreateFunctionalStorage` | Created storage functionality | Actual functional instance |
+| `logStorage_WithDifferentConfigurations_ShouldCreateDifferentInstances` | Instances per different config | Create different types based on config |
+| `logStorage_ShouldCreateNewInstanceEachTime` | Instance creation policy | Create new instance on each call |
 
 ---
 
-### 5. REST 서비스 테스트 (`RestLogServiceTest.java`)
+### 3. Conditional Annotation Tests (`ConditionalAnnotationsTest.java`)
 
-#### 🎯 테스트 목적
-REST 로그 서비스 비즈니스 로직, 의존성 주입, 예외 처리 검증
+#### 🎯 Test Purpose
+Verify conditional bean activation annotations per protocol.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `restLogService_ShouldHaveCorrectAnnotations` | 서비스 어노테이션 | @Service, @ConditionalOnRestProtocol |
-| `constructor_WithLogStorage_ShouldCreateInstance` | 생성자 의존성 주입 | 정상 인스턴스 생성 |
-| `constructor_WithNullLogStorage_ShouldThrowException` | null 의존성 처리 | IllegalArgumentException |
-| `storeLog_WithValidLogEntry_ShouldCallLogStorage` | 로그 저장 위임 | Storage 메서드 호출 확인 |
-| `storeLog_WithNullLogEntry_ShouldCallLogStorageWithNull` | null 로그 위임 | null 값 그대로 전달 |
-| `storeLog_WhenStorageThrowsException_ShouldPropagateException` | 저장 예외 전파 | 예외 그대로 전달 |
-| `storeLogs_WithValidLogEntries_ShouldCallLogStorage` | 배치 저장 위임 | 배치 Storage 호출 |
-| `storeLogs_WithEmptyList_ShouldCallLogStorage` | 빈 배치 위임 | 빈 리스트 전달 |
-| `storeLogs_WithNullList_ShouldCallLogStorageWithNull` | null 배치 위임 | null 값 전달 |
-| `storeLogs_WhenStorageThrowsException_ShouldPropagateException` | 배치 저장 예외 전파 | 예외 그대로 전달 |
-| `getLogsForConsumer_WithValidParameters_ShouldCallLogStorage` | 컨슈머 조회 위임 | Storage 조회 호출 |
-| `getLogsForConsumer_WithNullChannel_ShouldCallLogStorage` | null 채널 조회 | null 값 전달 |
-| `getLogsForConsumer_WithNullConsumerId_ShouldCallLogStorage` | null 컨슈머 조회 | null 값 전달 |
-| `getLogsForConsumer_WithZeroLimit_ShouldCallLogStorage` | 0 제한 조회 | 0 값 전달 |
-| `getLogsForConsumer_WhenStorageThrowsException_ShouldPropagateException` | 조회 예외 전파 | 예외 그대로 전달 |
-| `getAllLogs_WithValidLimit_ShouldCallLogStorage` | 전체 조회 위임 | Storage 전체 조회 |
-| `getAllLogs_WithZeroLimit_ShouldCallLogStorage` | 0 제한 전체 조회 | 0 값 전달 |
-| `getAllLogs_WithNegativeLimit_ShouldCallLogStorage` | 음수 제한 조회 | 음수 값 전달 |
-| `getAllLogs_WhenStorageThrowsException_ShouldPropagateException` | 전체 조회 예외 전파 | 예외 그대로 전달 |
-| `getAllLogs_WithLargeLimit_ShouldCallLogStorage` | 큰 제한값 조회 | 큰 숫자 처리 |
-| `service_ShouldDelegateAllCallsToLogStorage` | 모든 호출 위임 | 완전한 위임 패턴 |
-| `service_ShouldHandleMultipleConsecutiveCalls` | 연속 호출 처리 | 상태 유지 없는 처리 |
-| `service_ShouldMaintainLogStorageReference` | Storage 참조 유지 | 의존성 참조 보존 |
-| `service_ShouldHandleComplexLogEntries` | 복잡한 로그 처리 | 메타데이터 포함 로그 |
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `conditionalOnGrpcProtocol_ShouldHaveCorrectAnnotations` | gRPC conditional annotation | @ConditionalOnProperty setting |
+| `conditionalOnRestProtocol_ShouldHaveCorrectAnnotations` | REST conditional annotation | @ConditionalOnProperty setting |
+| `conditionalAnnotations_ShouldHaveDifferentHavingValues` | Difference between annotations | Different havingValue settings |
+| `conditionalAnnotations_ShouldTargetSameElements` | Target consistency | Common ElementType.TYPE, METHOD |
+| `conditionalAnnotations_ShouldHaveRuntimeRetention` | Runtime retention policy | RetentionPolicy.RUNTIME |
+| `conditionalAnnotations_ShouldBeMetaAnnotatedWithConditionalOnProperty` | Meta-annotation | Inherit @ConditionalOnProperty |
+| `conditionalAnnotations_ShouldBeApplicableToClasses` | Class applicability | Include TYPE target |
+| `conditionalAnnotations_ShouldBeApplicableToMethods` | Method applicability | Include METHOD target |
 
 ---
 
-### 6. gRPC 핸들러 테스트 (`GrpcLogHandlerTest.java`)
+### 4. REST Controller Tests (`LogControllerTest.java`)
 
-#### 🎯 테스트 목적
-gRPC 로그 핸들러 서비스 계층, 의존성 주입, 비즈니스 로직 검증
+#### 🎯 Test Purpose
+Verify REST API endpoints, HTTP request/response handling, and error handling.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `grpcLogHandler_ShouldHaveCorrectAnnotations` | 핸들러 어노테이션 | @Service, @ConditionalOnGrpcProtocol |
-| `constructor_WithLogStorage_ShouldCreateInstance` | 생성자 의존성 주입 | 정상 인스턴스 생성 |
-| `constructor_WithNullLogStorage_ShouldThrowException` | null 의존성 처리 | IllegalArgumentException |
-| `storeLog_WithValidLogEntry_ShouldCallLogStorage` | 로그 저장 위임 | Storage 메서드 호출 |
-| `storeLog_WithNullLogEntry_ShouldCallLogStorageWithNull` | null 로그 위임 | null 값 전달 |
-| `storeLog_WhenStorageThrowsException_ShouldPropagateException` | 저장 예외 전파 | 예외 그대로 전달 |
-| `storeLogs_WithValidLogEntries_ShouldCallLogStorage` | 배치 저장 위임 | 배치 Storage 호출 |
-| `storeLogs_WithEmptyList_ShouldCallLogStorage` | 빈 배치 위임 | 빈 리스트 전달 |
-| `storeLogs_WithNullList_ShouldCallLogStorageWithNull` | null 배치 위임 | null 값 전달 |
-| `storeLogs_WhenStorageThrowsException_ShouldPropagateException` | 배치 저장 예외 전파 | 예외 그대로 전달 |
-| `getLogsForConsumer_WithValidParameters_ShouldCallLogStorage` | 컨슈머 조회 위임 | Storage 조회 호출 |
-| `getLogsForConsumer_WithNullChannel_ShouldCallLogStorage` | null 채널 조회 | null 값 전달 |
-| `getLogsForConsumer_WithNullConsumerId_ShouldCallLogStorage` | null 컨슈머 조회 | null 값 전달 |
-| `getLogsForConsumer_WithZeroLimit_ShouldCallLogStorage` | 0 제한 조회 | 0 값 전달 |
-| `getLogsForConsumer_WhenStorageThrowsException_ShouldPropagateException` | 조회 예외 전파 | 예외 그대로 전달 |
-| `getAllLogs_WithValidLimit_ShouldCallLogStorage` | 전체 조회 위임 | Storage 전체 조회 |
-| `getAllLogs_WithZeroLimit_ShouldCallLogStorage` | 0 제한 전체 조회 | 0 값 전달 |
-| `getAllLogs_WithNegativeLimit_ShouldCallLogStorage` | 음수 제한 조회 | 음수 값 전달 |
-| `getAllLogs_WhenStorageThrowsException_ShouldPropagateException` | 전체 조회 예외 전파 | 예외 그대로 전달 |
-| `getAllLogs_WithLargeLimit_ShouldCallLogStorage` | 큰 제한값 조회 | 큰 숫자 처리 |
-| `handler_ShouldDelegateAllCallsToLogStorage` | 모든 호출 위임 | 완전한 위임 패턴 |
-| `handler_ShouldHandleMultipleConsecutiveCalls` | 연속 호출 처리 | 상태 유지 없는 처리 |
-| `handler_ShouldMaintainLogStorageReference` | Storage 참조 유지 | 의존성 참조 보존 |
-| `handler_ShouldHandleComplexLogEntries` | 복잡한 로그 처리 | 메타데이터 포함 로그 |
-| `handler_ShouldImplementLogServiceInterface` | 인터페이스 구현 | LogService 인터페이스 구현 |
-| `handler_ShouldHaveCorrectBeanName` | 빈 이름 확인 | 적절한 Spring 빈 이름 |
-| `handler_ShouldBeConditionalOnGrpcProtocol` | 조건부 활성화 | gRPC 프로토콜 조건 확인 |
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `logController_ShouldHaveCorrectAnnotations` | Controller annotations | @RestController, @RequestMapping |
+| `storeLog_WithValidLogEntry_ShouldReturnCreated` | Store single log API | 201 Created response |
+| `storeLog_WithInvalidJson_ShouldReturnBadRequest` | Handle invalid JSON | 400 Bad Request response |
+| `storeLog_WithEmptyBody_ShouldReturnBadRequest` | Handle empty request body | 400 Bad Request response |
+| `storeLogs_WithValidLogEntries_ShouldReturnCreated` | Store batch logs API | 201 Created response |
+| `storeLogs_WithEmptyList_ShouldReturnCreated` | Handle empty batch | 201 Created response |
+| `getLogs_WithChannelAndConsumerId_ShouldReturnLogs` | Retrieve logs by channel | 200 OK and log data |
+| `getLogs_WithChannelOnly_ShouldReturnAllLogs` | Retrieve all channel logs | Return all logs |
+| `getLogs_WithDefaultLimit_ShouldUseDefaultValue` | Use default limit | Apply default value |
+| `getLogs_WithCustomLimit_ShouldUseCustomValue` | Custom limit | Apply custom value |
+| `getAllLogs_ShouldReturnAllLogs` | Retrieve all logs API | Return logs from all channels |
+| `getAllLogs_WithCustomLimit_ShouldUseCustomValue` | Retrieve all logs with limit | Apply limit value |
+| `getAllLogs_WithDefaultLimit_ShouldUseDefaultValue` | Retrieve all logs default limit | Apply default value |
+| `storeLog_WhenServiceThrowsException_ShouldReturnInternalServerError` | Service exception handling | 500 Internal Server Error |
+| `storeLogs_WhenServiceThrowsException_ShouldReturnInternalServerError` | Batch service exception handling | 500 Internal Server Error |
+| `getLogs_WhenServiceThrowsException_ShouldReturnInternalServerError` | Retrieval service exception handling | 500 Internal Server Error |
+| `storeLog_WithComplexLogEntry_ShouldHandleCorrectly` | Complex log entry | Handle with metadata |
+| `getLogs_WithSpecialCharactersInChannel_ShouldHandleCorrectly` | Special char channel name | Encoding handling |
+| `getLogs_WithLargeLimit_ShouldAcceptValue` | Handle large limit | Allow large numbers |
+| `getLogs_WithZeroLimit_ShouldAcceptValue` | Handle zero limit | Allow 0 value |
+| `storeLog_WithMissingRequiredFields_ShouldReturnBadRequest` | Missing required fields | 400 Bad Request |
 
 ---
 
-### 7. gRPC 서비스 테스트 (`LogPilotGrpcServiceTest.java`)
+### 5. REST Service Tests (`RestLogServiceTest.java`)
 
-#### 🎯 테스트 목적
-gRPC 프로토콜 처리, 메시지 변환, StreamObserver 패턴 검증
+#### 🎯 Test Purpose
+Verify REST log service business logic, dependency injection, and exception handling.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `grpcService_ShouldHaveCorrectAnnotations` | gRPC 서비스 어노테이션 | @Service, @ConditionalOnGrpcProtocol |
-| `sendLog_WithValidRequest_ShouldReturnSuccessResponse` | 단일 로그 gRPC 전송 | SUCCESS 응답 반환 |
-| `sendLog_WithMetadata_ShouldConvertCorrectly` | 메타데이터 포함 전송 | 메타데이터 변환 처리 |
-| `sendLog_WithEmptyMessage_ShouldHandleGracefully` | 빈 메시지 처리 | 빈 값 안전 처리 |
-| `sendLog_WhenServiceThrowsException_ShouldReturnErrorResponse` | 전송 예외 처리 | FAILED 응답 반환 |
-| `sendLogs_WithValidRequests_ShouldReturnSuccessResponse` | 배치 로그 gRPC 전송 | 배치 SUCCESS 응답 |
-| `sendLogs_WithEmptyList_ShouldReturnSuccessResponse` | 빈 배치 전송 | 빈 리스트 SUCCESS 처리 |
-| `sendLogs_WhenServiceThrowsException_ShouldReturnErrorResponse` | 배치 예외 처리 | FAILED 응답 반환 |
-| `listLogs_ShouldReturnProtoLogEntries` | 로그 목록 스트리밍 | StreamObserver 응답 |
-| `listLogs_WithNoLogs_ShouldReturnEmptyResponse` | 빈 로그 목록 | 빈 응답 스트리밍 |
-| `listLogs_WhenServiceThrowsException_ShouldCallOnError` | 목록 조회 예외 | onError 호출 |
-| `fetchLogs_WithChannel_ShouldCallGetLogsForConsumer` | 채널 기반 조회 | 특정 채널 조회 |
-| `fetchLogs_WithoutChannel_ShouldCallGetAllLogs` | 전체 로그 조회 | 채널 없는 전체 조회 |
-| `fetchLogs_WithEmptyChannel_ShouldCallGetAllLogs` | 빈 채널 조회 | 빈 채널을 전체 조회로 처리 |
-| `fetchLogs_WhenServiceThrowsException_ShouldCallOnError` | 조회 예외 처리 | onError 호출 |
-| `convertLogRequestToLogEntry_ShouldMapAllFields` | gRPC 요청 변환 | 모든 필드 매핑 |
-| `convertLogRequestToLogEntry_WithMetadata_ShouldConvertMap` | 메타데이터 맵 변환 | gRPC Map → Java Map |
-| `convertToProtoLogEntry_ShouldMapAllFields` | Java → Proto 변환 | 모든 필드 역변환 |
-| `convertStringToLogLevel_WithValidLevel_ShouldConvert` | 로그 레벨 문자열 변환 | 유효한 레벨 변환 |
-| `convertStringToLogLevel_WithInvalidLevel_ShouldDefaultToInfo` | 잘못된 로그 레벨 | 기본값 INFO 사용 |
-
----
-
-### 8. 통합 테스트 (`LogPilotServerIntegrationTest.java`)
-
-#### 🎯 테스트 목적
-전체 서버 모듈의 end-to-end 워크플로우, 다중 프로토콜, 동시성 검증
-
-#### 📋 테스트 케이스
-
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `contextLoads_WithAllProfiles_ShouldStartSuccessfully` | 전체 프로필 컨텍스트 | 모든 컴포넌트 정상 로딩 |
-| `restEndpoints_ShouldWorkEndToEnd_WithFileStorage` | REST API 전체 워크플로우 | 저장→조회 완전한 사이클 |
-| `restAndGrpc_ShouldWorkTogether_SameStorage` | REST-gRPC 통합 동작 | 동일 스토리지 공유 |
-| `multipleClients_ShouldAccessConcurrently` | 다중 클라이언트 동시 접근 | 동시성 안전성 |
-| `largeBatchRequests_ShouldProcessCorrectly` | 대용량 배치 처리 | 500개 로그 처리 성능 |
-| `invalidRequests_ShouldReturnAppropriateErrors` | 잘못된 요청 처리 | 적절한 에러 응답 |
-| `crossProtocolDataConsistency_ShouldMaintain` | 프로토콜 간 데이터 일관성 | REST-gRPC 데이터 동일성 |
-| `applicationShutdown_ShouldCloseResourcesProperly` | 애플리케이션 종료 처리 | 리소스 정리 |
-| `storagePerformance_ShouldMeetBasicRequirements` | 스토리지 성능 요구사항 | 기본 성능 기준 충족 |
-| `errorHandling_ShouldBeConsistent` | 일관된 에러 처리 | 모든 계층 동일한 에러 처리 |
-| `healthCheck_ShouldIndicateSystemStatus` | 헬스체크 기능 | 시스템 상태 정확 반영 |
-| `dataIntegrity_ShouldBePreserved` | 데이터 무결성 | 저장/조회 데이터 일치 |
-| `concurrentReadWrite_ShouldMaintainConsistency` | 동시 읽기/쓰기 일관성 | 동시 작업 시 데이터 정합성 |
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `restLogService_ShouldHaveCorrectAnnotations` | Service annotations | @Service, @ConditionalOnRestProtocol |
+| `constructor_WithLogStorage_ShouldCreateInstance` | Constructor dependency injection | Create normal instance |
+| `constructor_WithNullLogStorage_ShouldThrowException` | Handle null dependency | IllegalArgumentException |
+| `storeLog_WithValidLogEntry_ShouldCallLogStorage` | Delegate log storage | Verify Storage method call |
+| `storeLog_WithNullLogEntry_ShouldCallLogStorageWithNull` | Delegate null log | Pass null value as is |
+| `storeLog_WhenStorageThrowsException_ShouldPropagateException` | Propagate storage exception | Pass exception as is |
+| `storeLogs_WithValidLogEntries_ShouldCallLogStorage` | Delegate batch storage | Call Batch Storage |
+| `storeLogs_WithEmptyList_ShouldCallLogStorage` | Delegate empty batch | Pass empty list |
+| `storeLogs_WithNullList_ShouldCallLogStorageWithNull` | Delegate null batch | Pass null value |
+| `storeLogs_WhenStorageThrowsException_ShouldPropagateException` | Propagate batch exception | Pass exception as is |
+| `getLogsForConsumer_WithValidParameters_ShouldCallLogStorage` | Delegate consumer retrieval | Call Storage retrieval |
+| `getLogsForConsumer_WithNullChannel_ShouldCallLogStorage` | Retrieve null channel | Pass null value |
+| `getLogsForConsumer_WithNullConsumerId_ShouldCallLogStorage` | Retrieve null consumer | Pass null value |
+| `getLogsForConsumer_WithZeroLimit_ShouldCallLogStorage` | Retrieve zero limit | Pass 0 value |
+| `getLogsForConsumer_WhenStorageThrowsException_ShouldPropagateException` | Propagate retrieval exception | Pass exception as is |
+| `getAllLogs_WithValidLimit_ShouldCallLogStorage` | Delegate retrieve all | Storage retrieve all |
+| `getAllLogs_WithZeroLimit_ShouldCallLogStorage` | Retrieve all zero limit | Pass 0 value |
+| `getAllLogs_WithNegativeLimit_ShouldCallLogStorage` | Retrieve negative limit | Pass negative value |
+| `getAllLogs_WhenStorageThrowsException_ShouldPropagateException` | Propagate retrieve all exception | Pass exception as is |
+| `getAllLogs_WithLargeLimit_ShouldCallLogStorage` | Retrieve large limit | Handle large number |
+| `service_ShouldDelegateAllCallsToLogStorage` | Delegate all calls | Complete delegation pattern |
+| `service_ShouldHandleMultipleConsecutiveCalls` | Handle consecutive calls | Stateless processing |
+| `service_ShouldMaintainLogStorageReference` | Maintain Storage reference | Preserve dependency reference |
+| `service_ShouldHandleComplexLogEntries` | Handle complex logs | Logs with metadata |
 
 ---
 
-### 9. 서버 설정 테스트 (`ServerConfigurationTest.java`)
+### 6. gRPC Handler Tests (`GrpcLogHandlerTest.java`)
 
-#### 🎯 테스트 목적
-다양한 환경 설정, 프로토콜별 빈 활성화, 스토리지 타입별 설정 검증
+#### 🎯 Test Purpose
+Verify gRPC log handler service layer, dependency injection, and business logic.
 
-#### 📋 테스트 케이스
+#### 📋 Test Cases
 
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `RestOnlyConfigurationTest` | REST 전용 설정 | REST 빈만 활성화, gRPC 빈 비활성화 |
-| `GrpcOnlyConfigurationTest` | gRPC 전용 설정 | gRPC 빈만 활성화, REST 빈 비활성화 |
-| `AllProtocolsConfigurationTest` | 모든 프로토콜 설정 | 모든 빈 활성화 |
-| `FileStorageConfigurationTest` | 파일 스토리지 설정 | FileLogStorage 빈 생성 |
-| `SqliteStorageConfigurationTest` | SQLite 스토리지 설정 | SqliteLogStorage 빈 생성 |
-| `CustomPortsConfigurationTest` | 커스텀 포트 설정 | 사용자 정의 포트 바인딩 |
-| `DefaultPropertiesConfigurationTest` | 기본 설정값 | 기본값으로 정상 동작 |
-| `LoggingLevelConfigurationTest` | 로깅 레벨 설정 | 커스텀 로깅 설정 적용 |
-| `ActuatorConfigurationTest` | Actuator 설정 | 모니터링 엔드포인트 활성화 |
-| `ProfileSwitchingConfigurationTest` | 프로필 전환 설정 | 프로필별 다른 설정 적용 |
-| `ResourceCleanupConfigurationTest` | 리소스 정리 설정 | 적절한 리소스 관리 |
-
----
-
-### 10. 성능 테스트 (`PerformanceTest.java`)
-
-#### 🎯 테스트 목적
-처리량, 응답시간, 메모리 사용량, 동시성 성능 검증
-
-#### 📋 테스트 케이스
-
-| 테스트 메서드 | 설명 | 검증 사항 |
-|---------------|------|-----------|
-| `restApi_ShouldHandleHighThroughput` | REST API 고처리량 | 100개 요청, 초당 10개 이상 처리 |
-| `concurrentClients_ShouldMaintainPerformance` | 동시 클라이언트 성능 | 10개 클라이언트 동시 처리 |
-| `largeBatches_ShouldProcessWithinTimeout` | 대용량 배치 성능 | 500개 배치 10초 이내 처리 |
-| `memoryUsage_ShouldStayWithinLimits` | 메모리 사용량 제한 | 50MB 이내 메모리 증가 |
-| `storagePerformance_ShouldMeetRequirements` | 스토리지 성능 | 쓰기 500ms, 읽기 200ms 이내 |
-| `responseTime_ShouldMeetSLA` | 응답시간 SLA | 평균 1초, 95% 2초, 최대 5초 이내 |
-| `errorRate_ShouldStayBelowThreshold` | 에러율 임계값 | 1% 미만 에러율 유지 |
-
-#### 🔍 성능 기준
-
-**처리량 (Throughput):**
-- REST API: 초당 10개 이상 요청 처리
-- 동시 클라이언트: 10개 클라이언트, 초당 15개 이상 요청
-- 대용량 배치: 500개 로그 10초 이내 처리
-
-**응답시간 (Response Time):**
-- 평균 응답시간: 1초 이내
-- 95th 백분위수: 2초 이내
-- 최대 응답시간: 5초 이내
-
-**리소스 사용량:**
-- 메모리 증가: 50MB 이내
-- 에러율: 1% 미만
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `grpcLogHandler_ShouldHaveCorrectAnnotations` | Handler annotations | @Service, @ConditionalOnGrpcProtocol |
+| `constructor_WithLogStorage_ShouldCreateInstance` | Constructor dependency injection | Create normal instance |
+| `constructor_WithNullLogStorage_ShouldThrowException` | Handle null dependency | IllegalArgumentException |
+| `storeLog_WithValidLogEntry_ShouldCallLogStorage` | Delegate log storage | Call Storage method |
+| `storeLog_WithNullLogEntry_ShouldCallLogStorageWithNull` | Delegate null log | Pass null value |
+| `storeLog_WhenStorageThrowsException_ShouldPropagateException` | Propagate storage exception | Pass exception as is |
+| `storeLogs_WithValidLogEntries_ShouldCallLogStorage` | Delegate batch storage | Call Batch Storage |
+| `storeLogs_WithEmptyList_ShouldCallLogStorage` | Delegate empty batch | Pass empty list |
+| `storeLogs_WithNullList_ShouldCallLogStorageWithNull` | Delegate null batch | Pass null value |
+| `storeLogs_WhenStorageThrowsException_ShouldPropagateException` | Propagate batch exception | Pass exception as is |
+| `getLogsForConsumer_WithValidParameters_ShouldCallLogStorage` | Delegate consumer retrieval | Call Storage retrieval |
+| `getLogsForConsumer_WithNullChannel_ShouldCallLogStorage` | Retrieve null channel | Pass null value |
+| `getLogsForConsumer_WithNullConsumerId_ShouldCallLogStorage` | Retrieve null consumer | Pass null value |
+| `getLogsForConsumer_WithZeroLimit_ShouldCallLogStorage` | Retrieve zero limit | Pass 0 value |
+| `getLogsForConsumer_WhenStorageThrowsException_ShouldPropagateException` | Propagate retrieval exception | Pass exception as is |
+| `getAllLogs_WithValidLimit_ShouldCallLogStorage` | Delegate retrieve all | Storage retrieve all |
+| `getAllLogs_WithZeroLimit_ShouldCallLogStorage` | Retrieve all zero limit | Pass 0 value |
+| `getAllLogs_WithNegativeLimit_ShouldCallLogStorage` | Retrieve negative limit | Pass negative value |
+| `getAllLogs_WhenStorageThrowsException_ShouldPropagateException` | Propagate retrieve all exception | Pass exception as is |
+| `getAllLogs_WithLargeLimit_ShouldCallLogStorage` | Retrieve large limit | Handle large number |
+| `handler_ShouldDelegateAllCallsToLogStorage` | Delegate all calls | Complete delegation pattern |
+| `handler_ShouldHandleMultipleConsecutiveCalls` | Handle consecutive calls | Stateless processing |
+| `handler_ShouldMaintainLogStorageReference` | Maintain Storage reference | Preserve dependency reference |
+| `handler_ShouldHandleComplexLogEntries` | Handle complex logs | Logs with metadata |
+| `handler_ShouldImplementLogServiceInterface` | Interface implementation | Implement LogService interface |
+| `handler_ShouldHaveCorrectBeanName` | Check Bean name | Appropriate Spring Bean name |
+| `handler_ShouldBeConditionalOnGrpcProtocol` | Conditional activation | Check gRPC protocol condition |
 
 ---
 
-## 🔧 Server 모듈 테스트 실행 방법
+### 7. gRPC Service Tests (`LogPilotGrpcServiceTest.java`)
 
-### 전체 테스트 실행
+#### 🎯 Test Purpose
+Verify gRPC protocol handling, message conversion, and StreamObserver pattern.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `grpcService_ShouldHaveCorrectAnnotations` | gRPC service annotations | @Service, @ConditionalOnGrpcProtocol |
+| `sendLog_WithValidRequest_ShouldReturnSuccessResponse` | Single log gRPC send | Return SUCCESS response |
+| `sendLog_WithMetadata_ShouldConvertCorrectly` | Send with metadata | Metadata conversion handling |
+| `sendLog_WithEmptyMessage_ShouldHandleGracefully` | Handle empty message | Safe empty value handling |
+| `sendLog_WhenServiceThrowsException_ShouldReturnErrorResponse` | Send exception handling | Return FAILED response |
+| `sendLogs_WithValidRequests_ShouldReturnSuccessResponse` | Batch logs gRPC send | Batch SUCCESS response |
+| `sendLogs_WithEmptyList_ShouldReturnSuccessResponse` | Send empty batch | Empty list SUCCESS handling |
+| `sendLogs_WhenServiceThrowsException_ShouldReturnErrorResponse` | Batch exception handling | Return FAILED response |
+| `listLogs_ShouldReturnProtoLogEntries` | Stream log list | StreamObserver response |
+| `listLogs_WithNoLogs_ShouldReturnEmptyResponse` | Empty log list | Stream empty response |
+| `listLogs_WhenServiceThrowsException_ShouldCallOnError` | List retrieval exception | onError called |
+| `fetchLogs_WithChannel_ShouldCallGetLogsForConsumer` | Retrieve by channel | Retrieve specific channel |
+| `fetchLogs_WithoutChannel_ShouldCallGetAllLogs` | Retrieve all logs | Retrieve all without channel |
+| `fetchLogs_WithEmptyChannel_ShouldCallGetAllLogs` | Retrieve empty channel | Treat empty channel as retrieve all |
+| `fetchLogs_WhenServiceThrowsException_ShouldCallOnError` | Retrieval exception handling | onError called |
+| `convertLogRequestToLogEntry_ShouldMapAllFields` | Convert gRPC request | Map all fields |
+| `convertLogRequestToLogEntry_WithMetadata_ShouldConvertMap` | Convert metadata map | gRPC Map → Java Map |
+| `convertToProtoLogEntry_ShouldMapAllFields` | Convert Java → Proto | Reverse map all fields |
+| `convertStringToLogLevel_WithValidLevel_ShouldConvert` | Convert LogLevel string | Convert valid level |
+| `convertStringToLogLevel_WithInvalidLevel_ShouldDefaultToInfo` | Invalid LogLevel | Use default INFO |
+
+---
+
+### 8. Integration Tests (`LogPilotServerIntegrationTest.java`)
+
+#### 🎯 Test Purpose
+Verify end-to-end workflow of the entire server module, multi-protocol, and concurrency.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `contextLoads_WithAllProfiles_ShouldStartSuccessfully` | Full profile context | Normal loading of all components |
+| `restEndpoints_ShouldWorkEndToEnd_WithFileStorage` | REST API Full Workflow | Complete Save->Retrieve cycle |
+| `restAndGrpc_ShouldWorkTogether_SameStorage` | REST-gRPC Integrated Operation | Share same storage |
+| `multipleClients_ShouldAccessConcurrently` | Concurrent Multi-client Access | Concurrency safety |
+| `largeBatchRequests_ShouldProcessCorrectly` | Large Batch Processing | 500 logs processing performance |
+| `invalidRequests_ShouldReturnAppropriateErrors` | Handle Invalid Requests | Appropriate error response |
+| `crossProtocolDataConsistency_ShouldMaintain` | Data Consistency across protocols | Data identity between REST-gRPC |
+| `applicationShutdown_ShouldCloseResourcesProperly` | Application Shutdown Handling | Resource cleanup |
+| `storagePerformance_ShouldMeetBasicRequirements` | Storage Performance Requirements | Meet basic performance standards |
+| `errorHandling_ShouldBeConsistent` | Consistent Error Handling | Same error handling across layers |
+| `healthCheck_ShouldIndicateSystemStatus` | Health Check Functionality | Accurately reflect system status |
+| `dataIntegrity_ShouldBePreserved` | Data Integrity | Match stored/retrieved data |
+| `concurrentReadWrite_ShouldMaintainConsistency` | Concurrent Read/Write Consistency | Data integrity during concurrent ops |
+
+---
+
+### 9. Server Configuration Tests (`ServerConfigurationTest.java`)
+
+#### 🎯 Test Purpose
+Verify various environment configurations, protocol-specific bean activation, and storage type settings.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `RestOnlyConfigurationTest` | REST-only configuration | Activate REST beans only, deactivate gRPC beans |
+| `GrpcOnlyConfigurationTest` | gRPC-only configuration | Activate gRPC beans only, deactivate REST beans |
+| `AllProtocolsConfigurationTest` | All protocols configuration | Activate all beans |
+| `FileStorageConfigurationTest` | File storage configuration | Create FileLogStorage bean |
+| `SqliteStorageConfigurationTest` | SQLite storage configuration | Create SqliteLogStorage bean |
+| `CustomPortsConfigurationTest` | Custom port configuration | User-defined port binding |
+| `DefaultPropertiesConfigurationTest` | Default configuration values | Normal operation with defaults |
+| `LoggingLevelConfigurationTest` | Logging level configuration | Apply custom logging settings |
+| `ActuatorConfigurationTest` | Actuator configuration | Activate monitoring endpoints |
+| `ProfileSwitchingConfigurationTest` | Profile switching configuration | Apply different settings per profile |
+| `ResourceCleanupConfigurationTest` | Resource cleanup configuration | Appropriate resource management |
+
+---
+
+### 10. Performance Tests (`PerformanceTest.java`)
+
+#### 🎯 Test Purpose
+Verify throughput, response time, memory usage, and concurrency performance.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `restApi_ShouldHandleHighThroughput` | REST API High Throughput | 100 requests, >10 per second |
+| `concurrentClients_ShouldMaintainPerformance` | Concurrent Client Performance | 10 simultaneous clients |
+| `largeBatches_ShouldProcessWithinTimeout` | Large Batch Performance | 500 batch within 10 seconds |
+| `memoryUsage_ShouldStayWithinLimits` | Memory Usage Limits | Memory increase within 50MB |
+| `storagePerformance_ShouldMeetRequirements` | Storage Performance | Write <500ms, Read <200ms |
+| `responseTime_ShouldMeetSLA` | Response Time SLA | Avg 1s, 95% 2s, Max 5s |
+| `errorRate_ShouldStayBelowThreshold` | Error Rate Threshold | Maintain error rate <1% |
+
+#### 🔍 Performance Criteria
+
+**Throughput:**
+- REST API: >10 req/sec
+- Concurrent Clients: 10 clients, >15 req/sec
+- Large Batch: 500 logs within 10s
+
+**Response Time:**
+- Avg: <1s
+- 95th Percentile: <2s
+- Max: <5s
+
+**Resource Usage:**
+- Memory Increase: <50MB
+- Error Rate: <1%
+
+---
+
+## 🔧 How to Run Server Module Tests
+
+### Run All Tests
 ```bash
 ./gradlew :logpilot-server:test
 ```
 
-### 카테고리별 테스트 실행
+### Run by Category
 ```bash
-# 통합 테스트만
+# Integration Tests Only
 ./gradlew :logpilot-server:test --tests "*IntegrationTest"
 
-# 성능 테스트만
+# Performance Tests Only
 ./gradlew :logpilot-server:test --tests "*PerformanceTest"
 
-# 설정 테스트만
+# Configuration Tests Only
 ./gradlew :logpilot-server:test --tests "*ConfigurationTest"
 ```
 
-### 특정 테스트 클래스 실행
+### Run Specific Test Class
 ```bash
 ./gradlew :logpilot-server:test --tests "com.logpilot.server.rest.LogControllerTest"
 ```
 
-### 테스트 결과 보고서 확인
+### Check Test Report
 ```bash
 open logpilot-server/build/reports/tests/test/index.html
 ```
 
 ---
 
-## 🔧 Core 모듈 테스트 실행 방법
+## 🔧 How to Run Core Module Tests
 
-### 전체 테스트 실행
+### Run All Tests
 ```bash
 ./gradlew :logpilot-core:test
 ```
 
-### 특정 테스트 클래스 실행
+### Run Specific Test Class
 ```bash
 ./gradlew :logpilot-core:test --tests "com.logpilot.core.model.LogEntryTest"
 ```
 
-### 특정 테스트 메서드 실행
+### Run Specific Test Method
 ```bash
 ./gradlew :logpilot-core:test --tests "com.logpilot.core.model.LogEntryTest.constructor_ShouldCreateLogEntryWithRequiredFields"
 ```
 
-### 테스트 결과 보고서 확인
+### Check Test Report
 ```bash
 open logpilot-core/build/reports/tests/test/index.html
 ```
-
----
