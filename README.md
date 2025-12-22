@@ -219,4 +219,4 @@ See [`logpilot.proto`](logpilot-server/src/main/proto/logpilot.proto) for full s
 ```
 
 ### 📄 License
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License
