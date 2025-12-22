@@ -90,26 +90,18 @@ public class LogController {
 
     @PostMapping("/logs")
     public ResponseEntity<Void> storeLog(@Valid @RequestBody LogEntry logEntry) {
-        try {
-            recordLogMetrics(logEntry);
-            logService.storeLog(logEntry);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        recordLogMetrics(logEntry);
+        logService.storeLog(logEntry);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/logs/batch")
     public ResponseEntity<Void> storeLogs(@Valid @RequestBody List<LogEntry> logEntries) {
-        try {
-            if (logEntries != null) {
-                logEntries.forEach(this::recordLogMetrics);
-            }
-            logService.storeLogs(logEntries);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        if (logEntries != null) {
+            logEntries.forEach(this::recordLogMetrics);
         }
+        logService.storeLogs(logEntries);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/logs/{channel}")
@@ -118,27 +110,19 @@ public class LogController {
             @RequestParam(required = false) String consumerId,
             @RequestParam(defaultValue = "100") int limit) {
 
-        try {
-            List<LogEntry> logs;
-            if (consumerId != null) {
-                logs = logService.getLogsForConsumer(channel, consumerId, limit);
-            } else {
-                logs = logService.getAllLogs(limit);
-            }
-            return ResponseEntity.ok(logs);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        List<LogEntry> logs;
+        if (consumerId != null) {
+            logs = logService.getLogsForConsumer(channel, consumerId, limit);
+        } else {
+            logs = logService.getAllLogs(limit);
         }
+        return ResponseEntity.ok(logs);
     }
 
     @GetMapping("/logs")
     public ResponseEntity<List<LogEntry>> getAllLogs(
             @RequestParam(defaultValue = "100") int limit) {
-        try {
-            List<LogEntry> logs = logService.getAllLogs(limit);
-            return ResponseEntity.ok(logs);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<LogEntry> logs = logService.getAllLogs(limit);
+        return ResponseEntity.ok(logs);
     }
 }

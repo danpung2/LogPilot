@@ -13,6 +13,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -42,13 +44,16 @@ public class LogPilotGrpcServiceTest {
     @Mock
     private StreamObserver<LogPilotProto.FetchLogsResponse> fetchLogsResponseObserver;
 
+    @Mock
+    private MeterRegistry meterRegistry;
+
     private LogPilotGrpcService grpcService;
     private LogPilotProto.LogRequest testLogRequest;
     private List<LogEntry> testLogEntries;
 
     @BeforeEach
     void setUp() {
-        grpcService = new LogPilotGrpcService(logService);
+        grpcService = new LogPilotGrpcService(logService, meterRegistry);
 
         testLogRequest = LogPilotProto.LogRequest.newBuilder()
                 .setChannel("test-channel")

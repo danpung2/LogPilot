@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
+import com.logpilot.core.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class SqliteLogStorage implements LogStorage {
             createTablesIfNotExists();
             logger.info("SQLite storage initialized at: {}", dbPath);
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize SQLite storage", e);
+            throw new StorageException("Failed to initialize SQLite storage", e);
         }
     }
 
@@ -88,7 +89,7 @@ public class SqliteLogStorage implements LogStorage {
             logger.debug("Stored log entry for channel: {}", logEntry.getChannel());
         } catch (SQLException | JsonProcessingException e) {
             logger.error("Failed to store log entry", e);
-            throw new RuntimeException("Failed to store log entry", e);
+            throw new StorageException("Failed to store log entry", e);
         }
     }
 
@@ -130,7 +131,7 @@ public class SqliteLogStorage implements LogStorage {
             } catch (SQLException rollbackException) {
                 logger.error("Failed to rollback transaction", rollbackException);
             }
-            throw new RuntimeException("Failed to store log entries in batch", e);
+            throw new StorageException("Failed to store log entries in batch", e);
         } finally {
             try {
                 connection.setAutoCommit(true);
@@ -171,7 +172,7 @@ public class SqliteLogStorage implements LogStorage {
                         entries.size(), channel, consumerId);
         } catch (SQLException e) {
             logger.error("Failed to retrieve log entries", e);
-            throw new RuntimeException("Failed to retrieve log entries", e);
+            throw new StorageException("Failed to retrieve log entries", e);
         }
 
         return entries;
@@ -196,7 +197,7 @@ public class SqliteLogStorage implements LogStorage {
             logger.debug("Retrieved {} log entries", entries.size());
         } catch (SQLException e) {
             logger.error("Failed to retrieve all log entries", e);
-            throw new RuntimeException("Failed to retrieve all log entries", e);
+            throw new StorageException("Failed to retrieve all log entries", e);
         }
 
         return entries;

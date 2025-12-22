@@ -163,6 +163,20 @@ curl "http://localhost:8080/api/logs/my-app?consumerId=consumer-1&limit=10"
 - `message` (String): **필수**. 실제 로그 내용.
 - `timestamp` (String): 선택사항. ISO 8601 형식. 생략 시 서버 수신 시간으로 설정됨.
 - `meta` (Object): 선택사항. 추가적인 Key-Value 메타데이터 (예: userId, requestId).
+
+#### 에러 응답 (Error Response)
+에러 발생 시 (4xx 또는 5xx), API는 다음과 같은 JSON 형식의 응답을 반환합니다:
+```json
+{
+  "errorCode": "STORAGE_ERROR",
+  "message": "데이터베이스 잠금으로 인해 로그 저장 실패",
+  "timestamp": "2025-09-25T05:01:00"
+}
+```
+- `errorCode` (String): 고유 에러 코드 (예: `INTERNAL_SERVER_ERROR`, `VALIDATION_ERROR`, `STORAGE_ERROR`).
+- `message` (String): 설명 메시지.
+- `timestamp` (String): 에러 발생 시간.
+
 #### 방식 2: Kubernetes
 *참고: Minikube, Docker Desktop K8S 등 로컬 클러스터가 구동 중이어야 합니다. 클러스터 설정 및 상세 배포 가이드는 [K8S.md](K8S.md)를 참조하세요.*
 

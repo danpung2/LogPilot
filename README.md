@@ -209,6 +209,19 @@ Configure via environment variables or `application.yml`:
 - `timestamp` (String): Optional. ISO 8601 format. Defaults to server time if omitted.
 - `meta` (Object): Optional Key-Value pairs for extra context (e.g., userId, requestId).
 
+#### Error Response
+In case of an error (4xx or 5xx), the API returns a JSON response with the following structure:
+```json
+{
+  "errorCode": "STORAGE_ERROR",
+  "message": "Failed to store log entry due to database lock",
+  "timestamp": "2025-09-25T05:01:00"
+}
+```
+- `errorCode` (String): A unique error code (e.g., `INTERNAL_SERVER_ERROR`, `VALIDATION_ERROR`, `STORAGE_ERROR`).
+- `message` (String): Descriptive error message.
+- `timestamp` (String): Time when the error occurred.
+
 #### gRPC API
 See [`logpilot.proto`](logpilot-server/src/main/proto/logpilot.proto) for full service definition.
 
