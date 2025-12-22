@@ -1,14 +1,19 @@
 package com.logpilot.core.storage;
 
+import com.logpilot.core.config.LogPilotProperties;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import com.logpilot.core.exception.StorageException;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,12 +23,12 @@ import java.util.Map;
 public class SqliteLogStorage implements LogStorage {
 
     private static final Logger logger = LoggerFactory.getLogger(SqliteLogStorage.class);
-    private final String dbPath;
+    private final LogPilotProperties.Storage.Sqlite config;
     private final ObjectMapper objectMapper;
-    private Connection connection;
+    private HikariDataSource dataSource;
 
-    public SqliteLogStorage(String dbPath) {
-        this.dbPath = dbPath;
+    public SqliteLogStorage(LogPilotProperties.Storage.Sqlite config) {
+        this.config = config;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         initialize();
@@ -32,15 +37,32 @@ public class SqliteLogStorage implements LogStorage {
     @Override
     public void initialize() {
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
-            createTablesIfNotExists();
-            logger.info("SQLite storage initialized at: {}", dbPath);
+            HikariConfig hikariConfig = new HikariConfig();
+            hikariConfig.setJdbcUrl("jdbc:sqlite:" + config.getPath());
+            hikariConfig.setDriverClassName("org.sqlite.JDBC");
+            
+            LogPilotProperties.Storage.Pooling pooling = config.getPooling();
+            hikariConfig.setMaximumPoolSize(pooling.getMaximumPoolSize());
+            hikariConfig.setMinimumIdle(pooling.getMinimumIdle());
+            hikariConfig.setConnectionTimeout(pooling.getConnectionTimeout());
+            hikariConfig.setIdleTimeout(pooling.getIdleTimeout());
+            
+            hikariConfig.setPoolName("LogPilotSQLitePool");
+            hikariConfig.setConnectionInitSql("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;");
+            
+            this.dataSource = new HikariDataSource(hikariConfig);
+            
+            try (Connection conn = dataSource.getConnection()) {
+                createTablesIfNotExists(conn);
+            }
+            
+            logger.info("SQLite storage initialized at: {} with WAL mode enabled", config.getPath());
         } catch (SQLException e) {
             throw new StorageException("Failed to initialize SQLite storage", e);
         }
     }
 
-    private void createTablesIfNotExists() throws SQLException {
+    private void createTablesIfNotExists(Connection conn) throws SQLException {
         String createLogsTable = """
             CREATE TABLE IF NOT EXISTS logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,7 +84,7 @@ public class SqliteLogStorage implements LogStorage {
             )
             """;
 
-        try (Statement stmt = connection.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute(createLogsTable);
             stmt.execute(createConsumerOffsetsTable);
         }
@@ -72,7 +94,8 @@ public class SqliteLogStorage implements LogStorage {
     public void store(LogEntry logEntry) {
         String sql = "INSERT INTO logs (channel, level, message, meta, timestamp) VALUES (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, logEntry.getChannel());
             stmt.setString(2, logEntry.getLevel().name());
             stmt.setString(3, logEntry.getMessage());
@@ -101,10 +124,10 @@ public class SqliteLogStorage implements LogStorage {
 
         String sql = "INSERT INTO logs (channel, level, message, meta, timestamp) VALUES (?, ?, ?, ?, ?)";
 
-        try {
-            connection.setAutoCommit(false);
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
 
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 for (LogEntry logEntry : logEntries) {
                     stmt.setString(1, logEntry.getChannel());
                     stmt.setString(2, logEntry.getLevel().name());
@@ -121,23 +144,25 @@ public class SqliteLogStorage implements LogStorage {
                 }
 
                 stmt.executeBatch();
-                connection.commit();
+                conn.commit();
                 logger.debug("Stored {} log entries in batch", logEntries.size());
+            } catch (SQLException | JsonProcessingException e) {
+                try {
+                    conn.rollback();
+                    logger.error("Transaction rolled back due to error in batch insert", e);
+                } catch (SQLException rollbackException) {
+                    logger.error("Failed to rollback transaction", rollbackException);
+                }
+                throw new StorageException("Failed to store log entries in batch", e);
+            } finally {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    logger.error("Failed to reset auto-commit", e);
+                }
             }
-        } catch (SQLException | JsonProcessingException e) {
-            try {
-                connection.rollback();
-                logger.error("Transaction rolled back due to error in batch insert", e);
-            } catch (SQLException rollbackException) {
-                logger.error("Failed to rollback transaction", rollbackException);
-            }
-            throw new StorageException("Failed to store log entries in batch", e);
-        } finally {
-            try {
-                connection.setAutoCommit(true);
-            } catch (SQLException e) {
-                logger.error("Failed to reset auto-commit", e);
-            }
+        } catch (SQLException e) {
+            throw new StorageException("Failed to obtain connection for batch insert", e);
         }
     }
 
@@ -146,12 +171,13 @@ public class SqliteLogStorage implements LogStorage {
         long lastLogId = getConsumerOffset(consumerId, channel);
 
         String sql = "SELECT id, channel, level, message, meta, timestamp FROM logs " +
-                    "WHERE channel = ? AND id > ? ORDER BY id ASC LIMIT ?";
+                "WHERE channel = ? AND id > ? ORDER BY id ASC LIMIT ?";
 
         List<LogEntry> entries = new ArrayList<>();
         long maxLogId = lastLogId;
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, channel);
             pstmt.setLong(2, lastLogId);
             pstmt.setInt(3, limit);
@@ -169,7 +195,7 @@ public class SqliteLogStorage implements LogStorage {
             }
 
             logger.debug("Retrieved {} log entries for channel: {} and consumer: {}",
-                        entries.size(), channel, consumerId);
+                    entries.size(), channel, consumerId);
         } catch (SQLException e) {
             logger.error("Failed to retrieve log entries", e);
             throw new StorageException("Failed to retrieve log entries", e);
@@ -181,11 +207,12 @@ public class SqliteLogStorage implements LogStorage {
     @Override
     public List<LogEntry> retrieveAll(int limit) {
         String sql = "SELECT id, channel, level, message, meta, timestamp FROM logs " +
-                    "ORDER BY id DESC LIMIT ?";
+                "ORDER BY id DESC LIMIT ?";
 
         List<LogEntry> entries = new ArrayList<>();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, limit);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -227,7 +254,8 @@ public class SqliteLogStorage implements LogStorage {
     private Long getConsumerOffset(String consumerId, String channel) {
         String sql = "SELECT last_log_id FROM consumer_offsets WHERE consumer_id = ? AND channel = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, consumerId);
             pstmt.setString(2, channel);
 
@@ -251,7 +279,8 @@ public class SqliteLogStorage implements LogStorage {
             DO UPDATE SET last_log_id = excluded.last_log_id
             """;
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, consumerId);
             pstmt.setString(2, channel);
             pstmt.setLong(3, logId);
@@ -263,13 +292,9 @@ public class SqliteLogStorage implements LogStorage {
 
     @Override
     public void close() {
-        if (connection != null) {
-            try {
-                connection.close();
-                logger.info("SQLite storage connection closed");
-            } catch (SQLException e) {
-                logger.error("Failed to close SQLite connection", e);
-            }
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            logger.info("SQLite storage connection pool closed");
         }
     }
 }

@@ -195,6 +195,24 @@ kubectl port-forward svc/logpilot 8080:8080 50051:50051
 curl http://localhost:8081/actuator/prometheus
 ```
 
+### ⚙️ 설정 (Configuration)
+
+환경 변수 또는 `application.yml`을 통해 설정할 수 있습니다:
+
+| 변수명 (Variable) | 기본값 (Default) | 설명 (Description) |
+|---|---|---|
+| `LOGPILOT_PROTOCOL` | `all` | 프로토콜 모드: `rest`, `grpc`, 또는 `all` |
+| `LOGPILOT_HTTP_PORT` | `8080` | REST API 포트 |
+| `LOGPILOT_GRPC_PORT` | `50051` | gRPC 서버 포트 |
+| `LOGPILOT_STORAGE_TYPE` | `sqlite` | 저장소 백엔드: `sqlite` 또는 `file` |
+| `LOGPILOT_SQLITE_PATH` | `./data/logpilot.db` | SQLite 데이터베이스 경로 |
+| `LOGPILOT_SQLITE_POOL_SIZE` | `10` | HikariCP 최대 풀 크기 |
+| `LOGPILOT_SQLITE_MIN_IDLE` | `2` | HikariCP 최소 유휴 연결 수 |
+| `LOGPILOT_SQLITE_CONN_TIMEOUT` | `30000` | 연결 타임아웃 (ms) |
+| `LOGPILOT_SQLITE_IDLE_TIMEOUT` | `600000` | 유휴 타임아웃 (ms) |
+| `LOGPILOT_STORAGE_DIR` | `./data/logs` | 파일 저장소 디렉토리 |
+| `LOGPILOT_MANAGEMENT_PORT` | `8081` | Actuator/메트릭 포트 |
+
 ---
 
 ### 📡 API 레퍼런스

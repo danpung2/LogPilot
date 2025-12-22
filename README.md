@@ -191,6 +191,10 @@ Configure via environment variables or `application.yml`:
 | `LOGPILOT_GRPC_PORT` | `50051` | gRPC server port |
 | `LOGPILOT_STORAGE_TYPE` | `sqlite` | Storage backend: `sqlite` or `file` |
 | `LOGPILOT_SQLITE_PATH` | `./data/logpilot.db` | SQLite database path |
+| `LOGPILOT_SQLITE_POOL_SIZE` | `10` | HikariCP max pool size |
+| `LOGPILOT_SQLITE_MIN_IDLE` | `2` | HikariCP min idle connections |
+| `LOGPILOT_SQLITE_CONN_TIMEOUT` | `30000` | Connection timeout (ms) |
+| `LOGPILOT_SQLITE_IDLE_TIMEOUT` | `600000` | Idle timeout (ms) |
 | `LOGPILOT_STORAGE_DIR` | `./data/logs` | File storage directory |
 | `LOGPILOT_MANAGEMENT_PORT` | `8081` | Actuator/metrics port |
 

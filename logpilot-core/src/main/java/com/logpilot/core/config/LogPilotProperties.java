@@ -65,6 +65,7 @@ public class LogPilotProperties {
 
         public static class Sqlite {
             private String path = "./data/logpilot.db";
+            private Pooling pooling = new Pooling();
 
             public String getPath() {
                 return path;
@@ -72,6 +73,53 @@ public class LogPilotProperties {
 
             public void setPath(String path) {
                 this.path = path;
+            }
+
+            public Pooling getPooling() {
+                return pooling;
+            }
+
+            public void setPooling(Pooling pooling) {
+                this.pooling = pooling;
+            }
+        }
+
+        public static class Pooling {
+            private int maximumPoolSize = 10;
+            private int minimumIdle = 2;
+            private long connectionTimeout = 30000;
+            private long idleTimeout = 600000;
+
+            public int getMaximumPoolSize() {
+                return maximumPoolSize;
+            }
+
+            public void setMaximumPoolSize(int maximumPoolSize) {
+                this.maximumPoolSize = maximumPoolSize;
+            }
+
+            public int getMinimumIdle() {
+                return minimumIdle;
+            }
+
+            public void setMinimumIdle(int minimumIdle) {
+                this.minimumIdle = minimumIdle;
+            }
+
+            public long getConnectionTimeout() {
+                return connectionTimeout;
+            }
+
+            public void setConnectionTimeout(long connectionTimeout) {
+                this.connectionTimeout = connectionTimeout;
+            }
+
+            public long getIdleTimeout() {
+                return idleTimeout;
+            }
+
+            public void setIdleTimeout(long idleTimeout) {
+                this.idleTimeout = idleTimeout;
             }
         }
     }

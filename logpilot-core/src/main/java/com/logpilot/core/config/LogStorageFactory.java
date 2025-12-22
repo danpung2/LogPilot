@@ -33,7 +33,7 @@ public class LogStorageFactory {
         ensureParentDirectoryExists(dbPath);
 
         logger.debug("Creating SQLite storage at: {}", dbPath);
-        return new SqliteLogStorage(dbPath);
+        return new SqliteLogStorage(properties.getStorage().getSqlite());
     }
 
     private static LogStorage createFileStorage(LogPilotProperties properties) {

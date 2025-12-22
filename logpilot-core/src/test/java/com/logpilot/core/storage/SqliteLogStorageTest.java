@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.logpilot.core.config.LogPilotProperties;
 
 public class SqliteLogStorageTest {
 
@@ -24,7 +25,11 @@ public class SqliteLogStorageTest {
     @BeforeEach
     void setUp() {
         dbPath = tempDir.resolve("test.db").toString();
-        storage = new SqliteLogStorage(dbPath);
+        
+        LogPilotProperties.Storage.Sqlite config = new LogPilotProperties.Storage.Sqlite();
+        config.setPath(dbPath);
+        
+        storage = new SqliteLogStorage(config);
     }
 
     @AfterEach
