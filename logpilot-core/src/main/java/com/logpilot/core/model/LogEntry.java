@@ -91,30 +91,34 @@ public class LogEntry {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         LogEntry logEntry = (LogEntry) o;
         return Objects.equals(channel, logEntry.channel) &&
-               level == logEntry.level &&
-               Objects.equals(message, logEntry.message) &&
-               Objects.equals(meta, logEntry.meta) &&
-               Objects.equals(timestamp, logEntry.timestamp);
+                level == logEntry.level &&
+                Objects.equals(message, logEntry.message) &&
+                Objects.equals(meta, logEntry.meta) &&
+                Objects.equals(id, logEntry.id) &&
+                Objects.equals(timestamp, logEntry.timestamp);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(channel, level, message, meta, timestamp);
+        return Objects.hash(channel, level, message, meta, id, timestamp);
     }
 
     @Override
     public String toString() {
         return "LogEntry{" +
-               "channel='" + channel + '\'' +
-               ", level=" + level +
-               ", message='" + message + '\'' +
-               ", meta=" + meta +
-               ", timestamp=" + timestamp +
-               '}';
+                "channel='" + channel + '\'' +
+                ", level=" + level +
+                ", message='" + message + '\'' +
+                ", meta=" + meta +
+                ", id=" + id +
+                ", timestamp=" + timestamp +
+                '}';
     }
 
     public static Builder builder() {
