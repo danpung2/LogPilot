@@ -24,6 +24,21 @@ public interface LogStorage extends AutoCloseable {
      */
     void commitOffset(String channel, String consumerId, long lastLogId);
 
+    /**
+     * Seek to the beginning (earliest) of the log
+     */
+    void seekToBeginning(String channel, String consumerId);
+
+    /**
+     * Seek to the end (latest) of the log
+     */
+    void seekToEnd(String channel, String consumerId);
+
+    /**
+     * Seek to a specific log ID
+     */
+    void seekToId(String channel, String consumerId, long logId);
+
     List<LogEntry> retrieveAll(int limit);
 
     void initialize();

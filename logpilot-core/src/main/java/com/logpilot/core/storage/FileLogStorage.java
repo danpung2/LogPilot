@@ -13,6 +13,7 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Stream;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -191,6 +192,41 @@ public class FileLogStorage implements LogStorage {
         saveConsumerOffset(offsetKey, lastLogId);
         logger.info("Manually committed offset for consumer: {} on channel: {} to logId: {}",
                 consumerId, channel, lastLogId);
+    }
+
+    @Override
+    public void seekToBeginning(String channel, String consumerId) {
+        String offsetKey = consumerId + ":" + channel;
+        consumerOffsets.put(offsetKey, 0L);
+        saveConsumerOffset(offsetKey, 0L);
+        logger.info("Seek to beginning for consumer: {} on channel: {}", consumerId, channel);
+    }
+
+    @Override
+    public void seekToEnd(String channel, String consumerId) {
+        Path logFile = getLogFilePath(channel);
+        long lineCount = 0;
+        if (Files.exists(logFile)) {
+            try (Stream<String> lines = Files.lines(logFile)) {
+                lineCount = lines.count();
+            } catch (IOException e) {
+                logger.error("Failed to count lines in file: {}", logFile, e);
+                throw new RuntimeException("Failed to seek to end", e);
+            }
+        }
+        String offsetKey = consumerId + ":" + channel;
+        consumerOffsets.put(offsetKey, lineCount);
+        saveConsumerOffset(offsetKey, lineCount);
+        logger.info("Seek to end for consumer: {} on channel: {} (maxLine: {})", consumerId, channel, lineCount);
+    }
+
+    @Override
+    public void seekToId(String channel, String consumerId, long logId) {
+        String offsetKey = consumerId + ":" + channel;
+        // In FileLogStorage, ID is the line number
+        consumerOffsets.put(offsetKey, logId - 1);
+        saveConsumerOffset(offsetKey, logId - 1);
+        logger.info("Seek to ID {} for consumer: {} on channel: {}", logId, consumerId, channel);
     }
 
     @Override

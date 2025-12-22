@@ -63,6 +63,24 @@ public class RestLogService implements LogService {
     }
 
     @Override
+    public void seekToBeginning(String channel, String consumerId) {
+        logger.debug("[REST] Seeking to beginning for channel: {} and consumer: {}", channel, consumerId);
+        logStorage.seekToBeginning(channel, consumerId);
+    }
+
+    @Override
+    public void seekToEnd(String channel, String consumerId) {
+        logger.debug("[REST] Seeking to end for channel: {} and consumer: {}", channel, consumerId);
+        logStorage.seekToEnd(channel, consumerId);
+    }
+
+    @Override
+    public void seekToId(String channel, String consumerId, long logId) {
+        logger.debug("[REST] Seeking to ID {} for channel: {} and consumer: {}", logId, channel, consumerId);
+        logStorage.seekToId(channel, consumerId, logId);
+    }
+
+    @Override
     public List<LogEntry> getAllLogs(int limit) {
         logger.debug("[REST] Retrieving all logs with limit: {}", limit);
         return logStorage.retrieveAll(limit);

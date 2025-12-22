@@ -62,4 +62,22 @@ public class GrpcLogHandler implements LogService {
         logger.debug("[gRPC] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId, lastLogId);
         logStorage.commitOffset(channel, consumerId, lastLogId);
     }
+
+    @Override
+    public void seekToBeginning(String channel, String consumerId) {
+        logger.debug("[gRPC] Seeking to beginning for channel: {} and consumer: {}", channel, consumerId);
+        logStorage.seekToBeginning(channel, consumerId);
+    }
+
+    @Override
+    public void seekToEnd(String channel, String consumerId) {
+        logger.debug("[gRPC] Seeking to end for channel: {} and consumer: {}", channel, consumerId);
+        logStorage.seekToEnd(channel, consumerId);
+    }
+
+    @Override
+    public void seekToId(String channel, String consumerId, long logId) {
+        logger.debug("[gRPC] Seeking to ID {} for channel: {} and consumer: {}", logId, channel, consumerId);
+        logStorage.seekToId(channel, consumerId, logId);
+    }
 }

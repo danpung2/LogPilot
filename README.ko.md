@@ -164,6 +164,8 @@ curl "http://localhost:8080/api/logs/my-app?consumerId=consumer-1&limit=10"
     - `autoCommit` (기본값: true): false일 경우 오프셋을 업데이트하지 않습니다. "Peek & Commit" 패턴에 사용.
 - `POST /api/logs/commit`: 수동으로 컨슈머 오프셋 커밋.
   - 본문: `{ "channel": "...", "consumerId": "...", "lastLogId": 123 }`
+- `POST /api/logs/seek`: 컨슈머 오프셋 탐색 (Kafka-style Seek).
+  - 본문: `{ "channel": "...", "consumerId": "...", "operation": "EARLIEST|LATEST|SPECIFIC", "logId": 123 }`
 
 #### 신뢰성 (Reliability - Manual Ack)
 데이터 손실을 방지하려면 "Fetch & Commit" 패턴을 사용하세요:
@@ -171,6 +173,12 @@ curl "http://localhost:8080/api/logs/my-app?consumerId=consumer-1&limit=10"
 2. 로그를 성공적으로 처리합니다.
 3. 처리된 가장 높은 `id`로 `/api/logs/commit`을 호출합니다.
 이 방식은 처리 중 실패하더라도 다음 조회 시 동일한 로그를 다시 전달받을 수 있게 보장합니다.
+
+#### 오프셋 관리 (Seek)
+`/api/logs/seek` API를 사용하여 컨슈머의 위치를 수동으로 조절할 수 있습니다:
+- **EARLIEST**: 처음부터 모든 로그를 다시 읽습니다.
+- **LATEST**: 현재까지의 모든 로그를 건너뛰고 새로운 로그부터 수신합니다.
+- **SPECIFIC**: 특정 로그 ID(또는 라인 번호)로 이동하여 해당 지점부터 다시 처리합니다.
 
 #### LogEntry 필드 상세
 - `channel` (String): **필수**. 로그의 카테고리나 출처 (예: 'payment-service').

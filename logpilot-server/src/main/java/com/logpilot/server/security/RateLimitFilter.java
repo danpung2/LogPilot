@@ -31,7 +31,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        if (request.getRequestURI().startsWith("/actuator")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String key = resolveClientKey(request);
+        logger.debug("Applying rate limit for key: {} on URI: {}", key, request.getRequestURI());
+
         Bucket bucket = buckets.computeIfAbsent(key, k -> bucketSupplier.get());
 
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
@@ -40,7 +47,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         } else {
             logger.warn("Rate limit exceeded for client: {}", key);
             response.setStatus(429);
-            response.setHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(probe.getNanosToWaitForRefill() / 1_000_000_000L));
+            response.setHeader("X-Rate-Limit-Retry-After-Seconds",
+                    String.valueOf(probe.getNanosToWaitForRefill() / 1_000_000_000L));
             response.getWriter().write("Too Many Requests");
         }
     }
@@ -50,7 +58,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             return auth.getName(); // API Key identifier (api-user)
         }
-        
+
         // Fallback to API Key header if not yet authenticated but present
         String apiKey = request.getHeader("X-API-KEY");
         if (apiKey != null) {

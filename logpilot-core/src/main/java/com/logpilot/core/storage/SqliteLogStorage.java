@@ -13,9 +13,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,22 +38,22 @@ public class SqliteLogStorage implements LogStorage {
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setJdbcUrl("jdbc:sqlite:" + config.getPath());
             hikariConfig.setDriverClassName("org.sqlite.JDBC");
-            
+
             LogPilotProperties.Storage.Pooling pooling = config.getPooling();
             hikariConfig.setMaximumPoolSize(pooling.getMaximumPoolSize());
             hikariConfig.setMinimumIdle(pooling.getMinimumIdle());
             hikariConfig.setConnectionTimeout(pooling.getConnectionTimeout());
             hikariConfig.setIdleTimeout(pooling.getIdleTimeout());
-            
+
             hikariConfig.setPoolName("LogPilotSQLitePool");
             hikariConfig.setConnectionInitSql("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;");
-            
+
             this.dataSource = new HikariDataSource(hikariConfig);
-            
+
             try (Connection conn = dataSource.getConnection()) {
                 createTablesIfNotExists(conn);
             }
-            
+
             logger.info("SQLite storage initialized at: {} with WAL mode enabled", config.getPath());
         } catch (SQLException e) {
             throw new StorageException("Failed to initialize SQLite storage", e);
@@ -64,25 +62,25 @@ public class SqliteLogStorage implements LogStorage {
 
     private void createTablesIfNotExists(Connection conn) throws SQLException {
         String createLogsTable = """
-            CREATE TABLE IF NOT EXISTS logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                channel TEXT NOT NULL,
-                level TEXT NOT NULL,
-                message TEXT NOT NULL,
-                meta TEXT,
-                timestamp DATETIME NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-            """;
+                CREATE TABLE IF NOT EXISTS logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    channel TEXT NOT NULL,
+                    level TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    meta TEXT,
+                    timestamp DATETIME NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+                """;
 
         String createConsumerOffsetsTable = """
-            CREATE TABLE IF NOT EXISTS consumer_offsets (
-                consumer_id TEXT NOT NULL,
-                channel TEXT NOT NULL,
-                last_log_id INTEGER NOT NULL,
-                PRIMARY KEY (consumer_id, channel)
-            )
-            """;
+                CREATE TABLE IF NOT EXISTS consumer_offsets (
+                    consumer_id TEXT NOT NULL,
+                    channel TEXT NOT NULL,
+                    last_log_id INTEGER NOT NULL,
+                    PRIMARY KEY (consumer_id, channel)
+                )
+                """;
 
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createLogsTable);
@@ -95,7 +93,7 @@ public class SqliteLogStorage implements LogStorage {
         String sql = "INSERT INTO logs (channel, level, message, meta, timestamp) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, logEntry.getChannel());
             stmt.setString(2, logEntry.getLevel().name());
             stmt.setString(3, logEntry.getMessage());
@@ -182,7 +180,7 @@ public class SqliteLogStorage implements LogStorage {
         long maxLogId = lastLogId;
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, channel);
             pstmt.setLong(2, lastLogId);
             pstmt.setInt(3, limit);
@@ -217,6 +215,39 @@ public class SqliteLogStorage implements LogStorage {
     }
 
     @Override
+    public void seekToBeginning(String channel, String consumerId) {
+        updateConsumerOffset(consumerId, channel, 0L);
+        logger.info("Seek to beginning for consumer: {} on channel: {}", consumerId, channel);
+    }
+
+    @Override
+    public void seekToEnd(String channel, String consumerId) {
+        String sql = "SELECT MAX(id) FROM logs WHERE channel = ?";
+        long maxId = 0;
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, channel);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    maxId = rs.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to seek to end for channel: {}", channel, e);
+            throw new StorageException("Failed to seek to end", e);
+        }
+        updateConsumerOffset(consumerId, channel, maxId);
+        logger.info("Seek to end for consumer: {} on channel: {} (maxId: {})", consumerId, channel, maxId);
+    }
+
+    @Override
+    public void seekToId(String channel, String consumerId, long logId) {
+        // We set offset to logId - 1 so that the next retrieve returns logId
+        updateConsumerOffset(consumerId, channel, logId - 1);
+        logger.info("Seek to ID {} for consumer: {} on channel: {}", logId, consumerId, channel);
+    }
+
+    @Override
     public List<LogEntry> retrieveAll(int limit) {
         String sql = "SELECT id, channel, level, message, meta, timestamp FROM logs " +
                 "ORDER BY id DESC LIMIT ?";
@@ -224,7 +255,7 @@ public class SqliteLogStorage implements LogStorage {
         List<LogEntry> entries = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, limit);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -270,7 +301,7 @@ public class SqliteLogStorage implements LogStorage {
         String sql = "SELECT last_log_id FROM consumer_offsets WHERE consumer_id = ? AND channel = ?";
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, consumerId);
             pstmt.setString(2, channel);
 
@@ -288,14 +319,14 @@ public class SqliteLogStorage implements LogStorage {
 
     private void updateConsumerOffset(String consumerId, String channel, Long logId) {
         String sql = """
-            INSERT INTO consumer_offsets (consumer_id, channel, last_log_id)
-            VALUES (?, ?, ?)
-            ON CONFLICT(consumer_id, channel)
-            DO UPDATE SET last_log_id = excluded.last_log_id
-            """;
+                INSERT INTO consumer_offsets (consumer_id, channel, last_log_id)
+                VALUES (?, ?, ?)
+                ON CONFLICT(consumer_id, channel)
+                DO UPDATE SET last_log_id = excluded.last_log_id
+                """;
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, consumerId);
             pstmt.setString(2, channel);
             pstmt.setLong(3, logId);

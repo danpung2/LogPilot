@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.logpilot.server.rest.dto.CommitOffsetRequest;
+import com.logpilot.server.rest.dto.SeekRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -124,6 +125,21 @@ public class LogController {
     @PostMapping("/logs/commit")
     public ResponseEntity<Void> commitOffset(@Valid @RequestBody CommitOffsetRequest request) {
         logService.commitLogOffset(request.getChannel(), request.getConsumerId(), request.getLastLogId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/logs/seek")
+    public ResponseEntity<Void> seek(@Valid @RequestBody SeekRequest request) {
+        switch (request.getOperation()) {
+            case EARLIEST -> logService.seekToBeginning(request.getChannel(), request.getConsumerId());
+            case LATEST -> logService.seekToEnd(request.getChannel(), request.getConsumerId());
+            case SPECIFIC -> {
+                if (request.getLogId() == null) {
+                    return ResponseEntity.badRequest().build();
+                }
+                logService.seekToId(request.getChannel(), request.getConsumerId(), request.getLogId());
+            }
+        }
         return ResponseEntity.ok().build();
     }
 

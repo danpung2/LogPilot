@@ -217,6 +217,8 @@ Configure via environment variables or `application.yml`:
     - `autoCommit` (default: true): If false, offset is NOT updated. Use for "Peak & Commit" pattern.
 - `POST /api/logs/commit`: Manually commit offset for a consumer.
   - Body: `{ "channel": "...", "consumerId": "...", "lastLogId": 123 }`
+- `POST /api/logs/seek`: Seek offset for a consumer (Kafka-style).
+  - Body: `{ "channel": "...", "consumerId": "...", "operation": "EARLIEST|LATEST|SPECIFIC", "logId": 123 }`
 
 #### Reliability (Manual Ack)
 To ensure zero data loss, use the "Fetch & Commit" pattern:
@@ -224,6 +226,12 @@ To ensure zero data loss, use the "Fetch & Commit" pattern:
 2. Process logs successfully.
 3. Call `/api/logs/commit` with the highest `id` processed.
 This ensures that if processing fails, the same logs will be delivered again on the next fetch.
+
+#### Offset Management (Seek)
+You can manually move the consumer's position using the `/api/logs/seek` API:
+- **EARLIEST**: Replay all logs from the beginning.
+- **LATEST**: Skip all current logs and only receive new logs.
+- **SPECIFIC**: Jump to a specific log ID (or line number) for targeted reprocessing.
 
 #### LogEntry Fields
 - `channel` (String): **Required**. The category or source of the log (e.g., 'payment-service').
