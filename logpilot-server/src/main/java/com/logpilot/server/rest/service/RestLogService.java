@@ -47,8 +47,19 @@ public class RestLogService implements LogService {
 
     @Override
     public List<LogEntry> getLogsForConsumer(String channel, String consumerId, int limit) {
-        logger.debug("[REST] Retrieving logs for channel: {} and consumer: {}", channel, consumerId);
-        return logStorage.retrieve(channel, consumerId, limit);
+        return getLogsForConsumer(channel, consumerId, limit, true);
+    }
+
+    @Override
+    public List<LogEntry> getLogsForConsumer(String channel, String consumerId, int limit, boolean autoCommit) {
+        logger.debug("[REST] Retrieving logs for channel: {} and consumer: {} (autoCommit={})", channel, consumerId, autoCommit);
+        return logStorage.retrieve(channel, consumerId, limit, autoCommit);
+    }
+
+    @Override
+    public void commitLogOffset(String channel, String consumerId, long lastLogId) {
+        logger.debug("[REST] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId, lastLogId);
+        logStorage.commitOffset(channel, consumerId, lastLogId);
     }
 
     @Override

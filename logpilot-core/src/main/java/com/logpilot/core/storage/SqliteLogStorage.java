@@ -168,6 +168,11 @@ public class SqliteLogStorage implements LogStorage {
 
     @Override
     public List<LogEntry> retrieve(String channel, String consumerId, int limit) {
+        return retrieve(channel, consumerId, limit, true);
+    }
+
+    @Override
+    public List<LogEntry> retrieve(String channel, String consumerId, int limit, boolean autoCommit) {
         long lastLogId = getConsumerOffset(consumerId, channel);
 
         String sql = "SELECT id, channel, level, message, meta, timestamp FROM logs " +
@@ -190,18 +195,25 @@ public class SqliteLogStorage implements LogStorage {
                 }
             }
 
-            if (maxLogId > lastLogId) {
+            if (autoCommit && maxLogId > lastLogId) {
                 updateConsumerOffset(consumerId, channel, maxLogId);
             }
 
-            logger.debug("Retrieved {} log entries for channel: {} and consumer: {}",
-                    entries.size(), channel, consumerId);
+            logger.debug("Retrieved {} log entries for channel: {} and consumer: {} (autoCommit={})",
+                    entries.size(), channel, consumerId, autoCommit);
         } catch (SQLException e) {
             logger.error("Failed to retrieve log entries", e);
             throw new StorageException("Failed to retrieve log entries", e);
         }
 
         return entries;
+    }
+
+    @Override
+    public void commitOffset(String channel, String consumerId, long lastLogId) {
+        updateConsumerOffset(consumerId, channel, lastLogId);
+        logger.info("Manually committed offset for consumer: {} on channel: {} to logId: {}",
+                consumerId, channel, lastLogId);
     }
 
     @Override
@@ -247,6 +259,9 @@ public class SqliteLogStorage implements LogStorage {
                 logger.warn("Failed to parse meta JSON: {}", metaJson, e);
             }
         }
+
+        // Set the ID from ResultSet
+        entry.setId(rs.getLong("id"));
 
         return entry;
     }

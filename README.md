@@ -209,6 +209,18 @@ Configure via environment variables or `application.yml`:
 - `POST /api/logs/batch`: Send a batch of log entries.
 - `GET /api/logs`: Retrieve all logs (with limit).
 - `GET /api/logs/{channel}`: Retrieve logs for a specific channel. Supports `consumerId` param for offset tracking.
+  - Query Params:
+    - `limit` (default: 100)
+    - `autoCommit` (default: true): If false, offset is NOT updated. Use for "Peak & Commit" pattern.
+- `POST /api/logs/commit`: Manually commit offset for a consumer.
+  - Body: `{ "channel": "...", "consumerId": "...", "lastLogId": 123 }`
+
+#### Reliability (Manual Ack)
+To ensure zero data loss, use the "Fetch & Commit" pattern:
+1. Fetch logs with `autoCommit=false`.
+2. Process logs successfully.
+3. Call `/api/logs/commit` with the highest `id` processed.
+This ensures that if processing fails, the same logs will be delivered again on the next fetch.
 
 #### LogEntry Fields
 - `channel` (String): **Required**. The category or source of the log (e.g., 'payment-service').

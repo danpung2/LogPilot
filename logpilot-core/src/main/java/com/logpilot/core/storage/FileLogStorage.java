@@ -124,6 +124,11 @@ public class FileLogStorage implements LogStorage {
 
     @Override
     public List<LogEntry> retrieve(String channel, String consumerId, int limit) {
+        return retrieve(channel, consumerId, limit, true);
+    }
+
+    @Override
+    public List<LogEntry> retrieve(String channel, String consumerId, int limit, boolean autoCommit) {
         lock.readLock().lock();
         try {
             Path logFile = getLogFilePath(channel);
@@ -162,13 +167,13 @@ public class FileLogStorage implements LogStorage {
                 }
             }
 
-            if (maxLineNumber > lastLineNumber) {
+            if (autoCommit && maxLineNumber > lastLineNumber) {
                 consumerOffsets.put(offsetKey, maxLineNumber);
                 saveConsumerOffset(offsetKey, maxLineNumber);
             }
 
-            logger.debug("Retrieved {} log entries for channel: {} and consumer: {}",
-                        entries.size(), channel, consumerId);
+            logger.debug("Retrieved {} log entries for channel: {} and consumer: {} (autoCommit={})",
+                        entries.size(), channel, consumerId, autoCommit);
             return entries;
 
         } catch (IOException e) {
@@ -177,6 +182,15 @@ public class FileLogStorage implements LogStorage {
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    @Override
+    public void commitOffset(String channel, String consumerId, long lastLogId) {
+        String offsetKey = consumerId + ":" + channel;
+        consumerOffsets.put(offsetKey, lastLogId);
+        saveConsumerOffset(offsetKey, lastLogId);
+        logger.info("Manually committed offset for consumer: {} on channel: {} to logId: {}",
+                consumerId, channel, lastLogId);
     }
 
     @Override
@@ -283,6 +297,13 @@ public class FileLogStorage implements LogStorage {
             if (meta != null) {
                 entry.setMeta(meta);
             }
+
+            if (meta != null) {
+                entry.setMeta(meta);
+            }
+
+            // Set the ID (using line number as ID for File storage)
+            entry.setId(lineNumber);
 
             return entry;
         } catch (Exception e) {

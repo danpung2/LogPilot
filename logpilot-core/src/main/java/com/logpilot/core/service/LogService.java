@@ -22,6 +22,18 @@ public interface LogService {
     List<LogEntry> getLogsForConsumer(String channel, String consumerId, int limit);
 
     /**
+     * Retrieve logs for a specific channel and consumer with optional auto-commit
+     */
+    default List<LogEntry> getLogsForConsumer(String channel, String consumerId, int limit, boolean autoCommit) {
+        return getLogsForConsumer(channel, consumerId, limit);
+    }
+
+    /**
+     * Commit offset for a consumer
+     */
+    void commitLogOffset(String channel, String consumerId, long lastLogId);
+
+    /**
      * Retrieve all logs with a limit
      */
     List<LogEntry> getAllLogs(int limit);

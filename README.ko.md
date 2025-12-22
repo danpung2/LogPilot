@@ -159,6 +159,18 @@ curl "http://localhost:8080/api/logs/my-app?consumerId=consumer-1&limit=10"
 - `POST /api/logs/batch`: 배치 로그 전송
 - `GET /api/logs`: 로그 조회
 - `GET /api/logs/{channel}`: 채널별 로그 조회 (`consumerId` 파라미터로 오프셋 관리 가능)
+  - 파라미터:
+    - `limit` (기본값: 100)
+    - `autoCommit` (기본값: true): false일 경우 오프셋을 업데이트하지 않습니다. "Peek & Commit" 패턴에 사용.
+- `POST /api/logs/commit`: 수동으로 컨슈머 오프셋 커밋.
+  - 본문: `{ "channel": "...", "consumerId": "...", "lastLogId": 123 }`
+
+#### 신뢰성 (Reliability - Manual Ack)
+데이터 손실을 방지하려면 "Fetch & Commit" 패턴을 사용하세요:
+1. `autoCommit=false`로 로그를 조회합니다.
+2. 로그를 성공적으로 처리합니다.
+3. 처리된 가장 높은 `id`로 `/api/logs/commit`을 호출합니다.
+이 방식은 처리 중 실패하더라도 다음 조회 시 동일한 로그를 다시 전달받을 수 있게 보장합니다.
 
 #### LogEntry 필드 상세
 - `channel` (String): **필수**. 로그의 카테고리나 출처 (예: 'payment-service').

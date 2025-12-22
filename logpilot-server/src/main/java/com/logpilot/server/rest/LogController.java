@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.logpilot.server.rest.dto.CommitOffsetRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,15 +109,22 @@ public class LogController {
     public ResponseEntity<List<LogEntry>> getLogs(
             @PathVariable String channel,
             @RequestParam(required = false) String consumerId,
-            @RequestParam(defaultValue = "100") int limit) {
+            @RequestParam(defaultValue = "100") int limit,
+            @RequestParam(defaultValue = "true") boolean autoCommit) {
 
         List<LogEntry> logs;
         if (consumerId != null) {
-            logs = logService.getLogsForConsumer(channel, consumerId, limit);
+            logs = logService.getLogsForConsumer(channel, consumerId, limit, autoCommit);
         } else {
             logs = logService.getAllLogs(limit);
         }
         return ResponseEntity.ok(logs);
+    }
+
+    @PostMapping("/logs/commit")
+    public ResponseEntity<Void> commitOffset(@Valid @RequestBody CommitOffsetRequest request) {
+        logService.commitLogOffset(request.getChannel(), request.getConsumerId(), request.getLastLogId());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/logs")

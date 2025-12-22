@@ -56,4 +56,10 @@ public class GrpcLogHandler implements LogService {
         logger.debug("[gRPC] Retrieving all logs with limit: {}", limit);
         return logStorage.retrieveAll(limit);
     }
+
+    @Override
+    public void commitLogOffset(String channel, String consumerId, long lastLogId) {
+        logger.debug("[gRPC] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId, lastLogId);
+        logStorage.commitOffset(channel, consumerId, lastLogId);
+    }
 }

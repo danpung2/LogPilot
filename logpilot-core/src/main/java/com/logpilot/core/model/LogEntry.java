@@ -21,6 +21,8 @@ public class LogEntry {
 
     private Map<String, Object> meta;
 
+    private Long id;
+
     private LocalDateTime timestamp;
 
     public LogEntry() {
@@ -69,6 +71,14 @@ public class LogEntry {
 
     public void setMeta(Map<String, Object> meta) {
         this.meta = meta;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public LocalDateTime getTimestamp() {
