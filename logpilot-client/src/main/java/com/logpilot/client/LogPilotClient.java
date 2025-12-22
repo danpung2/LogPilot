@@ -44,6 +44,10 @@ public interface LogPilotClient extends AutoCloseable {
         private int timeout = 5000;
         private int maxRetries = 3;
 
+        private boolean enableBatching = false;
+        private int batchSize = 100;
+        private long flushIntervalMillis = 5000;
+
         public Builder serverUrl(String serverUrl) {
             this.serverUrl = serverUrl;
             return this;
@@ -64,13 +68,28 @@ public interface LogPilotClient extends AutoCloseable {
             return this;
         }
 
+        public Builder enableBatching(boolean enableBatching) {
+            this.enableBatching = enableBatching;
+            return this;
+        }
+
+        public Builder batchSize(int batchSize) {
+            this.batchSize = batchSize;
+            return this;
+        }
+
+        public Builder flushIntervalMillis(long flushIntervalMillis) {
+            this.flushIntervalMillis = flushIntervalMillis;
+            return this;
+        }
+
         public LogPilotClient build() {
             if (serverUrl == null || serverUrl.trim().isEmpty()) {
                 throw new IllegalArgumentException("Server URL is required");
             }
 
             return switch (clientType) {
-                case REST -> new LogPilotRestClient(serverUrl, timeout, maxRetries);
+                case REST -> new LogPilotRestClient(serverUrl, timeout, maxRetries, enableBatching, batchSize, flushIntervalMillis);
                 case GRPC -> new LogPilotGrpcClient(serverUrl, timeout, maxRetries);
             };
         }

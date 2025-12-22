@@ -43,7 +43,7 @@ Traditional Stack          LogPilot
 - 🔧 **Spring Actuator**: Health checks, info endpoints, and runtime metrics
 
 #### Developer Experience
-- 🔌 **Client SDK**: Java client library for seamless integration
+- 🔌 **Client SDK**: Java client library with **Asynchronous Batching** support. See [logpilot-client](logpilot-client/README.md).
 - 📝 **Protobuf Definitions**: Strongly-typed gRPC contracts
 - 🎯 **Flexible Configuration**: Environment-based configuration with Spring Profiles
 - 🔄 **Hot Reload**: Profile-based protocol switching (REST-only, gRPC-only, or both)

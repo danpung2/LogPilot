@@ -16,7 +16,6 @@ dependencies {
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.wiremock:wiremock:3.0.1'
 }
 

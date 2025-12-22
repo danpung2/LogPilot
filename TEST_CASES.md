@@ -603,3 +603,28 @@ open logpilot-server/build/reports/tests/test/index.html
 ```bash
 open logpilot-core/build/reports/tests/test/index.html
 ```
+
+---
+
+# LogPilot Client Module Test Cases
+
+## 🧪 Client Module Detailed Test Cases by File
+
+### 1. Client SDK Tests (`LogPilotClientTest.java`)
+
+#### 🎯 Test Purpose
+Verify `LogPilotClient` functionality, including synchronous logging, async batching, and graceful shutdown.
+
+#### 📋 Test Cases
+
+| Test Method | Description | Verification Item |
+|-------------|-------------|-------------------|
+| `testBatchingTriggersFlush` | Async batching behavior | Queueing logs and auto-flushing when batch size reached |
+| `testFlushOnClose` | Graceful shutdown | Flushing pending logs on client close |
+
+## 🔧 How to Run Client Module Tests
+
+### Run All Tests
+```bash
+./gradlew :logpilot-client:test
+```
