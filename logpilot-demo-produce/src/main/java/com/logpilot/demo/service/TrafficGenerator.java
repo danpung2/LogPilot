@@ -27,8 +27,9 @@ public class TrafficGenerator {
 
     public enum SimulationMode {
         STOPPED,
-        STEADY, // Low traffic: Job views mostly
-        PEAK // High traffic: Many applications, errors, high concurrency
+        STEADY, // 낮은 트래픽: 조회 위주 / Low traffic: Job views mostly
+        PEAK // 높은 트래픽: 잦은 지원 및 에러, 높은 동시성 / High traffic: Many applications, errors, high
+             // concurrency
     }
 
     public void setMode(SimulationMode mode) {
@@ -42,7 +43,8 @@ public class TrafficGenerator {
     }
 
     private void startWorkerThreads() {
-        // 5 Worker threads to simulate concurrent users
+        // 5개의 워커 스레드로 동시 사용자를 시뮬레이션합니다.
+        // Simulate concurrent users with 5 worker threads.
         for (int i = 0; i < 5; i++) {
             executorService.submit(this::trafficLoop);
         }
@@ -59,10 +61,14 @@ public class TrafficGenerator {
                 SimulationMode mode = currentMode.get();
                 if (mode == SimulationMode.STEADY) {
                     performSteadyAction();
-                    Thread.sleep(500 + (long) (Math.random() * 1000)); // 0.5s - 1.5s delay
+                    // 0.5초 - 1.5초 지연
+                    // 0.5s - 1.5s delay
+                    Thread.sleep(500 + (long) (Math.random() * 1000));
                 } else if (mode == SimulationMode.PEAK) {
                     performPeakAction();
-                    Thread.sleep(50 + (long) (Math.random() * 100)); // 0.05s - 0.15s delay (FAST!)
+                    // 0.05초 - 0.15초 지연 (빠름)
+                    // 0.05s - 0.15s delay (FAST)
+                    Thread.sleep(50 + (long) (Math.random() * 100));
                 }
 
             } catch (InterruptedException e) {
@@ -75,7 +81,8 @@ public class TrafficGenerator {
     }
 
     private void performSteadyAction() {
-        // Mostly Just Viewing Jobs (90%), rarely applying (10%)
+        // 대부분 조회(90%)이며, 가끔 지원(10%)합니다.
+        // Mostly Just Viewing Jobs (90%), rarely applying (10%).
         User user = recruitmentService.getRandomUser();
         Job job = recruitmentService.getRandomJob();
 
@@ -88,6 +95,7 @@ public class TrafficGenerator {
     }
 
     private void performPeakAction() {
+        // 마감 임박으로 50% 지원, 50% 조회. 서비스에서 에러 발생 확률이 높습니다.
         // Deadline rush! 50% Apply, 50% View. High chance of errors simulated in
         // service.
         User user = recruitmentService.getRandomUser();
@@ -101,7 +109,8 @@ public class TrafficGenerator {
         }
     }
 
-    // Cleanup on destroy if needed
+    // 필요 시 정리합니다.
+    // Cleanup on destroy if needed.
     public void shutdown() {
         executorService.shutdownNow();
     }

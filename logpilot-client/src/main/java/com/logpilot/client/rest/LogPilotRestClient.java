@@ -59,7 +59,8 @@ public class LogPilotRestClient implements LogPilotClient {
         }
     }
 
-    // 스케줄링 및 플러시 테스트를 위한 생성자
+    // 스케줄링 및 플러시 테스트를 위한 생성자입니다.
+    // Constructor for scheduling and flush testing.
     LogPilotRestClient(String serverUrl, HttpClient httpClient, ScheduledExecutorService scheduler,
             boolean enableBatching, int batchSize, int maxRetries) {
         this.apiKey = null;
@@ -73,9 +74,6 @@ public class LogPilotRestClient implements LogPilotClient {
         this.objectMapper.registerModule(new JavaTimeModule());
         this.executorService = Executors.newCachedThreadPool();
         this.logQueue = enableBatching ? new LinkedBlockingQueue<>() : null;
-
-        // Batching lifecycle is managed by the scheduler
-        // No additional initialization needed here
     }
 
     @Override

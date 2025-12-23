@@ -95,8 +95,10 @@ public interface LogPilotClient extends AutoCloseable {
             }
 
             return switch (clientType) {
-                case REST -> new LogPilotRestClient(serverUrl, timeout, maxRetries, enableBatching, batchSize, flushIntervalMillis, apiKey);
-                case GRPC -> new LogPilotGrpcClient(serverUrl, timeout, maxRetries); // gRPC API key support TO-DO
+                case REST -> new LogPilotRestClient(serverUrl, timeout, maxRetries, enableBatching, batchSize,
+                        flushIntervalMillis, apiKey);
+                case GRPC -> new LogPilotGrpcClient(serverUrl, timeout, maxRetries); // TODO: gRPC API 키 지원 필요 / gRPC
+                                                                                     // API key support needed
             };
         }
     }

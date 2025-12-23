@@ -64,10 +64,10 @@ public class FileLogStorage implements LogStorage {
             String logLine = formatLogEntry(logEntry);
 
             Files.write(logFile, (logLine + System.lineSeparator()).getBytes(),
-                       StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
             logger.debug("Stored log entry to file: {} for channel: {}",
-                        logFile.getFileName(), logEntry.getChannel());
+                    logFile.getFileName(), logEntry.getChannel());
         } catch (IOException e) {
             logger.error("Failed to store log entry to file", e);
             throw new RuntimeException("Failed to store log entry to file", e);
@@ -84,37 +84,41 @@ public class FileLogStorage implements LogStorage {
 
         lock.writeLock().lock();
         try {
-            // 채널별로 로그 엔트리들을 그룹화
+            // 채널별로 로그 엔트리들을 그룹화합니다.
+            // Group log entries by channel.
             Map<String, List<LogEntry>> entriesByChannel = new HashMap<>();
             for (LogEntry logEntry : logEntries) {
                 entriesByChannel.computeIfAbsent(logEntry.getChannel(), k -> new ArrayList<>())
-                               .add(logEntry);
+                        .add(logEntry);
             }
 
-            // 채널별로 배치 저장
+            // 채널별로 배치 저장을 수행합니다.
+            // Perform batch storage by channel.
             for (Map.Entry<String, List<LogEntry>> channelEntry : entriesByChannel.entrySet()) {
                 String channel = channelEntry.getKey();
                 List<LogEntry> channelEntries = channelEntry.getValue();
 
                 Path logFile = getLogFilePath(channel);
 
-                // 모든 로그 라인을 미리 생성
+                // 모든 로그 라인을 미리 생성합니다.
+                // Pre-generate all log lines.
                 StringBuilder batchContent = new StringBuilder();
                 for (LogEntry logEntry : channelEntries) {
                     String logLine = formatLogEntry(logEntry);
                     batchContent.append(logLine).append(System.lineSeparator());
                 }
 
-                // 한 번의 파일 쓰기로 배치 저장
+                // 한 번의 파일 쓰기로 배치를 저장합니다.
+                // Save batch with a single file write.
                 Files.write(logFile, batchContent.toString().getBytes(),
-                           StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
                 logger.debug("Stored {} log entries to file: {} for channel: {}",
-                            channelEntries.size(), logFile.getFileName(), channel);
+                        channelEntries.size(), logFile.getFileName(), channel);
             }
 
             logger.debug("Stored total {} log entries across {} channels",
-                        logEntries.size(), entriesByChannel.size());
+                    logEntries.size(), entriesByChannel.size());
         } catch (IOException e) {
             logger.error("Failed to store log entries to files", e);
             throw new RuntimeException("Failed to store log entries to files", e);
@@ -174,7 +178,7 @@ public class FileLogStorage implements LogStorage {
             }
 
             logger.debug("Retrieved {} log entries for channel: {} and consumer: {} (autoCommit={})",
-                        entries.size(), channel, consumerId, autoCommit);
+                    entries.size(), channel, consumerId, autoCommit);
             return entries;
 
         } catch (IOException e) {
@@ -223,7 +227,8 @@ public class FileLogStorage implements LogStorage {
     @Override
     public void seekToId(String channel, String consumerId, long logId) {
         String offsetKey = consumerId + ":" + channel;
-        // In FileLogStorage, ID is the line number
+        // NOTE: 파일 저장소에서는 ID가 라인 번호입니다.
+        // In FileLogStorage, ID is the line number.
         consumerOffsets.put(offsetKey, logId - 1);
         saveConsumerOffset(offsetKey, logId - 1);
         logger.info("Seek to ID {} for consumer: {} on channel: {}", logId, consumerId, channel);
@@ -266,7 +271,7 @@ public class FileLogStorage implements LogStorage {
                             }
                         } catch (Exception e) {
                             logger.warn("Failed to parse log line from file {}: {}",
-                                       logFile.getFileName(), lines.get(i), e);
+                                    logFile.getFileName(), lines.get(i), e);
                         }
                     }
                 } catch (IOException e) {
@@ -360,7 +365,8 @@ public class FileLogStorage implements LogStorage {
                         .forEach(offsetFile -> {
                             try {
                                 String fileName = offsetFile.getFileName().toString();
-                                String offsetKey = fileName.substring(0, fileName.length() - OFFSET_FILE_EXTENSION.length());
+                                String offsetKey = fileName.substring(0,
+                                        fileName.length() - OFFSET_FILE_EXTENSION.length());
 
                                 List<String> lines = Files.readAllLines(offsetFile);
                                 if (!lines.isEmpty()) {
@@ -386,7 +392,7 @@ public class FileLogStorage implements LogStorage {
             Path offsetFile = offsetDir.resolve(sanitizedKey + OFFSET_FILE_EXTENSION);
 
             Files.write(offsetFile, String.valueOf(offset).getBytes(),
-                       StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             logger.debug("Saved consumer offset: {} = {}", offsetKey, offset);
         } catch (IOException e) {

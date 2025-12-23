@@ -33,7 +33,9 @@ public class AnalyticsService {
                 .build();
     }
 
-    @Scheduled(fixedRate = 1000) // Poll every 1 second
+    @Scheduled(fixedRate = 1000)
+    // 1초마다 로그를 폴링합니다.
+    // Poll every 1 second.
     public void fetchLogs() {
         try {
             List<LogEntry> logs = logPilotClient.getLogs("demo-app", lastLogId, 100);
@@ -45,12 +47,15 @@ public class AnalyticsService {
             for (LogEntry entry : logs) {
                 processLogEntry(entry);
                 if (entry.getId() != null) {
-                    // Update offset to the latest log ID
+                    // 최신 로그 ID로 오프셋을 업데이트합니다.
+                    // Update offset to the latest log ID.
                     lastLogId = String.valueOf(entry.getId());
                 }
             }
 
+            // NOTE: gRPC 응답의 로그 ID를 사용하여 페이징 처리합니다.
             // Now we have proper pagination using the Log ID directly from gRPC response.
+            // 다음 폴링은 'lastLogId' 이후부터 시작됩니다.
             // The next poll will start after 'lastLogId'.
 
         } catch (Exception e) {

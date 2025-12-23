@@ -70,7 +70,9 @@ public class LogPilotGrpcClient implements LogPilotClient {
                     .setLevel(logEntry.getLevel().toString())
                     .setMessage(logEntry.getMessage())
                     .putAllMeta(convertMetaToStringMap(logEntry.getMeta()))
-                    .setStorage("sqlite") // Default storage
+                    // NOTE: 기본 저장소로 SQLite를 사용합니다.
+                    // Use SQLite as default storage.
+                    .setStorage("sqlite")
                     .build();
 
             executeWithRetry(() -> {
@@ -97,7 +99,9 @@ public class LogPilotGrpcClient implements LogPilotClient {
                             .setLevel(logEntry.getLevel().toString())
                             .setMessage(logEntry.getMessage())
                             .putAllMeta(convertMetaToStringMap(logEntry.getMeta()))
-                            .setStorage("sqlite") // Default storage
+                            // NOTE: 기본 저장소로 SQLite를 사용합니다.
+                            // Use SQLite as default storage.
+                            .setStorage("sqlite")
                             .build())
                     .collect(Collectors.toList());
 
@@ -147,7 +151,10 @@ public class LogPilotGrpcClient implements LogPilotClient {
                     .setSince(consumerId != null ? consumerId : "")
                     .setChannel(channel)
                     .setLimit(limit)
-                    .setStorage("sqlite") // Default storage
+                    .setLimit(limit)
+                    // NOTE: 기본 저장소로 SQLite를 사용합니다.
+                    // Use SQLite as default storage.
+                    .setStorage("sqlite")
                     .build();
 
             return executeWithRetry(() -> {
@@ -169,7 +176,10 @@ public class LogPilotGrpcClient implements LogPilotClient {
                     .setSince("")
                     .setChannel("")
                     .setLimit(limit)
-                    .setStorage("sqlite") // Default storage
+                    .setLimit(limit)
+                    // NOTE: 기본 저장소로 SQLite를 사용합니다.
+                    // Use SQLite as default storage.
+                    .setStorage("sqlite")
                     .build();
 
             return executeWithRetry(() -> {
@@ -209,7 +219,8 @@ public class LogPilotGrpcClient implements LogPilotClient {
             logEntry.setMeta(meta);
         }
 
-        // Convert timestamp from long to LocalDateTime
+        // 타임스탬프를 long 타입(Epoch)에서 LocalDateTime으로 변환합니다.
+        // Convert timestamp from long(Epoch) to LocalDateTime.
         if (protoLogEntry.getTimestamp() > 0) {
             try {
                 LocalDateTime timestamp = LocalDateTime.ofInstant(

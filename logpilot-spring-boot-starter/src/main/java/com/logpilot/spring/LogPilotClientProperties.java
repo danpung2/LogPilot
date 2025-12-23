@@ -4,29 +4,24 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "logpilot.client")
 public class LogPilotClientProperties {
-    /**
-     * URL of the LogPilot Server (e.g., http://localhost:8080)
-     */
+    // LogPilot 서버의 URL (예: http://localhost:8080)
+    // URL of the LogPilot Server (e.g., http://localhost:8080)
     private String serverUrl = "http://localhost:8080";
 
-    /**
-     * Enable asynchronous batching of logs
-     */
+    // 로그의 비동기 배치 전송 활성화 여부
+    // Enable asynchronous batching of logs.
     private boolean enableBatching = true;
 
-    /**
-     * Number of logs to buffer before flushing
-     */
+    // 플러시 전 버퍼링할 로그의 개수
+    // Number of logs to buffer before flushing.
     private int batchSize = 100;
 
-    /**
-     * Max time to wait before flushing buffer (in milliseconds)
-     */
+    // 버퍼 플러시 전 최대 대기 시간 (밀리초 단위)
+    // Max time to wait before flushing buffer (in milliseconds).
     private long flushIntervalMillis = 5000;
 
-    /**
-     * API Key for authentication
-     */
+    // 인증을 위한 API 키
+    // API Key for authentication.
     private String apiKey;
 
     // Getters and Setters

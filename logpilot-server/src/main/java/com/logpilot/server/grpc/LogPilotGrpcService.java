@@ -48,6 +48,8 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
                         .tag("level", l)
                         .description("Number of logs received by level")
                         .register(meterRegistry))
+                // 카운터를 증가시킵니다.
+                // Increment the counter.
                 .increment();
 
         String channel = logEntry.getChannel() != null ? logEntry.getChannel() : "unknown";
@@ -63,6 +65,8 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     public void sendLog(LogPilotProto.LogRequest request, StreamObserver<LogPilotProto.LogResponse> responseObserver) {
         try {
             LogEntry logEntry = convertLogRequestToLogEntry(request);
+            // 메트릭을 기록하고 로그를 저장합니다.
+            // Record metrics and store the log.
             recordLogMetrics(logEntry);
             logService.storeLog(logEntry);
 
@@ -96,6 +100,8 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
                     .map(this::convertLogRequestToLogEntry)
                     .toList();
 
+            // 배치 단위로 메트릭을 기록하고 저장합니다.
+            // Record metrics and store logs in batch.
             logEntries.forEach(this::recordLogMetrics);
             logService.storeLogs(logEntries);
 
@@ -152,9 +158,14 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
             List<LogEntry> logEntries;
 
             if (!request.getChannel().isEmpty()) {
+                // 특정 채널의 로그를 컨슈머 오프셋 기준으로 조회합니다.
+                // Retrieve logs for a specific channel based on consumer offset.
                 logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(),
                         request.getLimit(), true);
             } else {
+                // 채널이 지정되지 않은 경우 전체 로그를 최신순으로 조회합니다. (모니터링 목적)
+                // If no channel specified, retrieve all logs in descending order. (For
+                // monitoring purposes)
                 logEntries = logService.getAllLogs(request.getLimit());
             }
 

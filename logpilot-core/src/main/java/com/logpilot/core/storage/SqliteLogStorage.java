@@ -46,6 +46,8 @@ public class SqliteLogStorage implements LogStorage {
             hikariConfig.setIdleTimeout(pooling.getIdleTimeout());
 
             hikariConfig.setPoolName("LogPilotSQLitePool");
+            // 성능 향상을 위해 WAL 모드와 동기화 설정을 최적화합니다.
+            // Optimize WAL mode and synchronization settings for performance.
             hikariConfig.setConnectionInitSql("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;");
 
             this.dataSource = new HikariDataSource(hikariConfig);
@@ -242,7 +244,8 @@ public class SqliteLogStorage implements LogStorage {
 
     @Override
     public void seekToId(String channel, String consumerId, long logId) {
-        // We set offset to logId - 1 so that the next retrieve returns logId
+        // 다음 조회 시 해당 ID부터 시작하도록 오프셋을 ID - 1로 설정합니다.
+        // Set offset to logId - 1 so that the next retrieve returns logId.
         updateConsumerOffset(consumerId, channel, logId - 1);
         logger.info("Seek to ID {} for consumer: {} on channel: {}", logId, consumerId, channel);
     }
@@ -291,7 +294,8 @@ public class SqliteLogStorage implements LogStorage {
             }
         }
 
-        // Set the ID from ResultSet
+        // ResultSet에서 ID를 가져와 설정합니다.
+        // Set the ID from ResultSet.
         entry.setId(rs.getLong("id"));
 
         return entry;

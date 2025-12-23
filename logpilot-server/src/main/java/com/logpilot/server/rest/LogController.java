@@ -66,6 +66,8 @@ public class LogController {
             Counter levelCounter = levelCounters.computeIfAbsent(level,
                     l -> {
                         logger.info("Creating new counter for level: {}", l);
+                        // 레벨별 로그 수신 횟수를 측정하는 카운터를 동적으로 생성합니다.
+                        // Dynamically create a counter to measure total logs received by level.
                         return Counter.builder("logpilot_logs_received_total")
                                 .tag("level", l)
                                 .description("Number of logs received by level")
@@ -115,8 +117,12 @@ public class LogController {
 
         List<LogEntry> logs;
         if (consumerId != null) {
+            // 특정 컨슈머의 오프셋을 기반으로 로그를 조회합니다 (autoCommit 옵션 지원).
+            // Retrieve logs based on specific consumer offset (supports autoCommit).
             logs = logService.getLogsForConsumer(channel, consumerId, limit, autoCommit);
         } else {
+            // 컨슈머 ID가 없으면 최신 로그를 조회합니다.
+            // If no consumer ID, retrieve latest logs.
             logs = logService.getAllLogs(limit);
         }
         return ResponseEntity.ok(logs);
@@ -137,6 +143,8 @@ public class LogController {
                 if (request.getLogId() == null) {
                     return ResponseEntity.badRequest().build();
                 }
+                // 특정 로그 ID로 오프셋을 강제 조정합니다.
+                // Force seek to specific log ID.
                 logService.seekToId(request.getChannel(), request.getConsumerId(), request.getLogId());
             }
         }
