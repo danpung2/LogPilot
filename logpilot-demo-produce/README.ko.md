@@ -1,8 +1,13 @@
-# LogPilot Demo Application: 채용 사이트 시뮬레이션
+# LogPilot Demo Producer: 채용 사이트 시뮬레이션
 
-이 애플리케이션은 LogPilot의 기능을 실제와 유사한 환경에서 테스트하기 위해, 고트래픽 "채용 사이트(Recruitment Site)"를 시뮬레이션합니다.
+이 모듈은 LogPilot의 로그 생성 및 수집 기능을 실제와 유사한 환경에서 테스트하기 위해, 고트래픽 "채용 사이트(Recruitment Site)"를 시뮬레이션합니다.
+
+## 개요
+
+이 애플리케이션은 **로그 생성자(Log Producer)** 역할을 합니다. 채용 공고 조회, 지원 등 사용자 시나리오를 시뮬레이션하며 다양한 로그(INFO, WARN, ERROR)와 풍부한 메타데이터(MDC)를 생성합니다. 생성된 로그는 `logpilot-logback` appender를 통해 LogPilot Server로 전송됩니다.
 
 ## 시뮬레이션 시나리오
+
 사용자 행동(채용 공고 조회, 지원)을 기반으로 두 가지 트래픽 모드를 지원합니다.
 
 1.  **STEADY 모드 (평상시)**:
@@ -17,8 +22,10 @@
 ## 사용법
 
 ### 1. 애플리케이션 실행
+애플리케이션은 `8082` 포트에서 실행됩니다.
+
 ```bash
-./gradlew :logpilot-demo:bootRun
+./gradlew :logpilot-demo-produce:bootRun
 ```
 
 ### 2. 시뮬레이션 제어
@@ -26,18 +33,29 @@
 
 - **Steady 모드 시작**:
   ```bash
-  curl -X POST "http://localhost:8080/simulation/start?mode=STEADY"
+  curl -X POST "http://localhost:8082/simulation/start?mode=STEADY"
   ```
+  > **동작 상세:**
+  > - **동시성:** 5개의 워커 스레드가 병렬로 동작합니다.
+  > - **요청 간격:** 각 스레드는 0.5초 ~ 1.5초 간격으로 요청을 보냅니다 (약 5 RPS).
+  > - **행동 패턴:** 90% 확률로 '공고 조회(VIEW_JOB)', 10% 확률로 '입사 지원(APPLY_JOB)'을 수행합니다.
+  > - **목표:** 일반적인 데일리 트래픽 상황을 연출하며, 주로 INFO 레벨 로그가 발생합니다.
+
 - **Peak 모드 시작**:
   ```bash
-  curl -X POST "http://localhost:8080/simulation/start?mode=PEAK"
+  curl -X POST "http://localhost:8082/simulation/start?mode=PEAK"
   ```
+  > **동작 상세:**
+  > - **동시성:** 5개의 워커 스레드가 고속으로 동작합니다.
+  > - **요청 간격:** 각 스레드는 0.05초 ~ 0.15초 간격으로 매우 빠르게 요청을 보냅니다 (약 50 RPS).
+  > - **행동 패턴:** 50% 확률로 '공고 조회', 50% 확률로 '입사 지원'을 수행하여 쓰기 작업 부하를 높입니다.
+  > - **목표:** 마감 직전의 급증하는 트래픽을 연출합니다. 높은 빈도의 입사 지원 시도로 인해 비즈니스 로직 상의 예외(중복 지원 등) 및 WARN/ERROR 로그가 더 자주 발생합니다.
+
 - **시뮬레이션 중지**:
   ```bash
-  curl -X POST http://localhost:8080/simulation/stop
+  curl -X POST http://localhost:8082/simulation/stop
   ```
 - **상태 확인**:
   ```bash
-  curl http://localhost:8080/simulation/status
+  curl http://localhost:8082/simulation/status
   ```
-
