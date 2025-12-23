@@ -199,6 +199,10 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
                 .setMessage(logEntry.getMessage())
                 .setTimestamp(logEntry.getTimestamp().atZone(java.time.ZoneOffset.UTC).toInstant().toEpochMilli());
 
+        if (logEntry.getId() != null) {
+            builder.setId(logEntry.getId());
+        }
+
         if (logEntry.getMeta() != null) {
             Map<String, String> stringMeta = logEntry.getMeta().entrySet().stream()
                     .collect(Collectors.toMap(

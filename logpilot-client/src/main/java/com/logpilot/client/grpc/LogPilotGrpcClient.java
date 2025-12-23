@@ -200,6 +200,10 @@ public class LogPilotGrpcClient implements LogPilotClient {
         logEntry.setLevel(convertStringToLogLevel(protoLogEntry.getLevel()));
         logEntry.setMessage(protoLogEntry.getMessage());
 
+        if (protoLogEntry.getId() != 0) {
+            logEntry.setId(protoLogEntry.getId());
+        }
+
         if (!protoLogEntry.getMetaMap().isEmpty()) {
             Map<String, Object> meta = new HashMap<>(protoLogEntry.getMetaMap());
             logEntry.setMeta(meta);

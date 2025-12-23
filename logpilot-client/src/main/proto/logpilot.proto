@@ -63,4 +63,5 @@ message LogEntry {
   string message = 3;
   map<string, string> meta = 4;
   int64 timestamp = 5;
+  int64 id = 6;
 }
