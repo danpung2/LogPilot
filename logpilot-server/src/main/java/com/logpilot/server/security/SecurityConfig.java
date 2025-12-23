@@ -10,7 +10,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import java.time.Duration;
 import java.util.function.Supplier;
 
@@ -35,22 +34,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/logs/**").authenticated()
-                .requestMatchers("/actuator/**").permitAll()
-                .anyRequest().permitAll()
-            )
-            .addFilterBefore(new ApiKeyAuthFilter(API_KEY_HEADER, apiKeyValue), UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(new RateLimitFilter(createBucketSupplier()), ApiKeyAuthFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/logs/**").authenticated()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .anyRequest().permitAll())
+                .addFilterBefore(new ApiKeyAuthFilter(API_KEY_HEADER, apiKeyValue),
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new RateLimitFilter(createBucketSupplier()), ApiKeyAuthFilter.class);
 
         return http.build();
     }
 
     private Supplier<Bucket> createBucketSupplier() {
         return () -> Bucket.builder()
-                .addLimit(Bandwidth.classic(capacity, Refill.greedy(refillTokens, Duration.ofSeconds(refillDurationSeconds))))
+                .addLimit(Bandwidth.builder()
+                        .capacity(capacity)
+                        .refillGreedy(refillTokens, Duration.ofSeconds(refillDurationSeconds))
+                        .build())
                 .build();
     }
 }

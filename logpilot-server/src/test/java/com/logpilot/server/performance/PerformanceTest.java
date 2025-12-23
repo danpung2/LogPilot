@@ -1,6 +1,5 @@
 package com.logpilot.server.performance;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-    "logpilot.server.protocol=all",
-    "logpilot.storage.type=FILE",
-    "logpilot.storage.directory=/tmp/performance-test"
+        "logpilot.server.protocol=all",
+        "logpilot.storage.type=FILE",
+        "logpilot.storage.directory=/tmp/performance-test"
 })
 public class PerformanceTest {
 
@@ -44,9 +43,6 @@ public class PerformanceTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private static final int PERFORMANCE_TIMEOUT_SECONDS = 30;
     private static final int HIGH_THROUGHPUT_REQUESTS = 100;
@@ -93,7 +89,8 @@ public class PerformanceTest {
         // Send requests
         List<ResponseEntity<Void>> responses = new ArrayList<>();
         for (LogEntry entry : testEntries) {
-            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", new HttpEntity<>(entry, createHeaders()), Void.class);
+            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs",
+                    new HttpEntity<>(entry, createHeaders()), Void.class);
             responses.add(response);
         }
 
@@ -108,9 +105,9 @@ public class PerformanceTest {
         // Performance assertions
         double requestsPerSecond = (double) requestCount / (totalTime / 1000.0);
         assertTrue(requestsPerSecond > 10,
-            "Should handle at least 10 requests per second, got: " + requestsPerSecond);
+                "Should handle at least 10 requests per second, got: " + requestsPerSecond);
         assertTrue(totalTime < PERFORMANCE_TIMEOUT_SECONDS * 1000,
-            "High throughput test should complete within " + PERFORMANCE_TIMEOUT_SECONDS + " seconds");
+                "High throughput test should complete within " + PERFORMANCE_TIMEOUT_SECONDS + " seconds");
 
         System.out.println("REST API Throughput: " + requestsPerSecond + " requests/second");
     }
@@ -139,7 +136,7 @@ public class PerformanceTest {
                                 .build();
 
                         ResponseEntity<Void> response = restTemplate.postForEntity(
-                            "/api/logs", new HttpEntity<>(entry, createHeaders()), Void.class);
+                                "/api/logs", new HttpEntity<>(entry, createHeaders()), Void.class);
                         assertEquals(HttpStatus.CREATED, response.getStatusCode());
                     }
                 } finally {
@@ -152,7 +149,7 @@ public class PerformanceTest {
 
         // Wait for all clients to complete
         assertTrue(latch.await(PERFORMANCE_TIMEOUT_SECONDS, TimeUnit.SECONDS),
-            "All concurrent clients should complete within timeout");
+                "All concurrent clients should complete within timeout");
 
         long testEndTime = System.currentTimeMillis();
         long totalTestTime = testEndTime - testStartTime;
@@ -162,7 +159,7 @@ public class PerformanceTest {
             try {
                 Long clientTime = future.get();
                 assertTrue(clientTime < 15000,
-                    "Individual client should complete within 15 seconds, took: " + clientTime + "ms");
+                        "Individual client should complete within 15 seconds, took: " + clientTime + "ms");
             } catch (Exception e) {
                 fail("Client execution failed: " + e.getMessage());
             }
@@ -172,10 +169,10 @@ public class PerformanceTest {
         int totalRequests = clientCount * requestsPerClient;
         double overallThroughput = (double) totalRequests / (totalTestTime / 1000.0);
         assertTrue(overallThroughput > 15,
-            "Concurrent throughput should exceed 15 requests/second, got: " + overallThroughput);
+                "Concurrent throughput should exceed 15 requests/second, got: " + overallThroughput);
 
         System.out.println("Concurrent Performance: " + overallThroughput + " requests/second with "
-            + clientCount + " clients");
+                + clientCount + " clients");
 
         executor.shutdown();
     }
@@ -197,29 +194,29 @@ public class PerformanceTest {
         long startTime = System.currentTimeMillis();
 
         ResponseEntity<Void> response = restTemplate.postForEntity(
-            "/api/logs/batch", new HttpEntity<>(largeBatch, createHeaders()), Void.class);
+                "/api/logs/batch", new HttpEntity<>(largeBatch, createHeaders()), Void.class);
 
         long endTime = System.currentTimeMillis();
         long processingTime = endTime - startTime;
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue(processingTime < 10000,
-            "Large batch (" + batchSize + " entries) should process within 10 seconds, took: "
-            + processingTime + "ms");
+                "Large batch (" + batchSize + " entries) should process within 10 seconds, took: "
+                        + processingTime + "ms");
 
         // Verify batch was stored
         ResponseEntity<List<LogEntry>> retrievalResponse = restTemplate.exchange(
-            "/api/logs/large-batch-test?limit=" + (batchSize + 10),
-            HttpMethod.GET,
-            new HttpEntity<>(createHeaders()),
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs/large-batch-test?limit=" + (batchSize + 10),
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
 
         assertEquals(HttpStatus.OK, retrievalResponse.getStatusCode());
         List<LogEntry> retrievedLogs = retrievalResponse.getBody();
         assertNotNull(retrievedLogs);
         assertTrue(retrievedLogs.size() >= batchSize,
-            "Should retrieve at least " + batchSize + " entries");
+                "Should retrieve at least " + batchSize + " entries");
 
         System.out.println("Large batch processing: " + processingTime + "ms for " + batchSize + " entries");
     }
@@ -247,7 +244,7 @@ public class PerformanceTest {
             }
 
             ResponseEntity<Void> response = restTemplate.postForEntity(
-                "/api/logs/batch", new HttpEntity<>(batch, createHeaders()), Void.class);
+                    "/api/logs/batch", new HttpEntity<>(batch, createHeaders()), Void.class);
             assertEquals(HttpStatus.CREATED, response.getStatusCode());
         }
 
@@ -260,7 +257,7 @@ public class PerformanceTest {
         // Memory increase should be reasonable (less than 50MB)
         long maxMemoryIncrease = 50 * 1024 * 1024; // 50MB
         assertTrue(memoryIncrease < maxMemoryIncrease,
-            "Memory increase should be less than 50MB, but was: " + (memoryIncrease / 1024 / 1024) + "MB");
+                "Memory increase should be less than 50MB, but was: " + (memoryIncrease / 1024 / 1024) + "MB");
 
         System.out.println("Memory usage increase: " + (memoryIncrease / 1024 / 1024) + "MB");
     }
@@ -282,7 +279,7 @@ public class PerformanceTest {
 
             long writeStartTime = System.nanoTime();
             ResponseEntity<Void> writeResponse = restTemplate.postForEntity(
-                "/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
+                    "/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
             long writeEndTime = System.nanoTime();
 
             assertEquals(HttpStatus.CREATED, writeResponse.getStatusCode());
@@ -291,11 +288,11 @@ public class PerformanceTest {
             // Measure read performance
             long readStartTime = System.nanoTime();
             ResponseEntity<List<LogEntry>> readResponse = restTemplate.exchange(
-                "/api/logs/storage-perf-test-" + i + "?limit=10",
-                HttpMethod.GET,
-                new HttpEntity<>(createHeaders()),
-                new ParameterizedTypeReference<List<LogEntry>>() {}
-            );
+                    "/api/logs/storage-perf-test-" + i + "?limit=10",
+                    HttpMethod.GET,
+                    new HttpEntity<>(createHeaders()),
+                    new ParameterizedTypeReference<List<LogEntry>>() {
+                    });
             long readEndTime = System.nanoTime();
 
             assertEquals(HttpStatus.OK, readResponse.getStatusCode());
@@ -331,7 +328,8 @@ public class PerformanceTest {
                     .build();
 
             long startTime = System.nanoTime();
-            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
+            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs",
+                    new HttpEntity<>(testEntry, createHeaders()), Void.class);
             long endTime = System.nanoTime();
 
             assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -341,7 +339,6 @@ public class PerformanceTest {
         // Calculate statistics
         double avgResponseTime = responseTimes.stream().mapToLong(Long::longValue).average().orElse(0) / 1_000_000;
         long maxResponseTime = responseTimes.stream().mapToLong(Long::longValue).max().orElse(0) / 1_000_000;
-        long minResponseTime = responseTimes.stream().mapToLong(Long::longValue).min().orElse(0) / 1_000_000;
 
         // Calculate 95th percentile
         responseTimes.sort(Long::compareTo);
@@ -349,11 +346,14 @@ public class PerformanceTest {
         long percentile95 = responseTimes.get(percentile95Index) / 1_000_000;
 
         // SLA assertions
-        assertTrue(avgResponseTime < 1000, "Average response time should be less than 1000ms, got: " + avgResponseTime + "ms");
+        assertTrue(avgResponseTime < 1000,
+                "Average response time should be less than 1000ms, got: " + avgResponseTime + "ms");
         assertTrue(percentile95 < 2000, "95th percentile should be less than 2000ms, got: " + percentile95 + "ms");
-        assertTrue(maxResponseTime < 5000, "Max response time should be less than 5000ms, got: " + maxResponseTime + "ms");
+        assertTrue(maxResponseTime < 5000,
+                "Max response time should be less than 5000ms, got: " + maxResponseTime + "ms");
 
-        System.out.println("Response Time SLA - Avg: " + avgResponseTime + "ms, 95th: " + percentile95 + "ms, Max: " + maxResponseTime + "ms");
+        System.out.println("Response Time SLA - Avg: " + avgResponseTime + "ms, 95th: " + percentile95 + "ms, Max: "
+                + maxResponseTime + "ms");
     }
 
     @Test
@@ -370,7 +370,8 @@ public class PerformanceTest {
                     .build();
 
             try {
-                ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
+                ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs",
+                        new HttpEntity<>(testEntry, createHeaders()), Void.class);
                 if (!response.getStatusCode().is2xxSuccessful()) {
                     errorCount++;
                 }

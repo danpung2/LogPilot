@@ -78,3 +78,13 @@ sourceSets {
 tasks.named('test') {
     useJUnitPlatform()
 }
+// Workaround for IDEs complaining about missing AOT generated source folders
+// These folders are registered by the protobuf/native plugins but not created unless AOT tasks run.
+['aot', 'aotTest'].each { name ->
+    ['java', 'grpc'].each { type ->
+        def dir = file("build/generated/source/proto/${name}/${type}")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+    }
+}

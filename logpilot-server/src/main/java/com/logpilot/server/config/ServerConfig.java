@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class ServerConfig {
 
     @Bean(destroyMethod = "close")
-    @SuppressWarnings("resource")
     public LogStorage logStorage(LogPilotProperties properties) {
         return LogStorageFactory.createLogStorage(properties);
     }
