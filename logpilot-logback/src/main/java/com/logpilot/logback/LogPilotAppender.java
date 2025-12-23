@@ -47,16 +47,20 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
 
         LogLevel level = mapLogLevel(event.getLevel());
         String message = event.getFormattedMessage();
-        
-        Map<String, Object> meta = Map.of(
-            "logger", event.getLoggerName(),
-            "thread", event.getThreadName()
-        );
+
+        Map<String, Object> meta = new java.util.HashMap<>();
+        meta.put("logger", event.getLoggerName());
+        meta.put("thread", event.getThreadName());
+
+        Map<String, String> mdc = event.getMDCPropertyMap();
+        if (mdc != null && !mdc.isEmpty()) {
+            meta.putAll(mdc);
+        }
 
         // 배치 활성화 시: 내부 큐에 쌓으며 비동기 처리됨 (Fast)
         // 배치 비활성화 시: HTTP 요청을 동기로 보냄 (Blocking)
         // 현재는 클라이언트 설정에 따라 동작
-        
+
         client.log(serviceName, level, message, meta);
     }
 
