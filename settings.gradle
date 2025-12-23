@@ -1,9 +1,3 @@
 rootProject.name = 'logpilot-java'
 
-include 'logpilot-core'
-include 'logpilot-server'
-include 'logpilot-client'
-include 'logpilot-monitoring'
-include 'logpilot-logback'
-include 'logpilot-spring-boot-starter'
-include 'logpilot-demo'
+include 'logpilot-core', 'logpilot-server', 'logpilot-client', 'logpilot-monitoring', 'logpilot-logback', 'logpilot-spring-boot-starter', 'logpilot-demo-produce', 'logpilot-demo-consume'
