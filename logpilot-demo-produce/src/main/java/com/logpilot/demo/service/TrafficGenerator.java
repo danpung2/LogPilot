@@ -80,6 +80,7 @@ public class TrafficGenerator {
         Job job = recruitmentService.getRandomJob();
 
         if (Math.random() > 0.9) {
+            recruitmentService.viewJob(user.id(), job.id());
             recruitmentService.applyForJob(user.id(), job.id());
         } else {
             recruitmentService.viewJob(user.id(), job.id());
@@ -93,6 +94,7 @@ public class TrafficGenerator {
         Job job = recruitmentService.getRandomJob();
 
         if (Math.random() > 0.5) {
+            recruitmentService.viewJob(user.id(), job.id());
             recruitmentService.applyForJob(user.id(), job.id());
         } else {
             recruitmentService.viewJob(user.id(), job.id());

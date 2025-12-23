@@ -74,6 +74,14 @@ public class RecruitmentService {
     private boolean processApplication(User user, Job job) {
         // Simulate some processing
         simulateLatency();
+
+        // Simulate Random System Error (e.g. DB Timeout) - 1% chance
+        if (random.nextInt(100) == 0) {
+            log.error("System Error: Database connection timed out while processing application for User {}",
+                    user.id());
+            return false;
+        }
+
         // 10% chance of failure (e.g., already applied)
         return random.nextInt(10) > 0;
     }
