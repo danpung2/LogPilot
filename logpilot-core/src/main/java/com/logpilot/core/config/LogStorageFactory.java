@@ -12,7 +12,6 @@ public class LogStorageFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(LogStorageFactory.class);
 
-    @SuppressWarnings("resource")
     public static LogStorage createLogStorage(LogPilotProperties properties) {
         if (properties == null) {
             throw new IllegalArgumentException("LogPilotProperties cannot be null");

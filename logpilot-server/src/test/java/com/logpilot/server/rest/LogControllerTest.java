@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import com.logpilot.core.service.LogService;
-import io.micrometer.core.instrument.MeterRegistry;
+
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,9 +42,6 @@ public class LogControllerTest {
 
     @MockBean(name = "restLogService")
     private LogService logService;
-
-    @Autowired
-    private MeterRegistry meterRegistry;
 
     @Autowired
     private ObjectMapper objectMapper;

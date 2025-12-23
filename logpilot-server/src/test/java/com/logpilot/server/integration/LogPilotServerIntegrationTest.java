@@ -1,13 +1,11 @@
 package com.logpilot.server.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
-import com.logpilot.grpc.proto.LogPilotProto;
-import com.logpilot.grpc.proto.LogServiceGrpc;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -25,7 +23,7 @@ import org.springframework.test.context.TestPropertySource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,9 +45,6 @@ public class LogPilotServerIntegrationTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private LogEntry testLogEntry;
     private List<LogEntry> testLogEntries;

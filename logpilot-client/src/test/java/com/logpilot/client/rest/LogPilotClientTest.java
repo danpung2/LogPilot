@@ -1,6 +1,5 @@
 package com.logpilot.client.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logpilot.core.model.LogLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("unchecked")
 class LogPilotClientTest {
 
     @Mock
@@ -30,7 +30,6 @@ class LogPilotClientTest {
 
     private LogPilotRestClient client;
     private final String serverUrl = "http://localhost:8080";
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() throws IOException, InterruptedException {
@@ -63,12 +62,9 @@ class LogPilotClientTest {
         // 내용 확인
         ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
         verify(httpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
-
-        HttpRequest request = captor.getValue();
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void testFlushOnClose() throws IOException, InterruptedException {
         client = new LogPilotRestClient(serverUrl, httpClient, scheduler, true, 10, 3);
 

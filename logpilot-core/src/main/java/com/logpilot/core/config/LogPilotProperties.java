@@ -3,7 +3,7 @@ package com.logpilot.core.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "logpilot")
-@SuppressWarnings("unused")
+
 public class LogPilotProperties {
 
     private Storage storage = new Storage();
