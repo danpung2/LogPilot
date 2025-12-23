@@ -1,6 +1,11 @@
 # LogPilot
 
-**LogPilot은 Java 17 및 Spring Boot 3로 구축된 견실하고 프로덕션 준비가 된 로그 수집 시스템입니다.** 마이크로서비스 및 분산 시스템을 위해 설계되었으며, gRPC와 REST 프로토콜을 동시에 지원하며 엔터프라이즈급 로그 집계, 포괄적인 관측 가능성 및 클라우드 네이티브 배포 기능을 제공합니다.
+**LogPilot은 Java 17 및 Spring Boot 3로 구축된 경량 클라우드 네이티브 로그 수집 시스템(Lightweight, Cloud-Native Log Collection System)입니다.** 마이크로서비스 및 분산 시스템을 위해 설계되었으며, gRPC와 REST 프로토콜을 동시에 지원하며 엔터프라이즈급 로그 집계, 포괄적인 관측 가능성 및 제로 디펜던시(Zero-Dependency) 배포 기능을 제공합니다.
+
+> [!WARNING]
+> **프로덕션 보안 경고**: 기본 설정된 `LOGPILOT_API_KEY`는 예시 값입니다. 공유 환경이나 프로덕션 환경에 배포하기 전에 **반드시 이 값을 변경해야 합니다**. 변경하지 않을 경우 무단 접근의 위험이 있습니다.
+>
+> **호환성 참고**: 이 프로젝트는 **Java 17 이상** 및 **Spring Boot 3.x**를 엄격하게 요구합니다. 이전 버전(Java 8/11, Spring Boot 2.x)은 **지원하지 않습니다**.
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://www.oracle.com/java/)

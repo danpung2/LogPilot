@@ -1,6 +1,11 @@
 # LogPilot
 
-**LogPilot is a robust and production-ready log collection system** built with **Java 17** and **Spring Boot 3**. Designed for microservices and distributed systems, it provides enterprise-grade log aggregation with dual-protocol support (gRPC + REST), comprehensive observability, and cloud-native deployment capabilities.
+**LogPilot is a lightweight, cloud-native Log Collection System** built with **Java 17** and **Spring Boot 3**. Designed for microservices and distributed systems, it provides enterprise-grade log aggregation with dual-protocol support (gRPC + REST), comprehensive observability, and zero-dependency deployment capabilities.
+
+> [!WARNING]
+> **Production Safety Warning**: The default `LOGPILOT_API_KEY` is set to an example value. **You MUST change this** before deploying to any shared or production environment to prevent unauthorized access.
+>
+> **Compatibility Note**: This project strictly requires **Java 17+** and **Spring Boot 3.x**. Older versions (Java 8/11, Spring Boot 2.x) are **NOT supported**.
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://www.oracle.com/java/)
