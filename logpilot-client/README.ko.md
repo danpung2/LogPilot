@@ -1,71 +1,28 @@
-# LogPilot Java 클라이언트
+# LogPilot Client (Java)
 
-REST와 gRPC(출시 예정) 프로토콜을 모두 지원하는 공식 LogPilot Java 클라이언트입니다.
+LogPilot Server로 로그를 안정적이고 효율적으로 전송하기 위한 Java 클라이언트 구현체입니다.
 
-## 설치 (Installation)
+## 주요 기능
+- **gRPC 기반**: 고성능 gRPC 프로토콜을 사용하여 로그를 전송합니다.
+- **안정성 (Reliability)**: 네트워크 장애 시 데이터 유실을 방지하기 위해 로컬 영구 버퍼(SQLite)를 내장하고 있습니다.
+- **비동기 배칭 (Async Batching)**: 애플리케이션 스레드를 차단하지 않고 백그라운드에서 로그를 모아 비동기로 전송합니다.
+- **자동 재시도**: 전송 실패 시 자동으로 재시도를 수행합니다.
 
-`build.gradle`에 의존성을 추가하세요:
+## 설치 방법
 
-```gradle
-implementation 'com.logpilot:logpilot-client:1.0.0'
+### Gradle
+```groovy
+implementation project(':logpilot-client')
 ```
 
-## 사용법 (Usage)
-
-### 기본 사용법 (Basic Usage - REST)
-
-```java
-// 클라이언트 인스턴스 생성
-LogPilotClient client = LogPilotClient.builder()
-    .serverUrl("http://localhost:8080")
-    .build();
-
-// 로그 메시지 전송
-client.log("my-channel", LogLevel.INFO, "Hello, LogPilot!");
-
-// 메타데이터와 함께 로그 전송
-Map<String, Object> meta = Map.of("userId", "12345", "action", "login");
-client.log("my-channel", LogLevel.INFO, "User logged in", meta);
-
-// 비동기(Non-blocking)로 저장
-client.logAsync("my-channel", LogLevel.DEBUG, "Async log message");
-
-// 사용 후 클라이언트 종료 (AutoCloseable)
-client.close();
-```
-
-### 고급 사용법: 비동기 배치 (Async Batching)
-
-높은 처리량이 필요한 애플리케이션의 경우, 네트워크 오버헤드를 줄이기 위해 비동기 배치를 활성화하세요. 로그는 내부적으로 버퍼링되어 배치 단위로 전송됩니다.
+## 사용법
 
 ```java
 LogPilotClient client = LogPilotClient.builder()
-    .serverUrl("http://localhost:8080")
-    .enableBatching(true)          // 배치 활성화
-    .batchSize(500)                // 500개 로그가 쌓이면 전송 (기본값: 100)
-    .flushIntervalMillis(1000)     // 1초마다 전송 (기본값: 5000ms)
-    .apiKey("logpilot-secret-key-123") // 서버 API Key
+    .pilotServerAddress("localhost", 50051)
+    .serviceName("my-service")
     .build();
 
-// 참고: 'logpilot-spring-boot-starter'를 사용하는 경우, 'enableBatching'은 기본적으로 TRUE로 설정됩니다.
-// application.yml에서 변경 가능합니다: logpilot.client.enable-batching=false
-
-// 로그가 큐에 쌓이고 백그라운드에서 자동으로 전송됨
-client.log("high-volume-channel", LogLevel.INFO, "This is a batched log");
+client.send("info", "Hello LogPilot!");
 ```
 
-### 우아한 종료 (Graceful Shutdown)
-
-클라이언트는 `AutoCloseable`을 구현합니다. `close()`가 호출되면 클라이언트가 종료되기 전에 버퍼에 남은 모든 로그가 전송됩니다.
-
-```java
-try (LogPilotClient client = LogPilotClient.builder()
-        .serverUrl("http://localhost:8080")
-        .enableBatching(true)
-        .build()) {
-    
-    // 애플리케이션 로직...
-    client.log("app-channel", LogLevel.INFO, " Application stopping...");
-}
-// 클라이언트가 자동으로 종료되며, 대기 중인 로그를 전송합니다.
-```
