@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.Counter;
 
 import java.lang.reflect.Method;
@@ -44,7 +45,6 @@ public class LogPilotGrpcServiceTest {
     @Mock
     private StreamObserver<LogPilotProto.FetchLogsResponse> fetchLogsResponseObserver;
 
-    @Mock
     private MeterRegistry meterRegistry;
 
     private LogPilotGrpcService grpcService;
@@ -53,6 +53,7 @@ public class LogPilotGrpcServiceTest {
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
         grpcService = new LogPilotGrpcService(logService, meterRegistry);
 
         testLogRequest = LogPilotProto.LogRequest.newBuilder()
@@ -64,9 +65,8 @@ public class LogPilotGrpcServiceTest {
                 .build();
 
         testLogEntries = Arrays.asList(
-            new LogEntry("channel1", LogLevel.INFO, "Message 1"),
-            new LogEntry("channel2", LogLevel.ERROR, "Message 2")
-        );
+                new LogEntry("channel1", LogLevel.INFO, "Message 1"),
+                new LogEntry("channel2", LogLevel.ERROR, "Message 2"));
     }
 
     @Test
@@ -96,7 +96,8 @@ public class LogPilotGrpcServiceTest {
         assertEquals("123", capturedEntry.getMeta().get("userId"));
         assertEquals("session-abc", capturedEntry.getMeta().get("sessionId"));
 
-        ArgumentCaptor<LogPilotProto.LogResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.LogResponse.class);
+        ArgumentCaptor<LogPilotProto.LogResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.LogResponse.class);
         verify(logResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(logResponseObserver, times(1)).onCompleted();
 
@@ -177,7 +178,8 @@ public class LogPilotGrpcServiceTest {
 
         grpcService.sendLog(testLogRequest, logResponseObserver);
 
-        ArgumentCaptor<LogPilotProto.LogResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.LogResponse.class);
+        ArgumentCaptor<LogPilotProto.LogResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.LogResponse.class);
         verify(logResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(logResponseObserver, times(1)).onCompleted();
 
@@ -208,7 +210,8 @@ public class LogPilotGrpcServiceTest {
         assertEquals("test-channel", capturedEntries.get(0).getChannel());
         assertEquals("batch-channel", capturedEntries.get(1).getChannel());
 
-        ArgumentCaptor<LogPilotProto.SendLogsResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.SendLogsResponse.class);
+        ArgumentCaptor<LogPilotProto.SendLogsResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.SendLogsResponse.class);
         verify(sendLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(sendLogsResponseObserver, times(1)).onCompleted();
 
@@ -243,7 +246,8 @@ public class LogPilotGrpcServiceTest {
 
         grpcService.sendLogs(batchRequest, sendLogsResponseObserver);
 
-        ArgumentCaptor<LogPilotProto.SendLogsResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.SendLogsResponse.class);
+        ArgumentCaptor<LogPilotProto.SendLogsResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.SendLogsResponse.class);
         verify(sendLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(sendLogsResponseObserver, times(1)).onCompleted();
 
@@ -263,7 +267,8 @@ public class LogPilotGrpcServiceTest {
 
         verify(logService, times(1)).getAllLogs(100);
 
-        ArgumentCaptor<LogPilotProto.ListLogsResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.ListLogsResponse.class);
+        ArgumentCaptor<LogPilotProto.ListLogsResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.ListLogsResponse.class);
         verify(listLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(listLogsResponseObserver, times(1)).onCompleted();
 
@@ -281,7 +286,8 @@ public class LogPilotGrpcServiceTest {
 
         grpcService.listLogs(listRequest, listLogsResponseObserver);
 
-        ArgumentCaptor<LogPilotProto.ListLogsResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.ListLogsResponse.class);
+        ArgumentCaptor<LogPilotProto.ListLogsResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.ListLogsResponse.class);
         verify(listLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(listLogsResponseObserver, times(1)).onCompleted();
 
@@ -305,7 +311,7 @@ public class LogPilotGrpcServiceTest {
 
     @Test
     void fetchLogs_WithChannel_ShouldCallGetLogsForConsumer() {
-        when(logService.getLogsForConsumer("fetch-channel", "consumer1", 50)).thenReturn(testLogEntries);
+        when(logService.getLogsForConsumer("fetch-channel", "consumer1", 50, true)).thenReturn(testLogEntries);
 
         LogPilotProto.FetchLogsRequest fetchRequest = LogPilotProto.FetchLogsRequest.newBuilder()
                 .setChannel("fetch-channel")
@@ -315,9 +321,10 @@ public class LogPilotGrpcServiceTest {
 
         grpcService.fetchLogs(fetchRequest, fetchLogsResponseObserver);
 
-        verify(logService, times(1)).getLogsForConsumer("fetch-channel", "consumer1", 50);
+        verify(logService, times(1)).getLogsForConsumer("fetch-channel", "consumer1", 50, true);
 
-        ArgumentCaptor<LogPilotProto.FetchLogsResponse> responseCaptor = ArgumentCaptor.forClass(LogPilotProto.FetchLogsResponse.class);
+        ArgumentCaptor<LogPilotProto.FetchLogsResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.FetchLogsResponse.class);
         verify(fetchLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
         verify(fetchLogsResponseObserver, times(1)).onCompleted();
 
@@ -337,7 +344,7 @@ public class LogPilotGrpcServiceTest {
         grpcService.fetchLogs(fetchRequest, fetchLogsResponseObserver);
 
         verify(logService, times(1)).getAllLogs(75);
-        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt());
+        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt(), anyBoolean());
 
         verify(fetchLogsResponseObserver, times(1)).onNext(any(LogPilotProto.FetchLogsResponse.class));
         verify(fetchLogsResponseObserver, times(1)).onCompleted();
@@ -354,7 +361,7 @@ public class LogPilotGrpcServiceTest {
         grpcService.fetchLogs(fetchRequest, fetchLogsResponseObserver);
 
         verify(logService, times(1)).getAllLogs(100);
-        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt());
+        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt(), anyBoolean());
     }
 
     @Test

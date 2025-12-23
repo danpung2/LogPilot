@@ -36,8 +36,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-    "logpilot.server.protocol=all",
-    "logpilot.storage.type=FILE"
+        "logpilot.server.protocol=all",
+        "logpilot.storage.type=FILE",
+        "logpilot.server.api-key=test-api-key"
 })
 public class LogPilotServerIntegrationTest {
 
@@ -49,7 +50,6 @@ public class LogPilotServerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
 
     private LogEntry testLogEntry;
     private List<LogEntry> testLogEntries;
@@ -64,19 +64,25 @@ public class LogPilotServerIntegrationTest {
                 .build();
 
         testLogEntries = Arrays.asList(
-            LogEntry.builder()
-                .channel("batch-test-1")
-                .level(LogLevel.DEBUG)
-                .message("Batch message 1")
-                .timestamp(LocalDateTime.now())
-                .build(),
-            LogEntry.builder()
-                .channel("batch-test-2")
-                .level(LogLevel.WARN)
-                .message("Batch message 2")
-                .timestamp(LocalDateTime.now())
-                .build()
-        );
+                LogEntry.builder()
+                        .channel("batch-test-1")
+                        .level(LogLevel.DEBUG)
+                        .message("Batch message 1")
+                        .timestamp(LocalDateTime.now())
+                        .build(),
+                LogEntry.builder()
+                        .channel("batch-test-2")
+                        .level(LogLevel.WARN)
+                        .message("Batch message 2")
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
+
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-API-KEY", "test-api-key");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 
     @Test
@@ -89,28 +95,31 @@ public class LogPilotServerIntegrationTest {
     @Test
     void restEndpoints_ShouldWorkEndToEnd_WithFileStorage() {
         // Store a single log
-        ResponseEntity<Void> storeResponse = restTemplate.postForEntity(
-            "/api/logs",
-            testLogEntry,
-            Void.class
-        );
+        HttpEntity<LogEntry> storeRequest = new HttpEntity<>(testLogEntry, createHeaders());
+        ResponseEntity<Void> storeResponse = restTemplate.exchange(
+                "/api/logs",
+                HttpMethod.POST,
+                storeRequest,
+                Void.class);
         assertEquals(HttpStatus.CREATED, storeResponse.getStatusCode());
 
         // Store multiple logs
-        ResponseEntity<Void> batchStoreResponse = restTemplate.postForEntity(
-            "/api/logs/batch",
-            testLogEntries,
-            Void.class
-        );
+        HttpEntity<List<LogEntry>> batchRequest = new HttpEntity<>(testLogEntries, createHeaders());
+        ResponseEntity<Void> batchStoreResponse = restTemplate.exchange(
+                "/api/logs/batch",
+                HttpMethod.POST,
+                batchRequest,
+                Void.class);
         assertEquals(HttpStatus.CREATED, batchStoreResponse.getStatusCode());
 
         // Retrieve logs
+        HttpEntity<?> getRequest = new HttpEntity<>(createHeaders());
         ResponseEntity<List<LogEntry>> getResponse = restTemplate.exchange(
-            "/api/logs?limit=10",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs?limit=10",
+                HttpMethod.GET,
+                getRequest,
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         assertNotNull(getResponse.getBody());
     }
@@ -119,19 +128,18 @@ public class LogPilotServerIntegrationTest {
     void restAndGrpc_ShouldWorkTogether_SameStorage() throws Exception {
         // Store via REST
         ResponseEntity<Void> restStoreResponse = restTemplate.postForEntity(
-            "/api/logs",
-            testLogEntry,
-            Void.class
-        );
+                "/api/logs",
+                new HttpEntity<>(testLogEntry, createHeaders()),
+                Void.class);
         assertEquals(HttpStatus.CREATED, restStoreResponse.getStatusCode());
 
         // Retrieve via REST to verify storage
         ResponseEntity<List<LogEntry>> getResponse = restTemplate.exchange(
-            "/api/logs?limit=10",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs?limit=10",
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         List<LogEntry> retrievedLogs = getResponse.getBody();
         assertNotNull(retrievedLogs);
@@ -160,10 +168,9 @@ public class LogPilotServerIntegrationTest {
                                 .build();
 
                         ResponseEntity<Void> response = restTemplate.postForEntity(
-                            "/api/logs",
-                            clientLogEntry,
-                            Void.class
-                        );
+                                "/api/logs",
+                                new HttpEntity<>(clientLogEntry, createHeaders()),
+                                Void.class);
                         assertEquals(HttpStatus.CREATED, response.getStatusCode());
                     }
                 } finally {
@@ -177,11 +184,11 @@ public class LogPilotServerIntegrationTest {
 
         // Verify all logs were stored
         ResponseEntity<List<LogEntry>> getResponse = restTemplate.exchange(
-            "/api/logs?limit=100",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs?limit=100",
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         List<LogEntry> allLogs = getResponse.getBody();
         assertNotNull(allLogs);
@@ -203,19 +210,18 @@ public class LogPilotServerIntegrationTest {
         }
 
         ResponseEntity<Void> batchResponse = restTemplate.postForEntity(
-            "/api/logs/batch",
-            Arrays.asList(largeBatch),
-            Void.class
-        );
+                "/api/logs/batch",
+                new HttpEntity<>(Arrays.asList(largeBatch), createHeaders()),
+                Void.class);
         assertEquals(HttpStatus.CREATED, batchResponse.getStatusCode());
 
         // Verify logs were stored
         ResponseEntity<List<LogEntry>> getResponse = restTemplate.exchange(
-            "/api/logs?limit=150",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs?limit=150",
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         List<LogEntry> retrievedLogs = getResponse.getBody();
         assertNotNull(retrievedLogs);
@@ -225,23 +231,20 @@ public class LogPilotServerIntegrationTest {
     @Test
     void invalidRequests_ShouldReturnAppropriateErrors() {
         // Test invalid JSON
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
         HttpEntity<String> invalidJsonRequest = new HttpEntity<>("{invalid json}", headers);
 
         ResponseEntity<Void> invalidResponse = restTemplate.postForEntity(
-            "/api/logs",
-            invalidJsonRequest,
-            Void.class
-        );
+                "/api/logs",
+                invalidJsonRequest,
+                Void.class);
         assertEquals(HttpStatus.BAD_REQUEST, invalidResponse.getStatusCode());
 
         // Test empty body
         ResponseEntity<Void> emptyResponse = restTemplate.postForEntity(
-            "/api/logs",
-            null,
-            Void.class
-        );
+                "/api/logs",
+                new HttpEntity<>(null, createHeaders()),
+                Void.class);
         assertTrue(emptyResponse.getStatusCode().is4xxClientError());
     }
 
@@ -256,19 +259,18 @@ public class LogPilotServerIntegrationTest {
                 .build();
 
         ResponseEntity<Void> restResponse = restTemplate.postForEntity(
-            "/api/logs",
-            restLogEntry,
-            Void.class
-        );
+                "/api/logs",
+                new HttpEntity<>(restLogEntry, createHeaders()),
+                Void.class);
         assertEquals(HttpStatus.CREATED, restResponse.getStatusCode());
 
         // Retrieve via REST
         ResponseEntity<List<LogEntry>> restGetResponse = restTemplate.exchange(
-            "/api/logs/consistency-test?limit=10",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs/consistency-test?limit=10",
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
         assertEquals(HttpStatus.OK, restGetResponse.getStatusCode());
 
         List<LogEntry> restRetrievedLogs = restGetResponse.getBody();
@@ -277,8 +279,8 @@ public class LogPilotServerIntegrationTest {
         // Verify data consistency
         boolean foundConsistentData = restRetrievedLogs.stream()
                 .anyMatch(log -> "consistency-test".equals(log.getChannel())
-                         && "REST stored message".equals(log.getMessage())
-                         && LogLevel.ERROR.equals(log.getLevel()));
+                        && "REST stored message".equals(log.getMessage())
+                        && LogLevel.ERROR.equals(log.getLevel()));
         assertTrue(foundConsistentData, "Data should be consistent across protocols");
     }
 
@@ -289,10 +291,9 @@ public class LogPilotServerIntegrationTest {
 
         // Store a log to ensure resources are active
         ResponseEntity<Void> response = restTemplate.postForEntity(
-            "/api/logs",
-            testLogEntry,
-            Void.class
-        );
+                "/api/logs",
+                new HttpEntity<>(testLogEntry, createHeaders()),
+                Void.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
         // Resources should be properly closed when test completes
@@ -317,10 +318,9 @@ public class LogPilotServerIntegrationTest {
         long startTime = System.currentTimeMillis();
 
         ResponseEntity<Void> batchResponse = restTemplate.postForEntity(
-            "/api/logs/batch",
-            Arrays.asList(performanceTestLogs),
-            Void.class
-        );
+                "/api/logs/batch",
+                new HttpEntity<>(Arrays.asList(performanceTestLogs), createHeaders()),
+                Void.class);
 
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
@@ -333,27 +333,25 @@ public class LogPilotServerIntegrationTest {
     void errorHandling_ShouldBeConsistent() {
         // Test with invalid log level (this should be handled gracefully)
         String invalidLogJson = """
-            {
-                "channel": "error-test",
-                "level": "INVALID_LEVEL",
-                "message": "Test message with invalid level",
-                "timestamp": "2025-09-26T15:00:00"
-            }
-            """;
+                {
+                    "channel": "error-test",
+                    "level": "INVALID_LEVEL",
+                    "message": "Test message with invalid level",
+                    "timestamp": "2025-09-26T15:00:00"
+                }
+                """;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
         HttpEntity<String> request = new HttpEntity<>(invalidLogJson, headers);
 
         ResponseEntity<Void> response = restTemplate.postForEntity(
-            "/api/logs",
-            request,
-            Void.class
-        );
+                "/api/logs",
+                request,
+                Void.class);
 
         // Should handle gracefully - either accept with default or reject consistently
         assertTrue(response.getStatusCode().is2xxSuccessful() ||
-                  response.getStatusCode().is4xxClientError());
+                response.getStatusCode().is4xxClientError());
     }
 
     @Test
@@ -362,11 +360,11 @@ public class LogPilotServerIntegrationTest {
         // or verify system is responsive through basic endpoint
 
         ResponseEntity<List<LogEntry>> healthResponse = restTemplate.exchange(
-            "/api/logs?limit=1",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs?limit=1",
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
 
         assertEquals(HttpStatus.OK, healthResponse.getStatusCode());
         assertNotNull(healthResponse.getBody());
@@ -383,19 +381,18 @@ public class LogPilotServerIntegrationTest {
                 .build();
 
         ResponseEntity<Void> storeResponse = restTemplate.postForEntity(
-            "/api/logs",
-            specialLogEntry,
-            Void.class
-        );
+                "/api/logs",
+                new HttpEntity<>(specialLogEntry, createHeaders()),
+                Void.class);
         assertEquals(HttpStatus.CREATED, storeResponse.getStatusCode());
 
         // Retrieve and verify integrity
         ResponseEntity<List<LogEntry>> getResponse = restTemplate.exchange(
-            "/api/logs/integrity-test?limit=10",
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<List<LogEntry>>() {}
-        );
+                "/api/logs/integrity-test?limit=10",
+                HttpMethod.GET,
+                new HttpEntity<>(createHeaders()),
+                new ParameterizedTypeReference<List<LogEntry>>() {
+                });
 
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         List<LogEntry> retrievedLogs = getResponse.getBody();
@@ -428,10 +425,9 @@ public class LogPilotServerIntegrationTest {
                                 .build();
 
                         ResponseEntity<Void> response = restTemplate.postForEntity(
-                            "/api/logs",
-                            writerLogEntry,
-                            Void.class
-                        );
+                                "/api/logs",
+                                new HttpEntity<>(writerLogEntry, createHeaders()),
+                                Void.class);
                         assertEquals(HttpStatus.CREATED, response.getStatusCode());
                     }
                 } finally {
@@ -446,11 +442,11 @@ public class LogPilotServerIntegrationTest {
                 try {
                     for (int j = 0; j < operationsPerThread; j++) {
                         ResponseEntity<List<LogEntry>> response = restTemplate.exchange(
-                            "/api/logs?limit=5",
-                            HttpMethod.GET,
-                            null,
-                            new ParameterizedTypeReference<List<LogEntry>>() {}
-                        );
+                                "/api/logs?limit=5",
+                                HttpMethod.GET,
+                                new HttpEntity<>(createHeaders()),
+                                new ParameterizedTypeReference<List<LogEntry>>() {
+                                });
                         assertEquals(HttpStatus.OK, response.getStatusCode());
                         assertNotNull(response.getBody());
                     }

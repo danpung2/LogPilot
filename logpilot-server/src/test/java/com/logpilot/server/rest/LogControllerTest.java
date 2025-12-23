@@ -4,14 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logpilot.core.model.LogEntry;
 import com.logpilot.core.model.LogLevel;
 import com.logpilot.core.service.LogService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +28,13 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 @WebMvcTest(LogController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
+@TestPropertySource(properties = "logpilot.server.protocol=rest")
+@Import(SimpleMeterRegistry.class)
 public class LogControllerTest {
 
     @Autowired
@@ -34,6 +42,9 @@ public class LogControllerTest {
 
     @MockBean(name = "restLogService")
     private LogService logService;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -46,9 +57,8 @@ public class LogControllerTest {
         testLogEntry = new LogEntry("test-channel", LogLevel.INFO, "Test message");
 
         testLogEntries = Arrays.asList(
-            new LogEntry("channel1", LogLevel.INFO, "Message 1"),
-            new LogEntry("channel2", LogLevel.ERROR, "Message 2")
-        );
+                new LogEntry("channel1", LogLevel.INFO, "Message 1"),
+                new LogEntry("channel2", LogLevel.ERROR, "Message 2"));
     }
 
     @Test
@@ -130,8 +140,8 @@ public class LogControllerTest {
 
     @Test
     void getLogs_WithChannelAndConsumerId_ShouldReturnLogs() throws Exception {
-        when(logService.getLogsForConsumer("test-channel", "consumer1", 100))
-            .thenReturn(testLogEntries);
+        when(logService.getLogsForConsumer("test-channel", "consumer1", 100, true))
+                .thenReturn(testLogEntries);
 
         mockMvc.perform(get("/api/logs/test-channel")
                 .param("consumerId", "consumer1")
@@ -141,7 +151,7 @@ public class LogControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2));
 
-        verify(logService, times(1)).getLogsForConsumer("test-channel", "consumer1", 100);
+        verify(logService, times(1)).getLogsForConsumer("test-channel", "consumer1", 100, true);
         verify(logService, never()).getAllLogs(anyInt());
     }
 
@@ -157,7 +167,7 @@ public class LogControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(logService, times(1)).getAllLogs(100);
-        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt());
+        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt(), anyBoolean());
     }
 
     @Test

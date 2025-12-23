@@ -6,11 +6,13 @@ import com.logpilot.core.storage.LogStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service("restLogService")
+@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'rest' or '${logpilot.server.protocol:all}' == 'all'")
 public class RestLogService implements LogService {
 
     private static final Logger logger = LoggerFactory.getLogger(RestLogService.class);
@@ -52,13 +54,15 @@ public class RestLogService implements LogService {
 
     @Override
     public List<LogEntry> getLogsForConsumer(String channel, String consumerId, int limit, boolean autoCommit) {
-        logger.debug("[REST] Retrieving logs for channel: {} and consumer: {} (autoCommit={})", channel, consumerId, autoCommit);
+        logger.debug("[REST] Retrieving logs for channel: {} and consumer: {} (autoCommit={})", channel, consumerId,
+                autoCommit);
         return logStorage.retrieve(channel, consumerId, limit, autoCommit);
     }
 
     @Override
     public void commitLogOffset(String channel, String consumerId, long lastLogId) {
-        logger.debug("[REST] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId, lastLogId);
+        logger.debug("[REST] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId,
+                lastLogId);
         logStorage.commitOffset(channel, consumerId, lastLogId);
     }
 

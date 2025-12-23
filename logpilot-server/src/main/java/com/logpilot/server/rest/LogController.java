@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api")
+@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'rest' or '${logpilot.server.protocol:all}' == 'all'")
 public class LogController {
 
     private static final Logger logger = LoggerFactory.getLogger(LogController.class);
@@ -36,18 +38,18 @@ public class LogController {
         this.logService = logService;
         this.meterRegistry = meterRegistry;
         logger.info("LogController constructor called with LogService: {} and MeterRegistry: {}",
-            logService.getClass().getSimpleName(),
-            meterRegistry.getClass().getSimpleName());
+                logService.getClass().getSimpleName(),
+                meterRegistry.getClass().getSimpleName());
     }
 
     @PostConstruct
     public void init() {
         logger.info("LogController initialized with MeterRegistry: {}", meterRegistry.getClass().getSimpleName());
-        for (String level : new String[]{"DEBUG", "INFO", "WARN", "ERROR"}) {
+        for (String level : new String[] { "DEBUG", "INFO", "WARN", "ERROR" }) {
             Counter counter = Counter.builder("logpilot_logs_received_total")
-                .tag("level", level)
-                .description("Number of logs received by level")
-                .register(meterRegistry);
+                    .tag("level", level)
+                    .description("Number of logs received by level")
+                    .register(meterRegistry);
             levelCounters.put(level, counter);
             logger.info("Registered counter for level: {}", level);
         }
@@ -62,27 +64,25 @@ public class LogController {
         try {
             String level = logEntry.getLevel() != null ? logEntry.getLevel().toString() : "UNKNOWN";
             Counter levelCounter = levelCounters.computeIfAbsent(level,
-                l -> {
-                    logger.info("Creating new counter for level: {}", l);
-                    return Counter.builder("logpilot_logs_received_total")
-                        .tag("level", l)
-                        .description("Number of logs received by level")
-                        .register(meterRegistry);
-                }
-            );
+                    l -> {
+                        logger.info("Creating new counter for level: {}", l);
+                        return Counter.builder("logpilot_logs_received_total")
+                                .tag("level", l)
+                                .description("Number of logs received by level")
+                                .register(meterRegistry);
+                    });
             levelCounter.increment();
             logger.debug("Incremented counter for level: {} (current: {})", level, levelCounter.count());
 
             String channel = logEntry.getChannel() != null ? logEntry.getChannel() : "unknown";
             Counter channelCounter = channelCounters.computeIfAbsent(channel,
-                c -> {
-                    logger.info("Creating new counter for channel: {}", c);
-                    return Counter.builder("logpilot_logs_received_total")
-                        .tag("channel", c)
-                        .description("Number of logs received by channel")
-                        .register(meterRegistry);
-                }
-            );
+                    c -> {
+                        logger.info("Creating new counter for channel: {}", c);
+                        return Counter.builder("logpilot_logs_received_total")
+                                .tag("channel", c)
+                                .description("Number of logs received by channel")
+                                .register(meterRegistry);
+                    });
             channelCounter.increment();
             logger.debug("Incremented counter for channel: {} (current: {})", channel, channelCounter.count());
         } catch (Exception e) {

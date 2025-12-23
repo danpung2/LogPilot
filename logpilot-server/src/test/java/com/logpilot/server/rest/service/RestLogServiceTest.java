@@ -36,9 +36,8 @@ public class RestLogServiceTest {
         testLogEntry = new LogEntry("test-channel", LogLevel.INFO, "Test message");
 
         testLogEntries = Arrays.asList(
-            new LogEntry("channel1", LogLevel.INFO, "Message 1"),
-            new LogEntry("channel2", LogLevel.ERROR, "Message 2")
-        );
+                new LogEntry("channel1", LogLevel.INFO, "Message 1"),
+                new LogEntry("channel2", LogLevel.ERROR, "Message 2"));
     }
 
     @Test
@@ -130,53 +129,54 @@ public class RestLogServiceTest {
 
     @Test
     void getLogsForConsumer_WithValidParameters_ShouldCallLogStorage() {
-        when(logStorage.retrieve("test-channel", "consumer1", 100)).thenReturn(testLogEntries);
+        when(logStorage.retrieve("test-channel", "consumer1", 100, true)).thenReturn(testLogEntries);
 
         List<LogEntry> result = restLogService.getLogsForConsumer("test-channel", "consumer1", 100);
 
         assertEquals(testLogEntries, result);
-        verify(logStorage, times(1)).retrieve("test-channel", "consumer1", 100);
+        verify(logStorage, times(1)).retrieve("test-channel", "consumer1", 100, true);
     }
 
     @Test
     void getLogsForConsumer_WithNullChannel_ShouldCallLogStorage() {
-        when(logStorage.retrieve(null, "consumer1", 100)).thenReturn(Collections.emptyList());
+        when(logStorage.retrieve(null, "consumer1", 100, true)).thenReturn(Collections.emptyList());
 
         List<LogEntry> result = restLogService.getLogsForConsumer(null, "consumer1", 100);
 
         assertNotNull(result);
-        verify(logStorage, times(1)).retrieve(null, "consumer1", 100);
+        verify(logStorage, times(1)).retrieve(null, "consumer1", 100, true);
     }
 
     @Test
     void getLogsForConsumer_WithNullConsumerId_ShouldCallLogStorage() {
-        when(logStorage.retrieve("test-channel", null, 100)).thenReturn(testLogEntries);
+        when(logStorage.retrieve("test-channel", null, 100, true)).thenReturn(testLogEntries);
 
         List<LogEntry> result = restLogService.getLogsForConsumer("test-channel", null, 100);
 
         assertEquals(testLogEntries, result);
-        verify(logStorage, times(1)).retrieve("test-channel", null, 100);
+        verify(logStorage, times(1)).retrieve("test-channel", null, 100, true);
     }
 
     @Test
     void getLogsForConsumer_WithZeroLimit_ShouldCallLogStorage() {
-        when(logStorage.retrieve("test-channel", "consumer1", 0)).thenReturn(Collections.emptyList());
+        when(logStorage.retrieve("test-channel", "consumer1", 0, true)).thenReturn(Collections.emptyList());
 
         List<LogEntry> result = restLogService.getLogsForConsumer("test-channel", "consumer1", 0);
 
         assertNotNull(result);
-        verify(logStorage, times(1)).retrieve("test-channel", "consumer1", 0);
+        verify(logStorage, times(1)).retrieve("test-channel", "consumer1", 0, true);
     }
 
     @Test
     void getLogsForConsumer_WhenStorageThrowsException_ShouldPropagateException() {
-        when(logStorage.retrieve(anyString(), anyString(), anyInt())).thenThrow(new RuntimeException("Retrieval error"));
+        when(logStorage.retrieve(anyString(), anyString(), anyInt(), anyBoolean()))
+                .thenThrow(new RuntimeException("Retrieval error"));
 
         assertThrows(RuntimeException.class, () -> {
             restLogService.getLogsForConsumer("test-channel", "consumer1", 100);
         });
 
-        verify(logStorage, times(1)).retrieve("test-channel", "consumer1", 100);
+        verify(logStorage, times(1)).retrieve("test-channel", "consumer1", 100, true);
     }
 
     @Test
@@ -233,7 +233,7 @@ public class RestLogServiceTest {
     @Test
     void service_ShouldDelegateAllCallsToLogStorage() {
         when(logStorage.retrieveAll(anyInt())).thenReturn(testLogEntries);
-        when(logStorage.retrieve(anyString(), anyString(), anyInt())).thenReturn(testLogEntries);
+        when(logStorage.retrieve(anyString(), anyString(), anyInt(), anyBoolean())).thenReturn(testLogEntries);
 
         restLogService.storeLog(testLogEntry);
         restLogService.storeLogs(testLogEntries);
@@ -243,7 +243,7 @@ public class RestLogServiceTest {
         verify(logStorage, times(1)).store(testLogEntry);
         verify(logStorage, times(1)).storeLogs(testLogEntries);
         verify(logStorage, times(1)).retrieveAll(50);
-        verify(logStorage, times(1)).retrieve("channel", "consumer", 25);
+        verify(logStorage, times(1)).retrieve("channel", "consumer", 25, true);
 
         verifyNoMoreInteractions(logStorage);
     }

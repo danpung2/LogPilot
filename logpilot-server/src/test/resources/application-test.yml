@@ -5,6 +5,11 @@ logpilot:
   server:
     protocol: all
     port: 0
+    api-key: test-api-key
+    rate-limit:
+      capacity: 10000
+      refill-tokens: 10000
+      refill-duration-seconds: 1
 
 server:
   port: 0

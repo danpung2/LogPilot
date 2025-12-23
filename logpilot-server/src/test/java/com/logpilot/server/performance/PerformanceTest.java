@@ -10,8 +10,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -50,6 +53,13 @@ public class PerformanceTest {
     private static final int CONCURRENT_CLIENTS = 10;
     private static final int LARGE_BATCH_SIZE = 500;
 
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-API-KEY", "test-api-key");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
     @BeforeEach
     void setUp() {
         // Warm up the application
@@ -60,7 +70,7 @@ public class PerformanceTest {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        restTemplate.postForEntity("/api/logs", warmupEntry, Void.class);
+        restTemplate.postForEntity("/api/logs", new HttpEntity<>(warmupEntry, createHeaders()), Void.class);
     }
 
     @Test
@@ -83,7 +93,7 @@ public class PerformanceTest {
         // Send requests
         List<ResponseEntity<Void>> responses = new ArrayList<>();
         for (LogEntry entry : testEntries) {
-            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", entry, Void.class);
+            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", new HttpEntity<>(entry, createHeaders()), Void.class);
             responses.add(response);
         }
 
@@ -129,7 +139,7 @@ public class PerformanceTest {
                                 .build();
 
                         ResponseEntity<Void> response = restTemplate.postForEntity(
-                            "/api/logs", entry, Void.class);
+                            "/api/logs", new HttpEntity<>(entry, createHeaders()), Void.class);
                         assertEquals(HttpStatus.CREATED, response.getStatusCode());
                     }
                 } finally {
@@ -187,7 +197,7 @@ public class PerformanceTest {
         long startTime = System.currentTimeMillis();
 
         ResponseEntity<Void> response = restTemplate.postForEntity(
-            "/api/logs/batch", largeBatch, Void.class);
+            "/api/logs/batch", new HttpEntity<>(largeBatch, createHeaders()), Void.class);
 
         long endTime = System.currentTimeMillis();
         long processingTime = endTime - startTime;
@@ -201,7 +211,7 @@ public class PerformanceTest {
         ResponseEntity<List<LogEntry>> retrievalResponse = restTemplate.exchange(
             "/api/logs/large-batch-test?limit=" + (batchSize + 10),
             HttpMethod.GET,
-            null,
+            new HttpEntity<>(createHeaders()),
             new ParameterizedTypeReference<List<LogEntry>>() {}
         );
 
@@ -237,7 +247,7 @@ public class PerformanceTest {
             }
 
             ResponseEntity<Void> response = restTemplate.postForEntity(
-                "/api/logs/batch", batch, Void.class);
+                "/api/logs/batch", new HttpEntity<>(batch, createHeaders()), Void.class);
             assertEquals(HttpStatus.CREATED, response.getStatusCode());
         }
 
@@ -272,7 +282,7 @@ public class PerformanceTest {
 
             long writeStartTime = System.nanoTime();
             ResponseEntity<Void> writeResponse = restTemplate.postForEntity(
-                "/api/logs", testEntry, Void.class);
+                "/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
             long writeEndTime = System.nanoTime();
 
             assertEquals(HttpStatus.CREATED, writeResponse.getStatusCode());
@@ -283,7 +293,7 @@ public class PerformanceTest {
             ResponseEntity<List<LogEntry>> readResponse = restTemplate.exchange(
                 "/api/logs/storage-perf-test-" + i + "?limit=10",
                 HttpMethod.GET,
-                null,
+                new HttpEntity<>(createHeaders()),
                 new ParameterizedTypeReference<List<LogEntry>>() {}
             );
             long readEndTime = System.nanoTime();
@@ -321,7 +331,7 @@ public class PerformanceTest {
                     .build();
 
             long startTime = System.nanoTime();
-            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", testEntry, Void.class);
+            ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
             long endTime = System.nanoTime();
 
             assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -360,7 +370,7 @@ public class PerformanceTest {
                     .build();
 
             try {
-                ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", testEntry, Void.class);
+                ResponseEntity<Void> response = restTemplate.postForEntity("/api/logs", new HttpEntity<>(testEntry, createHeaders()), Void.class);
                 if (!response.getStatusCode().is2xxSuccessful()) {
                     errorCount++;
                 }

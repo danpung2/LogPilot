@@ -58,6 +58,14 @@ protobuf {
     }
 }
 
+graalvmNative {
+    testSupport = false
+}
+
+tasks.named('processTestAot') {
+    enabled = false
+}
+
 sourceSets {
     main {
         java {

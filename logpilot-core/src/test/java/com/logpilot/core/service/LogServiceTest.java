@@ -47,9 +47,8 @@ public class LogServiceTest {
     @Test
     void storeLogs_WithValidEntries_ShouldCallStorage() {
         List<LogEntry> logEntries = Arrays.asList(
-            createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("channel2", LogLevel.WARN, "Message 2")
-        );
+                createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("channel2", LogLevel.WARN, "Message 2"));
 
         logService.storeLogs(logEntries);
 
@@ -78,9 +77,8 @@ public class LogServiceTest {
         int limit = 50;
 
         List<LogEntry> expectedLogs = Arrays.asList(
-            createTestLogEntry(channel, LogLevel.INFO, "Message 1"),
-            createTestLogEntry(channel, LogLevel.WARN, "Message 2")
-        );
+                createTestLogEntry(channel, LogLevel.INFO, "Message 1"),
+                createTestLogEntry(channel, LogLevel.WARN, "Message 2"));
 
         when(mockLogStorage.retrieve(channel, consumerId, limit)).thenReturn(expectedLogs);
 
@@ -93,35 +91,35 @@ public class LogServiceTest {
     @Test
     void getLogsForConsumer_WithNullChannel_ShouldThrowException() {
         assertThrows(IllegalArgumentException.class,
-            () -> logService.getLogsForConsumer(null, "consumer", 10));
+                () -> logService.getLogsForConsumer(null, "consumer", 10));
         verify(mockLogStorage, never()).retrieve(any(), any(), anyInt());
     }
 
     @Test
     void getLogsForConsumer_WithEmptyChannel_ShouldThrowException() {
         assertThrows(IllegalArgumentException.class,
-            () -> logService.getLogsForConsumer("", "consumer", 10));
+                () -> logService.getLogsForConsumer("", "consumer", 10));
         verify(mockLogStorage, never()).retrieve(any(), any(), anyInt());
     }
 
     @Test
     void getLogsForConsumer_WithNullConsumerId_ShouldThrowException() {
         assertThrows(IllegalArgumentException.class,
-            () -> logService.getLogsForConsumer("channel", null, 10));
+                () -> logService.getLogsForConsumer("channel", null, 10));
         verify(mockLogStorage, never()).retrieve(any(), any(), anyInt());
     }
 
     @Test
     void getLogsForConsumer_WithEmptyConsumerId_ShouldThrowException() {
         assertThrows(IllegalArgumentException.class,
-            () -> logService.getLogsForConsumer("channel", "", 10));
+                () -> logService.getLogsForConsumer("channel", "", 10));
         verify(mockLogStorage, never()).retrieve(any(), any(), anyInt());
     }
 
     @Test
     void getLogsForConsumer_WithNegativeLimit_ShouldThrowException() {
         assertThrows(IllegalArgumentException.class,
-            () -> logService.getLogsForConsumer("channel", "consumer", -1));
+                () -> logService.getLogsForConsumer("channel", "consumer", -1));
         verify(mockLogStorage, never()).retrieve(any(), any(), anyInt());
     }
 
@@ -144,10 +142,9 @@ public class LogServiceTest {
     void getAllLogs_WithValidLimit_ShouldCallStorage() {
         int limit = 100;
         List<LogEntry> expectedLogs = Arrays.asList(
-            createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("channel2", LogLevel.ERROR, "Message 2"),
-            createTestLogEntry("channel3", LogLevel.DEBUG, "Message 3")
-        );
+                createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("channel2", LogLevel.ERROR, "Message 2"),
+                createTestLogEntry("channel3", LogLevel.DEBUG, "Message 3"));
 
         when(mockLogStorage.retrieveAll(limit)).thenReturn(expectedLogs);
 
@@ -236,6 +233,26 @@ public class LogServiceTest {
                 throw new IllegalArgumentException("Limit cannot be negative");
             }
             return logStorage.retrieveAll(limit);
+        }
+
+        @Override
+        public void commitLogOffset(String channel, String consumerId, long lastLogId) {
+            logStorage.commitOffset(channel, consumerId, lastLogId);
+        }
+
+        @Override
+        public void seekToBeginning(String channel, String consumerId) {
+            logStorage.seekToBeginning(channel, consumerId);
+        }
+
+        @Override
+        public void seekToEnd(String channel, String consumerId) {
+            logStorage.seekToEnd(channel, consumerId);
+        }
+
+        @Override
+        public void seekToId(String channel, String consumerId, long logId) {
+            logStorage.seekToId(channel, consumerId, logId);
         }
     }
 }

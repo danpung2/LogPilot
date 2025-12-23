@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component("grpcLogHandler")
+@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'grpc' or '${logpilot.server.protocol:all}' == 'all'")
 public class GrpcLogHandler implements LogService {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcLogHandler.class);
@@ -48,7 +49,7 @@ public class GrpcLogHandler implements LogService {
     @Override
     public List<LogEntry> getLogsForConsumer(String channel, String consumerId, int limit) {
         logger.debug("[gRPC] Retrieving logs for channel: {} and consumer: {}", channel, consumerId);
-        return logStorage.retrieve(channel, consumerId, limit);
+        return logStorage.retrieve(channel, consumerId, limit, true);
     }
 
     @Override
@@ -59,7 +60,8 @@ public class GrpcLogHandler implements LogService {
 
     @Override
     public void commitLogOffset(String channel, String consumerId, long lastLogId) {
-        logger.debug("[gRPC] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId, lastLogId);
+        logger.debug("[gRPC] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId,
+                lastLogId);
         logStorage.commitOffset(channel, consumerId, lastLogId);
     }
 

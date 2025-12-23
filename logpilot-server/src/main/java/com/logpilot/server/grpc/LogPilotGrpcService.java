@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @GrpcService
+@ConditionalOnExpression("'${logpilot.server.protocol:all}' == 'grpc' or '${logpilot.server.protocol:all}' == 'all'")
 public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
 
     private static final Logger logger = LoggerFactory.getLogger(LogPilotGrpcService.class);
@@ -37,23 +39,24 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     }
 
     private void recordLogMetrics(LogEntry logEntry) {
-        if (logEntry == null) return;
+        if (logEntry == null)
+            return;
 
         String level = logEntry.getLevel() != null ? logEntry.getLevel().toString() : "UNKNOWN";
         levelCounters.computeIfAbsent(level,
-            l -> Counter.builder("logpilot_logs_received_total")
-                .tag("level", l)
-                .description("Number of logs received by level")
-                .register(meterRegistry)
-        ).increment();
+                l -> Counter.builder("logpilot_logs_received_total")
+                        .tag("level", l)
+                        .description("Number of logs received by level")
+                        .register(meterRegistry))
+                .increment();
 
         String channel = logEntry.getChannel() != null ? logEntry.getChannel() : "unknown";
         channelCounters.computeIfAbsent(channel,
-            c -> Counter.builder("logpilot_logs_received_total")
-                .tag("channel", c)
-                .description("Number of logs received by channel")
-                .register(meterRegistry)
-        ).increment();
+                c -> Counter.builder("logpilot_logs_received_total")
+                        .tag("channel", c)
+                        .description("Number of logs received by channel")
+                        .register(meterRegistry))
+                .increment();
     }
 
     @Override
@@ -86,7 +89,8 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     }
 
     @Override
-    public void sendLogs(LogPilotProto.SendLogsRequest request, StreamObserver<LogPilotProto.SendLogsResponse> responseObserver) {
+    public void sendLogs(LogPilotProto.SendLogsRequest request,
+            StreamObserver<LogPilotProto.SendLogsResponse> responseObserver) {
         try {
             List<LogEntry> logEntries = request.getLogRequestsList().stream()
                     .map(this::convertLogRequestToLogEntry)
@@ -118,7 +122,8 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     }
 
     @Override
-    public void listLogs(LogPilotProto.ListLogsRequest request, StreamObserver<LogPilotProto.ListLogsResponse> responseObserver) {
+    public void listLogs(LogPilotProto.ListLogsRequest request,
+            StreamObserver<LogPilotProto.ListLogsResponse> responseObserver) {
         try {
             List<LogEntry> logEntries = logService.getAllLogs(100);
 
@@ -141,12 +146,14 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     }
 
     @Override
-    public void fetchLogs(LogPilotProto.FetchLogsRequest request, StreamObserver<LogPilotProto.FetchLogsResponse> responseObserver) {
+    public void fetchLogs(LogPilotProto.FetchLogsRequest request,
+            StreamObserver<LogPilotProto.FetchLogsResponse> responseObserver) {
         try {
             List<LogEntry> logEntries;
 
             if (!request.getChannel().isEmpty()) {
-                logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(), request.getLimit());
+                logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(),
+                        request.getLimit(), true);
             } else {
                 logEntries = logService.getAllLogs(request.getLimit());
             }
@@ -196,8 +203,7 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
             Map<String, String> stringMeta = logEntry.getMeta().entrySet().stream()
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
-                            entry -> entry.getValue().toString()
-                    ));
+                            entry -> entry.getValue().toString()));
             builder.putAllMeta(stringMeta);
         }
 
