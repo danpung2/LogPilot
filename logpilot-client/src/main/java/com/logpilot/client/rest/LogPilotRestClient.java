@@ -165,7 +165,7 @@ public class LogPilotRestClient implements LogPilotClient {
     @Override
     public List<LogEntry> getLogs(String channel, String consumerId, int limit) {
         try {
-            String url = String.format("%s/api/v1/logs/%s?consumerId=%s&limit=%d",
+            String url = String.format("%s/api/logs/%s?consumerId=%s&limit=%d",
                     serverUrl, channel, consumerId, limit);
             return sendGetRequest(url);
         } catch (Exception e) {
@@ -177,7 +177,7 @@ public class LogPilotRestClient implements LogPilotClient {
     @Override
     public List<LogEntry> getAllLogs(int limit) {
         try {
-            String url = String.format("%s/api/v1/logs?limit=%d", serverUrl, limit);
+            String url = String.format("%s/api/logs?limit=%d", serverUrl, limit);
             return sendGetRequest(url);
         } catch (Exception e) {
             logger.error("Failed to get all logs", e);
@@ -187,7 +187,7 @@ public class LogPilotRestClient implements LogPilotClient {
 
     private void sendLogRequest(LogEntry logEntry) throws Exception {
         String json = objectMapper.writeValueAsString(logEntry);
-        String url = serverUrl + "/api/v1/logs";
+        String url = serverUrl + "/api/logs";
 
         makeRequest(json, url);
 
@@ -196,7 +196,7 @@ public class LogPilotRestClient implements LogPilotClient {
 
     private void sendBatchLogRequest(List<LogEntry> logEntries) throws Exception {
         String json = objectMapper.writeValueAsString(logEntries);
-        String url = serverUrl + "/api/v1/logs/batch";
+        String url = serverUrl + "/api/logs/batch";
 
         makeRequest(json, url);
 
