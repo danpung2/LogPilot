@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  logpilot:
+    image: danpung2/logpilot-server:latest
+    container_name: logpilot-server
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      - LOGPILOT_API_KEY=your-api-key-here
+    volumes:
+      - ./data:/app/data
+    restart: always

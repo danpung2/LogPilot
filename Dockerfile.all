@@ -1,0 +1,71 @@
+# LogPilot Full-Stack (All-in-One) Dockerfile
+# Includes: LogPilot Server, Prometheus, Grafana
+
+# --- Stage 1: Build LogPilot Server ---
+FROM gradle:8.5-jdk17 AS build
+WORKDIR /app
+COPY gradle/ gradle/
+COPY gradlew gradlew.bat build.gradle settings.gradle ./
+COPY logpilot-core/ logpilot-core/
+COPY logpilot-client/ logpilot-client/
+COPY logpilot-server/ logpilot-server/
+RUN chmod +x gradlew
+RUN ./gradlew clean :logpilot-server:build -x test
+
+# --- Stage 2: Final Runtime Image ---
+FROM eclipse-temurin:17-jre-focal
+
+# Install dependencies (Prometheus, Grafana)
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg2 \
+    software-properties-common \
+    wget \
+    unzip \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Prometheus
+ENV PROMETHEUS_VERSION=2.51.1
+RUN wget https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz \
+    && tar xvf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz \
+    && mv prometheus-${PROMETHEUS_VERSION}.linux-amd64 /etc/prometheus \
+    && rm prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+
+# Install Grafana
+RUN mkdir -p /etc/apt/keyrings/ \
+    && wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null \
+    && echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list \
+    && apt-get update && apt-get install -y grafana \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up working directory
+WORKDIR /app
+
+# Copy LogPilot Server
+COPY --from=build /app/logpilot-server/build/libs/logpilot-server-*.jar app.jar
+
+# Copy Monitoring Configs
+COPY logpilot-monitoring/k8s/prometheus/configmap.yaml /etc/prometheus/prometheus-k8s.yaml
+# We need a standalone prometheus.yml for Docker. Let's create one later or use a simplified one.
+RUN echo 'global:\n  scrape_interval: 15s\nscrape_configs:\n  - job_name: "logpilot"\n    metrics_path: "/actuator/prometheus"\n    static_configs:\n      - targets: ["localhost:8080"]' > /etc/prometheus/prometheus.yml
+
+# Copy Grafana Dashboards
+RUN mkdir -p /var/lib/grafana/dashboards
+COPY logpilot-monitoring/dashboards/*.json /var/lib/grafana/dashboards/
+# Grafana provisioning
+RUN mkdir -p /etc/grafana/provisioning/datasources /etc/grafana/provisioning/dashboards
+RUN echo 'apiVersion: 1\ndatasources:\n  - name: Prometheus\n    type: prometheus\n    url: http://localhost:9090\n    isDefault: true' > /etc/grafana/provisioning/datasources/prometheus.yaml
+RUN echo 'apiVersion: 1\nproviders:\n  - name: "LogPilot"\n    orgId: 1\n    folder: ""\n    type: file\n    disableDeletion: false\n    editable: true\n    options:\n      path: /var/lib/grafana/dashboards' > /etc/grafana/provisioning/dashboards/logpilot.yaml
+
+# Supervisor configuration to manage multiple processes
+RUN mkdir -p /etc/supervisor/conf.d
+RUN echo '[supervisord]\nnodaemon=true\n\n[program:logpilot]\ncommand=java -jar /app/app.jar\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n\n[program:prometheus]\ncommand=/etc/prometheus/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/etc/prometheus/data\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n\n[program:grafana]\ncommand=/usr/sbin/grafana-server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0' > /etc/supervisor/conf.d/logpilot.conf
+
+# Expose ports
+# 8080: LogPilot REST, 50051: LogPilot gRPC
+# 9090: Prometheus, 3000: Grafana
+EXPOSE 8080 50051 9090 3000
+
+# Start Supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
