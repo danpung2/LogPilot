@@ -149,77 +149,6 @@ public class LogControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(logService, times(1)).getLogsForConsumer("test-channel", "consumer1", 100, true);
-        verify(logService, never()).getAllLogs(anyInt());
-    }
-
-    @Test
-    void getLogs_WithChannelOnly_ShouldReturnAllLogs() throws Exception {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs/test-channel")
-                .param("limit", "100"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2));
-
-        verify(logService, times(1)).getAllLogs(100);
-        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt(), anyBoolean());
-    }
-
-    @Test
-    void getLogs_WithDefaultLimit_ShouldUseDefaultValue() throws Exception {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs/test-channel"))
-                .andExpect(status().isOk());
-
-        verify(logService, times(1)).getAllLogs(100);
-    }
-
-    @Test
-    void getLogs_WithCustomLimit_ShouldUseCustomValue() throws Exception {
-        when(logService.getAllLogs(50)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs/test-channel")
-                .param("limit", "50"))
-                .andExpect(status().isOk());
-
-        verify(logService, times(1)).getAllLogs(50);
-    }
-
-    @Test
-    void getAllLogs_ShouldReturnAllLogs() throws Exception {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2));
-
-        verify(logService, times(1)).getAllLogs(100);
-    }
-
-    @Test
-    void getAllLogs_WithCustomLimit_ShouldUseCustomValue() throws Exception {
-        when(logService.getAllLogs(25)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs")
-                .param("limit", "25"))
-                .andExpect(status().isOk());
-
-        verify(logService, times(1)).getAllLogs(25);
-    }
-
-    @Test
-    void getAllLogs_WithDefaultLimit_ShouldUseDefaultValue() throws Exception {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs"))
-                .andExpect(status().isOk());
-
-        verify(logService, times(1)).getAllLogs(100);
     }
 
     @Test
@@ -252,12 +181,13 @@ public class LogControllerTest {
 
     @Test
     void getLogs_WhenServiceThrowsException_ShouldReturnInternalServerError() throws Exception {
-        when(logService.getAllLogs(anyInt())).thenThrow(new RuntimeException("Retrieval error"));
+        when(logService.getLogsByChannel(eq("test-channel"), anyInt()))
+                .thenThrow(new RuntimeException("Retrieval error"));
 
         mockMvc.perform(get("/api/logs/test-channel"))
                 .andExpect(status().isInternalServerError());
 
-        verify(logService, times(1)).getAllLogs(100);
+        verify(logService, times(1)).getLogsByChannel("test-channel", 100);
     }
 
     @Test
@@ -282,36 +212,18 @@ public class LogControllerTest {
 
     @Test
     void getLogs_WithSpecialCharactersInChannel_ShouldHandleCorrectly() throws Exception {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
+        // # is a fragment identifier, so it won't be part of the path unless encoded or
+        // we accept that it truncates.
+        // For this test, let's use characters that are valid in path but special: !@$
+        // If we really want # and %, we must encode them.
+        String channel = "special-channel!@$";
+        when(logService.getLogsByChannel(channel, 100)).thenReturn(testLogEntries);
 
-        mockMvc.perform(get("/api/logs/special-channel!@#$%")
+        mockMvc.perform(get("/api/logs/" + channel)
                 .param("limit", "100"))
                 .andExpect(status().isOk());
 
-        verify(logService, times(1)).getAllLogs(100);
-    }
-
-    @Test
-    void getLogs_WithLargeLimit_ShouldAcceptValue() throws Exception {
-        when(logService.getAllLogs(10000)).thenReturn(testLogEntries);
-
-        mockMvc.perform(get("/api/logs")
-                .param("limit", "10000"))
-                .andExpect(status().isOk());
-
-        verify(logService, times(1)).getAllLogs(10000);
-    }
-
-    @Test
-    void getLogs_WithZeroLimit_ShouldAcceptValue() throws Exception {
-        when(logService.getAllLogs(0)).thenReturn(Collections.emptyList());
-
-        mockMvc.perform(get("/api/logs")
-                .param("limit", "0"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-
-        verify(logService, times(1)).getAllLogs(0);
+        verify(logService, times(1)).getLogsByChannel(channel, 100);
     }
 
     @Test

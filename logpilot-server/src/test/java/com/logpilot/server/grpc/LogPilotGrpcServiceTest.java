@@ -18,7 +18,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -258,59 +257,7 @@ public class LogPilotGrpcServiceTest {
     }
 
     @Test
-    void listLogs_ShouldReturnProtoLogEntries() {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
-
-        LogPilotProto.ListLogsRequest listRequest = LogPilotProto.ListLogsRequest.newBuilder().build();
-
-        grpcService.listLogs(listRequest, listLogsResponseObserver);
-
-        verify(logService, times(1)).getAllLogs(100);
-
-        ArgumentCaptor<LogPilotProto.ListLogsResponse> responseCaptor = ArgumentCaptor
-                .forClass(LogPilotProto.ListLogsResponse.class);
-        verify(listLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
-        verify(listLogsResponseObserver, times(1)).onCompleted();
-
-        LogPilotProto.ListLogsResponse response = responseCaptor.getValue();
-        assertEquals(2, response.getLogsCount());
-        assertEquals("channel1", response.getLogs(0).getChannel());
-        assertEquals("channel2", response.getLogs(1).getChannel());
-    }
-
-    @Test
-    void listLogs_WithNoLogs_ShouldReturnEmptyResponse() {
-        when(logService.getAllLogs(100)).thenReturn(Collections.emptyList());
-
-        LogPilotProto.ListLogsRequest listRequest = LogPilotProto.ListLogsRequest.newBuilder().build();
-
-        grpcService.listLogs(listRequest, listLogsResponseObserver);
-
-        ArgumentCaptor<LogPilotProto.ListLogsResponse> responseCaptor = ArgumentCaptor
-                .forClass(LogPilotProto.ListLogsResponse.class);
-        verify(listLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
-        verify(listLogsResponseObserver, times(1)).onCompleted();
-
-        LogPilotProto.ListLogsResponse response = responseCaptor.getValue();
-        assertEquals(0, response.getLogsCount());
-    }
-
-    @Test
-    void listLogs_WhenServiceThrowsException_ShouldCallOnError() {
-        RuntimeException testException = new RuntimeException("List retrieval error");
-        when(logService.getAllLogs(anyInt())).thenThrow(testException);
-
-        LogPilotProto.ListLogsRequest listRequest = LogPilotProto.ListLogsRequest.newBuilder().build();
-
-        grpcService.listLogs(listRequest, listLogsResponseObserver);
-
-        verify(listLogsResponseObserver, times(1)).onError(testException);
-        verify(listLogsResponseObserver, never()).onNext(any());
-        verify(listLogsResponseObserver, never()).onCompleted();
-    }
-
-    @Test
-    void fetchLogs_WithChannel_ShouldCallGetLogsForConsumer() {
+    void fetchLogs_WithChannelAndSince_ShouldCallGetLogsForConsumer() {
         when(logService.getLogsForConsumer("fetch-channel", "consumer1", 50, true)).thenReturn(testLogEntries);
 
         LogPilotProto.FetchLogsRequest fetchRequest = LogPilotProto.FetchLogsRequest.newBuilder()
@@ -333,9 +280,29 @@ public class LogPilotGrpcServiceTest {
     }
 
     @Test
-    void fetchLogs_WithoutChannel_ShouldCallGetAllLogs() {
-        when(logService.getAllLogs(75)).thenReturn(testLogEntries);
+    void fetchLogs_WithChannelOnly_ShouldCallGetLogsByChannel() {
+        when(logService.getLogsByChannel("fetch-channel", 50)).thenReturn(testLogEntries);
 
+        LogPilotProto.FetchLogsRequest fetchRequest = LogPilotProto.FetchLogsRequest.newBuilder()
+                .setChannel("fetch-channel")
+                .setLimit(50)
+                .build();
+
+        grpcService.fetchLogs(fetchRequest, fetchLogsResponseObserver);
+
+        verify(logService, times(1)).getLogsByChannel("fetch-channel", 50);
+
+        ArgumentCaptor<LogPilotProto.FetchLogsResponse> responseCaptor = ArgumentCaptor
+                .forClass(LogPilotProto.FetchLogsResponse.class);
+        verify(fetchLogsResponseObserver, times(1)).onNext(responseCaptor.capture());
+        verify(fetchLogsResponseObserver, times(1)).onCompleted();
+
+        LogPilotProto.FetchLogsResponse response = responseCaptor.getValue();
+        assertEquals(2, response.getLogsCount());
+    }
+
+    @Test
+    void fetchLogs_WithoutChannel_ShouldReturnUnsupportedError() {
         LogPilotProto.FetchLogsRequest fetchRequest = LogPilotProto.FetchLogsRequest.newBuilder()
                 .setChannel("")
                 .setLimit(75)
@@ -343,33 +310,18 @@ public class LogPilotGrpcServiceTest {
 
         grpcService.fetchLogs(fetchRequest, fetchLogsResponseObserver);
 
-        verify(logService, times(1)).getAllLogs(75);
-        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt(), anyBoolean());
-
-        verify(fetchLogsResponseObserver, times(1)).onNext(any(LogPilotProto.FetchLogsResponse.class));
-        verify(fetchLogsResponseObserver, times(1)).onCompleted();
-    }
-
-    @Test
-    void fetchLogs_WithEmptyChannel_ShouldCallGetAllLogs() {
-        when(logService.getAllLogs(100)).thenReturn(testLogEntries);
-
-        LogPilotProto.FetchLogsRequest fetchRequest = LogPilotProto.FetchLogsRequest.newBuilder()
-                .setLimit(100)
-                .build();
-
-        grpcService.fetchLogs(fetchRequest, fetchLogsResponseObserver);
-
-        verify(logService, times(1)).getAllLogs(100);
-        verify(logService, never()).getLogsForConsumer(anyString(), anyString(), anyInt(), anyBoolean());
+        ArgumentCaptor<Throwable> errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(fetchLogsResponseObserver, times(1)).onError(errorCaptor.capture());
+        assertTrue(errorCaptor.getValue() instanceof UnsupportedOperationException);
     }
 
     @Test
     void fetchLogs_WhenServiceThrowsException_ShouldCallOnError() {
         RuntimeException testException = new RuntimeException("Fetch retrieval error");
-        when(logService.getAllLogs(anyInt())).thenThrow(testException);
+        when(logService.getLogsByChannel(eq("test-channel"), anyInt())).thenThrow(testException);
 
         LogPilotProto.FetchLogsRequest fetchRequest = LogPilotProto.FetchLogsRequest.newBuilder()
+                .setChannel("test-channel")
                 .setLimit(100)
                 .build();
 

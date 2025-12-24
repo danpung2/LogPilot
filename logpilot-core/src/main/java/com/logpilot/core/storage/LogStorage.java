@@ -13,6 +13,11 @@ public interface LogStorage extends AutoCloseable {
     List<LogEntry> retrieve(String channel, String consumerId, int limit);
 
     /**
+     * Retrieve logs for a specific channel
+     */
+    List<LogEntry> retrieve(String channel, int limit);
+
+    /**
      * Retrieve logs for a specific channel and consumer with optional auto-commit
      */
     default List<LogEntry> retrieve(String channel, String consumerId, int limit, boolean autoCommit) {
@@ -38,8 +43,6 @@ public interface LogStorage extends AutoCloseable {
      * Seek to a specific log ID
      */
     void seekToId(String channel, String consumerId, long logId);
-
-    List<LogEntry> retrieveAll(int limit);
 
     void initialize();
 

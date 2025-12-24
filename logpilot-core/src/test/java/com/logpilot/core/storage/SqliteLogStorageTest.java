@@ -25,10 +25,10 @@ public class SqliteLogStorageTest {
     @BeforeEach
     void setUp() {
         dbPath = tempDir.resolve("test.db").toString();
-        
+
         LogPilotProperties.Storage.Sqlite config = new LogPilotProperties.Storage.Sqlite();
         config.setPath(dbPath);
-        
+
         storage = new SqliteLogStorage(config);
     }
 
@@ -62,7 +62,8 @@ public class SqliteLogStorageTest {
 
         assertDoesNotThrow(() -> storage.store(logEntry));
 
-        List<LogEntry> retrieved = storage.retrieveAll(10);
+        // Retrieve for specific channel
+        List<LogEntry> retrieved = storage.retrieve("test-channel", "consumer1", 10);
         assertEquals(1, retrieved.size());
 
         LogEntry stored = retrieved.get(0);
@@ -78,7 +79,7 @@ public class SqliteLogStorageTest {
 
         assertDoesNotThrow(() -> storage.store(logEntry));
 
-        List<LogEntry> retrieved = storage.retrieveAll(10);
+        List<LogEntry> retrieved = storage.retrieve("test-channel", "consumer1", 10);
         assertEquals(1, retrieved.size());
         assertNull(retrieved.get(0).getMeta());
     }
@@ -86,15 +87,17 @@ public class SqliteLogStorageTest {
     @Test
     void storeLogs_WithValidEntries_ShouldStoreBatch() {
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("channel2", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("channel1", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("channel2", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("channel1", LogLevel.ERROR, "Message 3"));
 
         assertDoesNotThrow(() -> storage.storeLogs(entries));
 
-        List<LogEntry> retrieved = storage.retrieveAll(10);
-        assertEquals(3, retrieved.size());
+        List<LogEntry> retrieved1 = storage.retrieve("channel1", "consumer1", 10);
+        assertEquals(2, retrieved1.size());
+
+        List<LogEntry> retrieved2 = storage.retrieve("channel2", "consumer1", 10);
+        assertEquals(1, retrieved2.size());
     }
 
     @Test
@@ -107,10 +110,9 @@ public class SqliteLogStorageTest {
     void retrieve_WithNewConsumer_ShouldReturnAllLogs() {
         // Store some logs
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"));
         storage.storeLogs(entries);
 
         List<LogEntry> retrieved = storage.retrieve("test-channel", "consumer1", 10);
@@ -125,9 +127,8 @@ public class SqliteLogStorageTest {
     void retrieve_WithExistingConsumer_ShouldReturnOnlyNewLogs() {
         // Store initial logs
         List<LogEntry> initialEntries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"));
         storage.storeLogs(initialEntries);
 
         // First retrieval should get all logs
@@ -136,9 +137,8 @@ public class SqliteLogStorageTest {
 
         // Store more logs
         List<LogEntry> newEntries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"),
-            createTestLogEntry("test-channel", LogLevel.DEBUG, "Message 4")
-        );
+                createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"),
+                createTestLogEntry("test-channel", LogLevel.DEBUG, "Message 4"));
         storage.storeLogs(newEntries);
 
         // Second retrieval should get only new logs
@@ -183,56 +183,12 @@ public class SqliteLogStorageTest {
     }
 
     @Test
-    void retrieveAll_ShouldReturnAllLogsInDescendingOrder() {
-        List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("channel1", LogLevel.INFO, "First"),
-            createTestLogEntry("channel2", LogLevel.WARN, "Second"),
-            createTestLogEntry("channel1", LogLevel.ERROR, "Third")
-        );
-        storage.storeLogs(entries);
-
-        List<LogEntry> retrieved = storage.retrieveAll(10);
-
-        assertEquals(3, retrieved.size());
-        // Should be in descending order (latest first)
-        assertEquals("Third", retrieved.get(0).getMessage());
-        assertEquals("Second", retrieved.get(1).getMessage());
-        assertEquals("First", retrieved.get(2).getMessage());
-    }
-
-    @Test
-    void retrieveAll_WithLimit_ShouldRespectLimit() {
-        List<LogEntry> entries = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            entries.add(createTestLogEntry("channel", LogLevel.INFO, "Message " + i));
-        }
-        storage.storeLogs(entries);
-
-        List<LogEntry> retrieved = storage.retrieveAll(3);
-
-        assertEquals(3, retrieved.size());
-        // Should get latest 3 in descending order
-        assertEquals("Message 5", retrieved.get(0).getMessage());
-        assertEquals("Message 4", retrieved.get(1).getMessage());
-        assertEquals("Message 3", retrieved.get(2).getMessage());
-    }
-
-    @Test
-    void retrieveAll_WithNoLogs_ShouldReturnEmptyList() {
-        List<LogEntry> retrieved = storage.retrieveAll(10);
-
-        assertNotNull(retrieved);
-        assertTrue(retrieved.isEmpty());
-    }
-
-    @Test
     void multipleConsumers_ShouldHaveIndependentOffsets() {
         // Store logs
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"));
         storage.storeLogs(entries);
 
         // Consumer 1 reads 2 logs
@@ -273,7 +229,7 @@ public class SqliteLogStorageTest {
 
         storage.store(originalEntry);
 
-        List<LogEntry> retrieved = storage.retrieveAll(1);
+        List<LogEntry> retrieved = storage.retrieve("test-channel", "consumer1", 1);
         assertEquals(1, retrieved.size());
 
         LogEntry storedEntry = retrieved.get(0);

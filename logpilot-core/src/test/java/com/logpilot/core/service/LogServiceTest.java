@@ -138,58 +138,12 @@ public class LogServiceTest {
         verify(mockLogStorage, times(1)).retrieve(channel, consumerId, limit);
     }
 
-    @Test
-    void getAllLogs_WithValidLimit_ShouldCallStorage() {
-        int limit = 100;
-        List<LogEntry> expectedLogs = Arrays.asList(
-                createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
-                createTestLogEntry("channel2", LogLevel.ERROR, "Message 2"),
-                createTestLogEntry("channel3", LogLevel.DEBUG, "Message 3"));
-
-        when(mockLogStorage.retrieveAll(limit)).thenReturn(expectedLogs);
-
-        List<LogEntry> actualLogs = logService.getAllLogs(limit);
-
-        assertEquals(expectedLogs, actualLogs);
-        verify(mockLogStorage, times(1)).retrieveAll(limit);
-    }
-
-    @Test
-    void getAllLogs_WithNegativeLimit_ShouldThrowException() {
-        assertThrows(IllegalArgumentException.class, () -> logService.getAllLogs(-1));
-        verify(mockLogStorage, never()).retrieveAll(anyInt());
-    }
-
-    @Test
-    void getAllLogs_WithZeroLimit_ShouldCallStorage() {
-        int limit = 0;
-
-        when(mockLogStorage.retrieveAll(limit)).thenReturn(Arrays.asList());
-
-        List<LogEntry> actualLogs = logService.getAllLogs(limit);
-
-        assertNotNull(actualLogs);
-        assertTrue(actualLogs.isEmpty());
-        verify(mockLogStorage, times(1)).retrieveAll(limit);
-    }
-
-    @Test
-    void getAllLogs_WithLargeLimit_ShouldCallStorage() {
-        int limit = Integer.MAX_VALUE;
-
-        when(mockLogStorage.retrieveAll(limit)).thenReturn(Arrays.asList());
-
-        List<LogEntry> actualLogs = logService.getAllLogs(limit);
-
-        assertNotNull(actualLogs);
-        verify(mockLogStorage, times(1)).retrieveAll(limit);
-    }
-
+    // Helper method to create a LogEntry for testing
     private LogEntry createTestLogEntry(String channel, LogLevel level, String message) {
         return new LogEntry(channel, level, message);
     }
 
-    // Test implementation of LogService with validation
+    // Concrete implementation of LogService for testing purposes
     private static class TestLogService implements LogService {
         private final LogStorage logStorage;
 
@@ -228,11 +182,14 @@ public class LogServiceTest {
         }
 
         @Override
-        public List<LogEntry> getAllLogs(int limit) {
+        public List<LogEntry> getLogsByChannel(String channel, int limit) {
+            if (channel == null || channel.trim().isEmpty()) {
+                throw new IllegalArgumentException("Channel cannot be null or empty");
+            }
             if (limit < 0) {
                 throw new IllegalArgumentException("Limit cannot be negative");
             }
-            return logStorage.retrieveAll(limit);
+            return logStorage.retrieve(channel, limit);
         }
 
         @Override

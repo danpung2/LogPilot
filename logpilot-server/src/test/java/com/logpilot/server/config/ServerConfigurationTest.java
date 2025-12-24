@@ -19,9 +19,9 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=rest",
-        "logpilot.storage.type=FILE",
-        "logpilot.storage.directory=/tmp/test-rest-only"
+            "logpilot.server.protocol=rest",
+            "logpilot.storage.type=FILE",
+            "logpilot.storage.directory=/tmp/test-rest-only"
     })
     static class RestOnlyConfigurationTest {
 
@@ -33,9 +33,9 @@ public class ServerConfigurationTest {
 
             // gRPC components should NOT be present
             assertThrows(NoSuchBeanDefinitionException.class,
-                () -> context.getBean(LogPilotGrpcService.class));
+                    () -> context.getBean(LogPilotGrpcService.class));
             assertThrows(NoSuchBeanDefinitionException.class,
-                () -> context.getBean(GrpcLogHandler.class));
+                    () -> context.getBean(GrpcLogHandler.class));
 
             // Storage should still be configured
             assertDoesNotThrow(() -> context.getBean(LogStorage.class));
@@ -45,9 +45,9 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=grpc",
-        "logpilot.storage.type=FILE",
-        "logpilot.storage.directory=/tmp/test-grpc-only"
+            "logpilot.server.protocol=grpc",
+            "logpilot.storage.type=FILE",
+            "logpilot.storage.directory=/tmp/test-grpc-only"
     })
     static class GrpcOnlyConfigurationTest {
 
@@ -59,9 +59,9 @@ public class ServerConfigurationTest {
 
             // REST components should NOT be present
             assertThrows(NoSuchBeanDefinitionException.class,
-                () -> context.getBean(LogController.class));
+                    () -> context.getBean(LogController.class));
             assertThrows(NoSuchBeanDefinitionException.class,
-                () -> context.getBean(RestLogService.class));
+                    () -> context.getBean(RestLogService.class));
 
             // Storage should still be configured
             assertDoesNotThrow(() -> context.getBean(LogStorage.class));
@@ -71,9 +71,9 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=FILE",
-        "logpilot.storage.directory=/tmp/test-all-protocols"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=FILE",
+            "logpilot.storage.directory=/tmp/test-all-protocols"
     })
     static class AllProtocolsConfigurationTest {
 
@@ -91,9 +91,9 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=FILE",
-        "logpilot.storage.directory=/tmp/test-file-storage"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=FILE",
+            "logpilot.storage.directory=/tmp/test-file-storage"
     })
     static class FileStorageConfigurationTest {
 
@@ -102,16 +102,16 @@ public class ServerConfigurationTest {
             LogStorage storage = context.getBean(LogStorage.class);
             assertNotNull(storage);
             assertEquals("com.logpilot.core.storage.FileLogStorage",
-                storage.getClass().getName());
+                    storage.getClass().getName());
         }
     }
 
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=SQLITE",
-        "logpilot.storage.sqlite.path=/tmp/test-sqlite.db"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=SQLITE",
+            "logpilot.storage.sqlite.path=/tmp/test-sqlite.db"
     })
     static class SqliteStorageConfigurationTest {
 
@@ -120,16 +120,16 @@ public class ServerConfigurationTest {
             LogStorage storage = context.getBean(LogStorage.class);
             assertNotNull(storage);
             assertEquals("com.logpilot.core.storage.SqliteLogStorage",
-                storage.getClass().getName());
+                    storage.getClass().getName());
         }
     }
 
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=FILE",
-        "server.port=0"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=FILE",
+            "server.port=0"
     })
     static class CustomPortsConfigurationTest {
 
@@ -148,8 +148,8 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all"
-        // No storage configuration - should use defaults
+            "logpilot.server.protocol=all"
+    // No storage configuration - should use defaults
     })
     static class DefaultPropertiesConfigurationTest {
 
@@ -174,9 +174,9 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=FILE",
-        "logging.level.com.logpilot=DEBUG"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=FILE",
+            "logging.level.com.logpilot=DEBUG"
     })
     static class LoggingLevelConfigurationTest {
 
@@ -195,10 +195,10 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=FILE",
-        "management.server.port=0",
-        "management.endpoints.web.exposure.include=health,info,metrics"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=FILE",
+            "management.server.port=0",
+            "management.endpoints.web.exposure.include=health,info,metrics"
     })
     static class ActuatorConfigurationTest {
 
@@ -217,9 +217,9 @@ public class ServerConfigurationTest {
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=rest",
-        "logpilot.storage.type=FILE",
-        "logpilot.storage.directory=/tmp/profile-switch-test"
+            "logpilot.server.protocol=rest",
+            "logpilot.storage.type=FILE",
+            "logpilot.storage.directory=/tmp/profile-switch-test"
     })
     static class ProfileSwitchingConfigurationTest {
 
@@ -232,21 +232,21 @@ public class ServerConfigurationTest {
             // Only REST components should be active
             assertDoesNotThrow(() -> context.getBean(RestLogService.class));
             assertThrows(NoSuchBeanDefinitionException.class,
-                () -> context.getBean(GrpcLogHandler.class));
+                    () -> context.getBean(GrpcLogHandler.class));
 
             // Storage should be configured according to profile
             LogStorage storage = context.getBean(LogStorage.class);
             assertEquals("com.logpilot.core.storage.FileLogStorage",
-                storage.getClass().getName());
+                    storage.getClass().getName());
         }
     }
 
     @SpringBootTest
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
-        "logpilot.server.protocol=all",
-        "logpilot.storage.type=FILE",
-        "logpilot.storage.directory=/tmp/resource-cleanup-test"
+            "logpilot.server.protocol=all",
+            "logpilot.storage.type=FILE",
+            "logpilot.storage.directory=/tmp/resource-cleanup-test"
     })
     static class ResourceCleanupConfigurationTest {
 
@@ -262,7 +262,7 @@ public class ServerConfigurationTest {
             // Storage should be properly configured
             assertDoesNotThrow(() -> {
                 // Test basic storage functionality
-                storage.retrieveAll(1);
+                storage.retrieve("test-channel", "consumer1", 1);
             });
         }
     }

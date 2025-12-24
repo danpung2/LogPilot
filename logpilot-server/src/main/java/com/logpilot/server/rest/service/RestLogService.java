@@ -60,6 +60,12 @@ public class RestLogService implements LogService {
     }
 
     @Override
+    public List<LogEntry> getLogsByChannel(String channel, int limit) {
+        logger.debug("[REST] Retrieving latest logs for channel: {} (limit={})", channel, limit);
+        return logStorage.retrieve(channel, limit);
+    }
+
+    @Override
     public void commitLogOffset(String channel, String consumerId, long lastLogId) {
         logger.debug("[REST] Committing offset for channel: {} and consumer: {} to logId: {}", channel, consumerId,
                 lastLogId);
@@ -84,9 +90,4 @@ public class RestLogService implements LogService {
         logStorage.seekToId(channel, consumerId, logId);
     }
 
-    @Override
-    public List<LogEntry> getAllLogs(int limit) {
-        logger.debug("[REST] Retrieving all logs with limit: {}", limit);
-        return logStorage.retrieveAll(limit);
-    }
 }

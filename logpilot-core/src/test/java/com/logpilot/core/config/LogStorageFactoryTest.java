@@ -86,7 +86,7 @@ public class LogStorageFactoryTest {
 
         try (LogStorage storage = LogStorageFactory.createLogStorage(properties)) {
             assertNotNull(storage);
-            assertDoesNotThrow(() -> storage.retrieveAll(1));
+            assertDoesNotThrow(() -> storage.retrieve("test-channel", "consumer1", 1));
         }
     }
 

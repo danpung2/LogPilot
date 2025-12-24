@@ -29,6 +29,11 @@ public interface LogService {
     }
 
     /**
+     * Retrieve logs for a specific channel (without consumer offset)
+     */
+    List<LogEntry> getLogsByChannel(String channel, int limit);
+
+    /**
      * Commit offset for a consumer
      */
     void commitLogOffset(String channel, String consumerId, long lastLogId);
@@ -48,8 +53,4 @@ public interface LogService {
      */
     void seekToId(String channel, String consumerId, long logId);
 
-    /**
-     * Retrieve all logs with a limit
-     */
-    List<LogEntry> getAllLogs(int limit);
 }

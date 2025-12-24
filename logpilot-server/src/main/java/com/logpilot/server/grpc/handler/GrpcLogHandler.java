@@ -53,9 +53,9 @@ public class GrpcLogHandler implements LogService {
     }
 
     @Override
-    public List<LogEntry> getAllLogs(int limit) {
-        logger.debug("[gRPC] Retrieving all logs with limit: {}", limit);
-        return logStorage.retrieveAll(limit);
+    public List<LogEntry> getLogsByChannel(String channel, int limit) {
+        logger.debug("[gRPC] Retrieving latest logs for channel: {} (limit={})", channel, limit);
+        return logStorage.retrieve(channel, limit);
     }
 
     @Override

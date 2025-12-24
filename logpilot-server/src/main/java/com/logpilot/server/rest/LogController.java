@@ -121,9 +121,9 @@ public class LogController {
             // Retrieve logs based on specific consumer offset (supports autoCommit).
             logs = logService.getLogsForConsumer(channel, consumerId, limit, autoCommit);
         } else {
-            // 컨슈머 ID가 없으면 최신 로그를 조회합니다.
-            // If no consumer ID, retrieve latest logs.
-            logs = logService.getAllLogs(limit);
+            // 컨슈머 ID가 없으면 해당 채널의 최신 로그를 조회합니다.
+            // If no consumer ID, retrieve latest logs for this channel.
+            logs = logService.getLogsByChannel(channel, limit);
         }
         return ResponseEntity.ok(logs);
     }
@@ -151,10 +151,4 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/logs")
-    public ResponseEntity<List<LogEntry>> getAllLogs(
-            @RequestParam(defaultValue = "100") int limit) {
-        List<LogEntry> logs = logService.getAllLogs(limit);
-        return ResponseEntity.ok(logs);
-    }
 }

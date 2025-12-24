@@ -210,6 +210,33 @@ public class SqliteLogStorage implements LogStorage {
     }
 
     @Override
+    public List<LogEntry> retrieve(String channel, int limit) {
+        String sql = "SELECT id, channel, level, message, meta, timestamp FROM logs " +
+                "WHERE channel = ? ORDER BY id DESC LIMIT ?";
+
+        List<LogEntry> entries = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, channel);
+            pstmt.setInt(2, limit);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    entries.add(mapResultSetToLogEntry(rs));
+                }
+            }
+
+            logger.debug("Retrieved {} log entries for channel: {} (limit={})", entries.size(), channel, limit);
+        } catch (SQLException e) {
+            logger.error("Failed to retrieve log entries for channel: " + channel, e);
+            throw new StorageException("Failed to retrieve log entries for channel: " + channel, e);
+        }
+
+        return entries;
+    }
+
+    @Override
     public void commitOffset(String channel, String consumerId, long lastLogId) {
         updateConsumerOffset(consumerId, channel, lastLogId);
         logger.info("Manually committed offset for consumer: {} on channel: {} to logId: {}",
@@ -248,32 +275,6 @@ public class SqliteLogStorage implements LogStorage {
         // Set offset to logId - 1 so that the next retrieve returns logId.
         updateConsumerOffset(consumerId, channel, logId - 1);
         logger.info("Seek to ID {} for consumer: {} on channel: {}", logId, consumerId, channel);
-    }
-
-    @Override
-    public List<LogEntry> retrieveAll(int limit) {
-        String sql = "SELECT id, channel, level, message, meta, timestamp FROM logs " +
-                "ORDER BY id DESC LIMIT ?";
-
-        List<LogEntry> entries = new ArrayList<>();
-
-        try (Connection conn = dataSource.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, limit);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    entries.add(mapResultSetToLogEntry(rs));
-                }
-            }
-
-            logger.debug("Retrieved {} log entries", entries.size());
-        } catch (SQLException e) {
-            logger.error("Failed to retrieve all log entries", e);
-            throw new StorageException("Failed to retrieve all log entries", e);
-        }
-
-        return entries;
     }
 
     private LogEntry mapResultSetToLogEntry(ResultSet rs) throws SQLException {

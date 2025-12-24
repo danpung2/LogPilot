@@ -36,8 +36,7 @@ public class ServerConfigTest {
         assertTrue(configClass.isAnnotationPresent(Configuration.class));
         assertTrue(configClass.isAnnotationPresent(EnableConfigurationProperties.class));
 
-        EnableConfigurationProperties enableProps =
-            configClass.getAnnotation(EnableConfigurationProperties.class);
+        EnableConfigurationProperties enableProps = configClass.getAnnotation(EnableConfigurationProperties.class);
 
         Class<?>[] propertiesClasses = enableProps.value();
         assertEquals(1, propertiesClasses.length);
@@ -83,7 +82,8 @@ public class ServerConfigTest {
 
     @Test
     void logStorageBean_ShouldHaveCorrectAnnotations() throws NoSuchMethodException {
-        java.lang.reflect.Method logStorageMethod = ServerConfig.class.getMethod("logStorage", LogPilotProperties.class);
+        java.lang.reflect.Method logStorageMethod = ServerConfig.class.getMethod("logStorage",
+                LogPilotProperties.class);
 
         assertTrue(logStorageMethod.isAnnotationPresent(Bean.class));
 
@@ -102,7 +102,8 @@ public class ServerConfigTest {
             assertNotNull(storage);
 
             assertDoesNotThrow(() -> {
-                storage.retrieveAll(1);
+                // Test basic storage functionality
+                storage.retrieve("test-channel", "consumer1", 1);
             });
         }
     }
@@ -118,7 +119,7 @@ public class ServerConfigTest {
         fileProps.getStorage().setDirectory(tempDir.resolve("file-storage").toString());
 
         try (LogStorage sqliteStorage = serverConfig.logStorage(sqliteProps);
-             LogStorage fileStorage = serverConfig.logStorage(fileProps)) {
+                LogStorage fileStorage = serverConfig.logStorage(fileProps)) {
 
             assertNotNull(sqliteStorage);
             assertNotNull(fileStorage);
@@ -134,7 +135,7 @@ public class ServerConfigTest {
         properties.getStorage().setDirectory(tempDir.toString());
 
         try (LogStorage storage1 = serverConfig.logStorage(properties);
-             LogStorage storage2 = serverConfig.logStorage(properties)) {
+                LogStorage storage2 = serverConfig.logStorage(properties)) {
 
             assertNotNull(storage1);
             assertNotNull(storage2);

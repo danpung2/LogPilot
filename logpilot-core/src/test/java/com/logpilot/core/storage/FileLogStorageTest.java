@@ -95,10 +95,9 @@ public class FileLogStorageTest {
     @Test
     void storeLogs_WithMultipleEntries_ShouldStoreBatch() throws IOException {
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("channel1", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("channel2", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("channel1", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("channel1", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("channel2", LogLevel.ERROR, "Message 3"));
 
         storage.storeLogs(entries);
 
@@ -124,10 +123,9 @@ public class FileLogStorageTest {
     @Test
     void retrieve_WithNewConsumer_ShouldReturnAllLogs() {
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"));
         storage.storeLogs(entries);
 
         List<LogEntry> retrieved = storage.retrieve("test-channel", "consumer1", 10);
@@ -142,9 +140,8 @@ public class FileLogStorageTest {
     void retrieve_WithExistingConsumer_ShouldReturnOnlyNewLogs() {
         // Store initial logs
         List<LogEntry> initialEntries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"));
         storage.storeLogs(initialEntries);
 
         // First retrieval
@@ -185,51 +182,11 @@ public class FileLogStorageTest {
     }
 
     @Test
-    void retrieveAll_ShouldReturnLogsFromAllChannels() {
-        storage.store(createTestLogEntry("channel1", LogLevel.INFO, "Channel 1 message"));
-        storage.store(createTestLogEntry("channel2", LogLevel.WARN, "Channel 2 message"));
-        storage.store(createTestLogEntry("channel1", LogLevel.ERROR, "Another channel 1 message"));
-
-        List<LogEntry> allLogs = storage.retrieveAll(10);
-
-        assertEquals(3, allLogs.size());
-
-        // Should contain logs from both channels
-        long channel1Count = allLogs.stream().filter(log -> "channel1".equals(log.getChannel())).count();
-        long channel2Count = allLogs.stream().filter(log -> "channel2".equals(log.getChannel())).count();
-
-        assertEquals(2, channel1Count);
-        assertEquals(1, channel2Count);
-    }
-
-    @Test
-    void retrieveAll_WithLimit_ShouldRespectLimit() {
-        List<LogEntry> entries = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            entries.add(createTestLogEntry("channel", LogLevel.INFO, "Message " + i));
-        }
-        storage.storeLogs(entries);
-
-        List<LogEntry> retrieved = storage.retrieveAll(5);
-
-        assertEquals(5, retrieved.size());
-    }
-
-    @Test
-    void retrieveAll_WithNoLogs_ShouldReturnEmptyList() {
-        List<LogEntry> retrieved = storage.retrieveAll(10);
-
-        assertNotNull(retrieved);
-        assertTrue(retrieved.isEmpty());
-    }
-
-    @Test
     void multipleConsumers_ShouldHaveIndependentOffsets() {
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"));
         storage.storeLogs(entries);
 
         // Consumer 1 reads 2 logs
@@ -257,10 +214,9 @@ public class FileLogStorageTest {
     void consumerOffsetPersistence_ShouldSurviveRestart() throws IOException {
         // Store logs and consume some
         List<LogEntry> entries = Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
-            createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3")
-        );
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2"),
+                createTestLogEntry("test-channel", LogLevel.ERROR, "Message 3"));
         storage.storeLogs(entries);
 
         storage.retrieve("test-channel", "persistent-consumer", 2);
@@ -320,10 +276,9 @@ public class FileLogStorageTest {
         // Create a log file with malformed JSON
         Path logFile = tempDir.resolve("test-channel.log");
         Files.write(logFile, Arrays.asList(
-            "{\"valid\":\"json\",\"channel\":\"test-channel\",\"level\":\"INFO\",\"message\":\"Valid message\",\"timestamp\":\"2025-09-25T10:30:00\"}",
-            "this is not valid json",
-            "{\"another\":\"valid\",\"channel\":\"test-channel\",\"level\":\"WARN\",\"message\":\"Another valid message\",\"timestamp\":\"2025-09-25T10:31:00\"}"
-        ));
+                "{\"valid\":\"json\",\"channel\":\"test-channel\",\"level\":\"INFO\",\"message\":\"Valid message\",\"timestamp\":\"2025-09-25T10:30:00\"}",
+                "this is not valid json",
+                "{\"another\":\"valid\",\"channel\":\"test-channel\",\"level\":\"WARN\",\"message\":\"Another valid message\",\"timestamp\":\"2025-09-25T10:31:00\"}"));
 
         List<LogEntry> retrieved = storage.retrieve("test-channel", "consumer1", 10);
 
@@ -337,9 +292,8 @@ public class FileLogStorageTest {
     void close_ShouldSaveConsumerOffsets() throws IOException {
         // Store logs and consume some
         storage.storeLogs(Arrays.asList(
-            createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
-            createTestLogEntry("test-channel", LogLevel.WARN, "Message 2")
-        ));
+                createTestLogEntry("test-channel", LogLevel.INFO, "Message 1"),
+                createTestLogEntry("test-channel", LogLevel.WARN, "Message 2")));
 
         storage.retrieve("test-channel", "test-consumer", 1);
 
@@ -350,7 +304,8 @@ public class FileLogStorageTest {
         Path offsetsDir = tempDir.resolve(".offsets");
         assertTrue(Files.exists(offsetsDir));
 
-        // Check that there's an offset file (the exact filename depends on sanitization)
+        // Check that there's an offset file (the exact filename depends on
+        // sanitization)
         try (var pathStream = Files.list(offsetsDir)) {
             long offsetFileCount = pathStream.filter(path -> path.toString().endsWith(".offset")).count();
             assertTrue(offsetFileCount > 0);

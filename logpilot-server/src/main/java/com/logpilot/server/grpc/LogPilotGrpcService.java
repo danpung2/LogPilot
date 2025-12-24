@@ -128,45 +128,26 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
     }
 
     @Override
-    public void listLogs(LogPilotProto.ListLogsRequest request,
-            StreamObserver<LogPilotProto.ListLogsResponse> responseObserver) {
-        try {
-            List<LogEntry> logEntries = logService.getAllLogs(100);
-
-            List<LogPilotProto.LogEntry> protoLogEntries = logEntries.stream()
-                    .map(this::convertToProtoLogEntry)
-                    .collect(Collectors.toList());
-
-            LogPilotProto.ListLogsResponse response = LogPilotProto.ListLogsResponse.newBuilder()
-                    .addAllLogs(protoLogEntries)
-                    .build();
-
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-
-            logger.debug("Retrieved {} log entries via gRPC (listLogs)", logEntries.size());
-        } catch (Exception e) {
-            logger.error("Failed to list log entries via gRPC", e);
-            responseObserver.onError(e);
-        }
-    }
-
-    @Override
     public void fetchLogs(LogPilotProto.FetchLogsRequest request,
             StreamObserver<LogPilotProto.FetchLogsResponse> responseObserver) {
         try {
             List<LogEntry> logEntries;
 
             if (!request.getChannel().isEmpty()) {
-                // 특정 채널의 로그를 컨슈머 오프셋 기준으로 조회합니다.
-                // Retrieve logs for a specific channel based on consumer offset.
-                logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(),
-                        request.getLimit(), true);
+                if (request.getSince() != null && !request.getSince().isEmpty()) {
+                    // 특정 채널의 로그를 컨슈머 오프셋 기준으로 조회합니다.
+                    // Retrieve logs for a specific channel based on consumer offset.
+                    logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(),
+                            request.getLimit(), true);
+                } else {
+                    // 채널만 지정된 경우 최신 로그를 조회합니다. (REST와 동일)
+                    // If only channel is specified, retrieve latest logs. (Same as REST)
+                    logEntries = logService.getLogsByChannel(request.getChannel(), request.getLimit());
+                }
             } else {
-                // 채널이 지정되지 않은 경우 전체 로그를 최신순으로 조회합니다. (모니터링 목적)
-                // If no channel specified, retrieve all logs in descending order. (For
-                // monitoring purposes)
-                logEntries = logService.getAllLogs(request.getLimit());
+                // 채널이 지정되지 않은 경우 전체 로그 조회는 더 이상 지원되지 않습니다.
+                // If no channel specified, retrieve all logs is no longer supported.
+                throw new UnsupportedOperationException("Fetching all logs without channel is not supported");
             }
 
             List<LogPilotProto.LogEntry> protoLogEntries = logEntries.stream()

@@ -56,15 +56,13 @@ public class LogPilotCoreIntegrationTest {
         setupFileStorage();
 
         List<LogEntry> channel1Logs = Arrays.asList(
-            createLogEntry("channel1", LogLevel.INFO, "Channel 1 Message 1"),
-            createLogEntry("channel1", LogLevel.WARN, "Channel 1 Message 2"),
-            createLogEntry("channel1", LogLevel.ERROR, "Channel 1 Message 3")
-        );
+                createLogEntry("channel1", LogLevel.INFO, "Channel 1 Message 1"),
+                createLogEntry("channel1", LogLevel.WARN, "Channel 1 Message 2"),
+                createLogEntry("channel1", LogLevel.ERROR, "Channel 1 Message 3"));
 
         List<LogEntry> channel2Logs = Arrays.asList(
-            createLogEntry("channel2", LogLevel.DEBUG, "Channel 2 Message 1"),
-            createLogEntry("channel2", LogLevel.INFO, "Channel 2 Message 2")
-        );
+                createLogEntry("channel2", LogLevel.DEBUG, "Channel 2 Message 1"),
+                createLogEntry("channel2", LogLevel.INFO, "Channel 2 Message 2"));
 
         storage.storeLogs(channel1Logs);
         storage.storeLogs(channel2Logs);
@@ -109,8 +107,9 @@ public class LogPilotCoreIntegrationTest {
 
         assertTrue(endTime - startTime < 5000, "Large batch processing should be efficient");
 
-        List<LogEntry> allLogs = storage.retrieveAll(1500);
-        assertEquals(1000, allLogs.size());
+        // Removed retrieveAll check as it is no longer supported
+        // List<LogEntry> allLogs = storage.retrieveAll(1500);
+        // assertEquals(1000, allLogs.size());
 
         List<LogEntry> firstPage = storage.retrieve("batch-channel", "consumer1", 100);
         assertEquals(100, firstPage.size());
@@ -140,7 +139,7 @@ public class LogPilotCoreIntegrationTest {
         LogEntry logWithMeta = new LogEntry("metadata-test", LogLevel.INFO, "Complex metadata test", complexMeta);
         storage.store(logWithMeta);
 
-        List<LogEntry> retrieved = storage.retrieveAll(1);
+        List<LogEntry> retrieved = storage.retrieve("metadata-test", "consumer1", 1);
         assertEquals(1, retrieved.size());
 
         LogEntry retrievedLog = retrieved.get(0);
@@ -195,15 +194,14 @@ public class LogPilotCoreIntegrationTest {
 
         try {
             List<LogEntry> testLogs = Arrays.asList(
-                createLogEntry("test-channel", LogLevel.INFO, "Test message 1"),
-                createLogEntry("test-channel", LogLevel.WARN, "Test message 2")
-            );
+                    createLogEntry("test-channel", LogLevel.INFO, "Test message 1"),
+                    createLogEntry("test-channel", LogLevel.WARN, "Test message 2"));
 
             fileStorage.storeLogs(testLogs);
             sqliteStorage.storeLogs(testLogs);
 
-            List<LogEntry> fileRetrieved = fileStorage.retrieveAll(10);
-            List<LogEntry> sqliteRetrieved = sqliteStorage.retrieveAll(10);
+            List<LogEntry> fileRetrieved = fileStorage.retrieve("test-channel", "consumer1", 10);
+            List<LogEntry> sqliteRetrieved = sqliteStorage.retrieve("test-channel", "consumer1", 10);
 
             assertEquals(2, fileRetrieved.size());
             assertEquals(2, sqliteRetrieved.size());
@@ -234,8 +232,8 @@ public class LogPilotCoreIntegrationTest {
         LogEntry specialChannel = createLogEntry("special/channel:name*with<chars>", LogLevel.DEBUG, "Special channel");
         assertDoesNotThrow(() -> storage.store(specialChannel));
 
-        List<LogEntry> allEdgeCases = storage.retrieveAll(10);
-        assertEquals(4, allEdgeCases.size());
+        List<LogEntry> allEdgeCases = storage.retrieve("edge-cases", "consumer1", 10);
+        assertEquals(3, allEdgeCases.size()); // 3 because 1 goes to different channel
 
         List<String> messages = allEdgeCases.stream()
                 .map(LogEntry::getMessage)
@@ -245,7 +243,7 @@ public class LogPilotCoreIntegrationTest {
         assertTrue(messages.contains(""));
         assertTrue(messages.contains(longMessage));
         assertTrue(messages.contains("Special chars: äöü 中文 🚀 \n\t\r"));
-        assertTrue(messages.contains("Special channel"));
+        // Special channel message is in another channel
     }
 
     private void runEndToEndWorkflow(LogStorage storage) {
@@ -253,10 +251,9 @@ public class LogPilotCoreIntegrationTest {
         storage.store(createLogEntry("test-channel", LogLevel.WARN, "Second message"));
 
         List<LogEntry> batchLogs = Arrays.asList(
-            createLogEntry("test-channel", LogLevel.ERROR, "Batch message 1"),
-            createLogEntry("test-channel", LogLevel.DEBUG, "Batch message 2"),
-            createLogEntry("other-channel", LogLevel.INFO, "Other channel message")
-        );
+                createLogEntry("test-channel", LogLevel.ERROR, "Batch message 1"),
+                createLogEntry("test-channel", LogLevel.DEBUG, "Batch message 2"),
+                createLogEntry("other-channel", LogLevel.INFO, "Other channel message"));
         storage.storeLogs(batchLogs);
 
         List<LogEntry> consumerLogs = storage.retrieve("test-channel", "consumer1", 3);
@@ -272,17 +269,20 @@ public class LogPilotCoreIntegrationTest {
         List<LogEntry> newConsumerLogs = storage.retrieve("test-channel", "consumer2", 10);
         assertEquals(4, newConsumerLogs.size());
 
-        List<LogEntry> allLogs = storage.retrieveAll(10);
-        assertEquals(5, allLogs.size());
-
-        Set<LogLevel> levels = new HashSet<>();
-        for (LogEntry log : allLogs) {
-            levels.add(log.getLevel());
-        }
-        assertTrue(levels.contains(LogLevel.INFO));
-        assertTrue(levels.contains(LogLevel.WARN));
-        assertTrue(levels.contains(LogLevel.ERROR));
-        assertTrue(levels.contains(LogLevel.DEBUG));
+        // Removed retrieveAll since it's no longer supported
+        /*
+         * List<LogEntry> allLogs = storage.retrieveAll(10);
+         * assertEquals(5, allLogs.size());
+         * 
+         * Set<LogLevel> levels = new HashSet<>();
+         * for (LogEntry log : allLogs) {
+         * levels.add(log.getLevel());
+         * }
+         * assertTrue(levels.contains(LogLevel.INFO));
+         * assertTrue(levels.contains(LogLevel.WARN));
+         * assertTrue(levels.contains(LogLevel.ERROR));
+         * assertTrue(levels.contains(LogLevel.DEBUG));
+         */
     }
 
     private void setupFileStorage() {

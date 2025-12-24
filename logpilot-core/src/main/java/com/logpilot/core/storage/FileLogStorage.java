@@ -133,6 +133,41 @@ public class FileLogStorage implements LogStorage {
     }
 
     @Override
+    public List<LogEntry> retrieve(String channel, int limit) {
+        lock.readLock().lock();
+        try {
+            Path logFile = getLogFilePath(channel);
+            if (!Files.exists(logFile)) {
+                return new ArrayList<>();
+            }
+
+            List<String> lines = Files.readAllLines(logFile);
+            List<LogEntry> entries = new ArrayList<>();
+
+            // Return from latest logs (reverse order)
+            for (int i = lines.size() - 1; i >= 0 && entries.size() < limit; i--) {
+                try {
+                    LogEntry entry = parseLogEntry(lines.get(i), i + 1);
+                    if (entry != null) {
+                        entries.add(entry);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to parse log line from file {}: {}", logFile.getFileName(), lines.get(i), e);
+                }
+            }
+
+            logger.debug("Retrieved {} log entries for channel: {} (limit={})", entries.size(), channel, limit);
+            return entries;
+
+        } catch (IOException e) {
+            logger.error("Failed to retrieve log entries from file for channel: " + channel, e);
+            throw new RuntimeException("Failed to retrieve log entries from file for channel: " + channel, e);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
     public List<LogEntry> retrieve(String channel, String consumerId, int limit, boolean autoCommit) {
         lock.readLock().lock();
         try {
@@ -229,65 +264,10 @@ public class FileLogStorage implements LogStorage {
         String offsetKey = consumerId + ":" + channel;
         // NOTE: 파일 저장소에서는 ID가 라인 번호입니다.
         // In FileLogStorage, ID is the line number.
+        // Similar to seekToId in SqliteLogStorage, we set offset to logId - 1.
         consumerOffsets.put(offsetKey, logId - 1);
         saveConsumerOffset(offsetKey, logId - 1);
         logger.info("Seek to ID {} for consumer: {} on channel: {}", logId, consumerId, channel);
-    }
-
-    @Override
-    public List<LogEntry> retrieveAll(int limit) {
-        lock.readLock().lock();
-        try {
-            List<LogEntry> allEntries = new ArrayList<>();
-            Path storageDir = Paths.get(storageDirectory);
-
-            List<Path> logFiles;
-            try (var pathStream = Files.list(storageDir)) {
-                logFiles = pathStream
-                        .filter(path -> path.toString().endsWith(LOG_FILE_EXTENSION))
-                        .sorted((p1, p2) -> {
-                            try {
-                                return Files.getLastModifiedTime(p2).compareTo(Files.getLastModifiedTime(p1));
-                            } catch (IOException e) {
-                                return 0;
-                            }
-                        })
-                        .toList();
-            }
-
-            for (Path logFile : logFiles) {
-                if (allEntries.size() >= limit) {
-                    break;
-                }
-
-                try {
-                    List<String> lines = Files.readAllLines(logFile);
-
-                    for (int i = lines.size() - 1; i >= 0 && allEntries.size() < limit; i--) {
-                        try {
-                            LogEntry entry = parseLogEntry(lines.get(i), i + 1);
-                            if (entry != null) {
-                                allEntries.add(entry);
-                            }
-                        } catch (Exception e) {
-                            logger.warn("Failed to parse log line from file {}: {}",
-                                    logFile.getFileName(), lines.get(i), e);
-                        }
-                    }
-                } catch (IOException e) {
-                    logger.warn("Failed to read log file: {}", logFile, e);
-                }
-            }
-
-            logger.debug("Retrieved {} total log entries", allEntries.size());
-            return allEntries;
-
-        } catch (IOException e) {
-            logger.error("Failed to retrieve all log entries", e);
-            throw new RuntimeException("Failed to retrieve all log entries", e);
-        } finally {
-            lock.readLock().unlock();
-        }
     }
 
     private Path getLogFilePath(String channel) {
