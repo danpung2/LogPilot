@@ -1,6 +1,7 @@
 package com.logpilot.server.grpc.interceptor;
 
 import io.grpc.*;
+import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 
 @Component
+@GrpcGlobalServerInterceptor
 public class ApiKeyGrpcInterceptor implements ServerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiKeyGrpcInterceptor.class);
