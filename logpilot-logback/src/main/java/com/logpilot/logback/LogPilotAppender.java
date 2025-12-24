@@ -15,6 +15,7 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
     private int batchSize = 100;
     private long flushIntervalMillis = 5000;
     private String apiKey;
+    private String clientType = "REST";
 
     private LogPilotClient client;
 
@@ -26,12 +27,14 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
         }
 
         try {
+            LogPilotClient.ClientType type = LogPilotClient.ClientType.valueOf(clientType.toUpperCase());
             client = LogPilotClient.builder()
                     .serverUrl(serverUrl)
                     .enableBatching(enableBatching)
                     .batchSize(batchSize)
                     .flushIntervalMillis(flushIntervalMillis)
                     .apiKey(apiKey)
+                    .clientType(type)
                     .build();
             super.start();
         } catch (Exception e) {
@@ -109,5 +112,9 @@ public class LogPilotAppender extends UnsynchronizedAppenderBase<ILoggingEvent> 
 
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    public void setClientType(String clientType) {
+        this.clientType = clientType;
     }
 }
