@@ -151,7 +151,6 @@ curl "http://localhost:8080/api/logs/orders?autoCommit=false&limit=5"
 #### REST API 엔드포인트
 - `POST /api/logs`: 단일 로그 전송
 - `POST /api/logs/batch`: 배치 로그 전송
-- `GET /api/logs`: 로그 조회
 - `GET /api/logs/{channel}`: 채널별 로그 조회 (`consumerId` 파라미터로 오프셋 관리 가능)
   - 파라미터:
     - `limit` (기본값: 100)

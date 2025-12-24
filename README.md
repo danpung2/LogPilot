@@ -204,7 +204,6 @@ Configure via environment variables or `application.yml`:
 #### REST API Endpoints
 - `POST /api/logs`: Send a single log entry.
 - `POST /api/logs/batch`: Send a batch of log entries.
-- `GET /api/logs`: Retrieve all logs (with limit).
 - `GET /api/logs/{channel}`: Retrieve logs for a specific channel. Supports `consumerId` param for offset tracking.
   - Query Params:
     - `limit` (default: 100)
