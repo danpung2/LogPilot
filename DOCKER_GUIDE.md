@@ -4,8 +4,8 @@ LogPilot is available on Docker Hub as a lightweight event streaming broker. We 
 
 ## 📦 Docker Images
 
-- **Standalone (`danpung2/logpilot-server:latest`)**: Only the LogPilot server. Best for custom integration.
-- **Full-Stack (`danpung2/logpilot-server:fullstack`)**: LogPilot + Prometheus + Grafana in a single image. Best for testing and demos.
+- **Standalone (`danpung2/logpilot:latest`)**: Only the LogPilot server. Best for custom integration.
+- **Full-Stack (`danpung2/logpilot:fullstack`)**: LogPilot + Prometheus + Grafana in a single image. Best for testing and demos.
 
 ---
 
@@ -15,10 +15,10 @@ If you want to pull the images before running them:
 
 ```bash
 # Pull Standalone image
-docker pull danpung2/logpilot-server:latest
+docker pull danpung2/logpilot:latest
 
 # Pull Full-Stack image
-docker pull danpung2/logpilot-server:fullstack
+docker pull danpung2/logpilot:fullstack
 ```
 
 ## 🚀 Quick Start (Standalone)
@@ -26,7 +26,7 @@ docker pull danpung2/logpilot-server:fullstack
 Run the server with a single command:
 
 ```bash
-docker run -d -p 8080:8080 -p 50051:50051 danpung2/logpilot-server:latest
+docker run -d -p 8080:8080 -p 50051:50051 danpung2/logpilot:latest
 ```
 
 ## 🚀 Quick Start (Full-Stack)
@@ -37,7 +37,7 @@ Get everything (Server + Metrics + Dashboard) with one command:
 docker run -d \
   -p 8080:8080 -p 50051:50051 \
   -p 9090:9090 -p 3000:3000 \
-  danpung2/logpilot-server:fullstack
+  danpung2/logpilot:fullstack
 ```
 
 - **REST API**: http://localhost:8080
@@ -66,7 +66,7 @@ docker-compose -f docker-compose.monitoring.yml up -d
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `LOGPILOT_API_KEY` | API Key for secure ingestion | `null` |
+| `LOGPILOT_API_KEY` | API Key for secure ingestion | `your-api-key-here` |
 | `SERVER_PORT` | REST API Port | `8080` |
 | `GRPC_PORT` | gRPC Port | `50051` |
 | `DATA_PATH` | Path for SQLite storage | `/app/data` |

@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   logpilot:
-    image: logpilot:test
+    image: danpung2/logpilot:latest
     container_name: logpilot-server
     ports:
-      - "8081:8080"
-      - "50052:50051"
+      - "8080:8080"
+      - "50051:50051"
     environment:
       - LOGPILOT_API_KEY=your-api-key-here
     volumes:
@@ -17,7 +17,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9091:9090"
+      - "9090:9090"
     volumes:
       - ./logpilot-monitoring/docker/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
@@ -29,7 +29,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

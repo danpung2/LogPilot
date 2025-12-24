@@ -4,8 +4,8 @@ LogPilot은 Docker Hub를 통해 경량 이벤트 스트리밍 브러커로 배�
 
 ## 📦 Docker 이미지
 
-- **Standalone (`danpung2/logpilot-server:latest`)**: LogPilot 서버만 포함된 이미지입니다. 기존 인프라에 통합하기 좋습니다.
-- **Full-Stack (`danpung2/logpilot-server:fullstack`)**: LogPilot + Prometheus + Grafana가 단일 이미지에 포함된 버전입니다. 테스트 및 데모에 최적화되어 있습니다.
+- **Standalone (`danpung2/logpilot:latest`)**: LogPilot 서버만 포함된 이미지입니다. 기존 인프라에 통합하기 좋습니다.
+- **Full-Stack (`danpung2/logpilot:fullstack`)**: LogPilot + Prometheus + Grafana가 단일 이미지에 포함된 버전입니다. 테스트 및 데모에 최적화되어 있습니다.
 
 ---
 
@@ -15,10 +15,10 @@ LogPilot은 Docker Hub를 통해 경량 이벤트 스트리밍 브러커로 배�
 
 ```bash
 # Standalone 이미지 가져오기
-docker pull danpung2/logpilot-server:latest
+docker pull danpung2/logpilot:latest
 
 # Full-Stack 이미지 가져오기
-docker pull danpung2/logpilot-server:fullstack
+docker pull danpung2/logpilot:fullstack
 ```
 
 ## 🚀 빠른 시작 (Standalone)
@@ -26,7 +26,7 @@ docker pull danpung2/logpilot-server:fullstack
 다음 명령어로 서버만 즉시 실행할 수 있습니다:
 
 ```bash
-docker run -d -p 8080:8080 -p 50051:50051 danpung2/logpilot-server:latest
+docker run -d -p 8080:8080 -p 50051:50051 danpung2/logpilot:latest
 ```
 
 ## 🚀 빠른 시작 (Full-Stack)
@@ -37,7 +37,7 @@ docker run -d -p 8080:8080 -p 50051:50051 danpung2/logpilot-server:latest
 docker run -d \
   -p 8080:8080 -p 50051:50051 \
   -p 9090:9090 -p 3000:3000 \
-  danpung2/logpilot-server:fullstack
+  danpung2/logpilot:fullstack
 ```
 
 - **REST API**: http://localhost:8080
@@ -66,7 +66,7 @@ docker-compose -f docker-compose.monitoring.yml up -d
 
 | 변수명 | 설명 | 기본값 |
 |----------|-------------|---------|
-| `LOGPILOT_API_KEY` | 보안 연동을 위한 API Key | `null` |
+| `LOGPILOT_API_KEY` | 보안 연동을 위한 API Key | `your-api-key-here` |
 | `SERVER_PORT` | REST API 포트 | `8080` |
 | `GRPC_PORT` | gRPC 포트 | `50051` |
 | `DATA_PATH` | SQLite 저장소 경로 | `/app/data` |

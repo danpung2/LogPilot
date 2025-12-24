@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   logpilot:
-    image: danpung2/logpilot-server:latest
+    image: danpung2/logpilot:latest
     container_name: logpilot-server
     ports:
       - "8080:8080"
