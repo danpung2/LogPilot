@@ -1,12 +1,12 @@
-# Test Traffic Generation Guide
+# Test Event Traffic Generation Guide
 
 ## 📋 Overview
 
-Methods to generate artificial traffic for LogPilot to verify data in Prometheus and Grafana.
+Methods to generate artificial event traffic for LogPilot to verify **event ingestion** and metrics in Prometheus and Grafana.
 
 ---
 
-## 🚀 Method 1: Simple HTTP Traffic Generation
+## 🚀 Method 1: Simple HTTP Event Generation
 
 ### Repeat Requests using curl
 
@@ -17,7 +17,7 @@ for i in {1..100}; do
     -H "Content-Type: application/json" \
     -d '{
       "level": "INFO",
-      "message": "Test log message '$i'",
+      "message": "Test event message '$i'",
       "channel": "test-channel",
       "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
     }'

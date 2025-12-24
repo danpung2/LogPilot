@@ -1,6 +1,6 @@
 # LogPilot Spring Boot Starter
 
-A Spring Boot Starter that auto-configures the LogPilot Client based on your application properties.
+A Spring Boot Starter that auto-configures the LogPilot **Producer and Consumer** clients based on your application properties.
 
 ## Features
 - **Auto Configuration**: Automatically configures `LogPilotClient` bean if configuration properties are present.

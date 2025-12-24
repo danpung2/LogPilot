@@ -1,6 +1,6 @@
 # LogPilot Logback Appender
 
-Java 애플리케이션을 LogPilot과 쉽게 연동할 수 있도록 도와주는 Logback Appender 구현체입니다.
+Java 애플리케이션의 로그를 **이벤트 스트림**으로 변환하여 LogPilot 브로커로 전송하는 Logback Appender 구현체입니다.
 
 ## 주요 기능
 - **간편한 연동**: 표준 `logback.xml` 설정을 통해 쉽게 적용할 수 있습니다.

@@ -1,6 +1,6 @@
-# LogPilot Demo Producer: Recruitment Site Simulation
+# LogPilot Demo Producer: Recruitment Event Simulation
 
-This module simulates a high-traffic "Recruitment Site" (e.g., Job Portal) to demonstrate LogPilot's log generation and collection capabilities in a production-like environment.
+This module simulates a high-traffic "Recruitment Site" to demonstrate LogPilot's **Event Publishing** capabilities in a production-like environment.
 
 ## Overview
 

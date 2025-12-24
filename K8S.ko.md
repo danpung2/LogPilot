@@ -1,6 +1,6 @@
 # LogPilot Kubernetes 배포 가이드
 
-이 문서는 LogPilot 애플리케이션을 Kubernetes 클러스터에 배포하는 방법에 대한 완전한 가이드입니다.
+이 문서는 **LogPilot 이벤트 브로커**를 Kubernetes 클러스터에 배포하는 방법에 대한 완전한 가이드입니다.
 
 ## 사전 요구사항
 

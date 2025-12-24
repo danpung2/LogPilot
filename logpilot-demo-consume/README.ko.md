@@ -1,6 +1,6 @@
-# LogPilot Demo Consumer: 로그 분석 서비스
+# LogPilot Demo Consumer: 이벤트 분석 서비스
 
-이 모듈은 LogPilot에 저장된 로그를 gRPC 클라이언트를 사용하여 소비(Consume)하고 처리하는 방법을 보여줍니다.
+이 모듈은 LogPilot에 저장된 **이벤트 스트림을 소비(Consume)하고 처리**하는 방법을 gRPC 클라이언트를 통해 보여줍니다.
 
 ## 개요
 

@@ -1,6 +1,6 @@
 # LogPilot 모니터링 모듈
 
-Prometheus와 Grafana를 포함한 LogPilot용 선택적 모니터링 스택입니다.
+Prometheus와 Grafana를 포함한 LogPilot **이벤트 브로커**용 선택적 모니터링 스택입니다.
 
 ## 📋 개요
 

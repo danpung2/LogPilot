@@ -1,6 +1,6 @@
 # LogPilot
 
-**LogPilot은 Java 17 및 Spring Boot 3로 구축된 경량 클라우드 네이티브 로그 수집 시스템(Lightweight, Cloud-Native Log Collection System)입니다.** 마이크로서비스 및 분산 시스템을 위해 설계되었으며, gRPC와 REST 프로토콜을 동시에 지원하며 엔터프라이즈급 로그 집계, 포괄적인 관측 가능성 및 제로 디펜던시(Zero-Dependency) 배포 기능을 제공합니다.
+**LogPilot은 Java 17 및 Spring Boot 3로 구축된 경량 클라우드 네이티브 이벤트 스트리밍 브로커(Lightweight, Cloud-Native Event Streaming Broker)입니다.** **Apache Kafka**에서 영감을 받아 설계되었으며, 마이크로서비스 간의 이벤트 기반 통신을 위해 이중 프로토콜(gRPC + REST), 영구 저장소, 그리고 안정적인 소비자 오프셋(Consumer Offset) 관리 기능을 제공합니다.
 
 > [!WARNING]
 > **프로덕션 보안 경고**: 기본 설정된 `LOGPILOT_API_KEY`는 예시 값입니다. 공유 환경이나 프로덕션 환경에 배포하기 전에 **반드시 이 값을 변경해야 합니다**. 변경하지 않을 경우 무단 접근의 위험이 있습니다.
@@ -15,29 +15,29 @@
 
 ### LogPilot을 선택해야 하는 이유
 
-ELK Stack과 같은 기존 로깅 솔루션은 강력하지만 운영 부담이 큽니다. LogPilot은 며칠이 아닌 몇 분 만에 실행할 수 있는 **가볍고 독립적인 대안**을 제공합니다.
+**Apache Kafka**와 같은 기존 이벤트 스트리밍 플랫폼은 강력하지만, 중소규모 프로젝트에서 운영하기에는 매우 무겁고 복잡합니다. LogPilot은 몇 분 만에 실행할 수 있는 **가볍고 독립적인 대안**을 제공합니다. 마이크로서비스 간의 이벤트 알림, 가벼운 감사 로그(Audit Log), 분산 이벤트 파이프라인 구축에 최적화되어 있습니다.
 
 ```
-기존 스택                   LogPilot
+기존 Kafka 스택                LogPilot
 ┌──────────────┐           ┌─────────────┐
-│ Logstash     │           │             │
+│ ZooKeeper    │           │             │
 ├──────────────┤           │  LogPilot   │
-│ Elasticsearch│    VS     │   Server    │
+│ Kafka Broker │    VS     │   Server    │
 ├──────────────┤           │             │
-│ Kibana       │           │  (All-in-1) │
+│ Schema Reg   │           │  (All-in-1) │
 └──────────────┘           └─────────────┘
-  ~2GB RAM                  ~256MB RAM
-  복잡한 설정                단일 바이너리
+  ~4GB+ RAM                 ~256MB RAM
+  복잡한 운영                단일 바이너리
 ```
 
 ### 🚀 주요 기능
 
-#### 프로덕션 레디 아키텍처
+#### 이벤트 스트리밍 엔진
 - ✅ **이중 프로토콜 지원**: 고성능 gRPC (50051) 및 REST API (8080)
-- ✅ **플러그형 저장소**: 인터페이스 기반 설계로 SQLite(내장) 또는 파일 시스템 지원
-- ✅ **배치 처리**: JDBC 배치 연산을 통한 대량 수신 최적화
-- ✅ **소비자 오프셋 추적**: 안정적인 로그 소비를 위한 Kafka 스타일의 오프셋 관리
-- ✅ **철저한 테스트**: 단위, 통합 및 성능 시나리오를 아우르는 18개의 테스트 파일
+- ✅ **플러그형 저장소**: SQLite(내장) 또는 Append-only 파일 시스템 지원
+- ✅ **Kafka 스타일 오프셋 추적**: 데이터 손실 없는 안정적인 소비를 위한 오프셋 관리
+- ✅ **배치 수신**: JDBC 배치 연산을 통한 대량 이벤트 발행 최적화
+- ✅ **스트림 탐색**: `seek`(시작/최신/특정 위치) 기능을 통한 이벤트 재생 및 건너뛰기
 
 #### 클라우드 네이티브 및 관측 가능성
 - 📊 **Prometheus 메트릭**: 로그 수신량, 에러율 및 지연 시간에 대한 메트릭 내장
@@ -116,47 +116,36 @@ docker run -d \
 
 **#### REST API 예시
 
-**1. 단일 로그 전송**
+**1. 단일 이벤트 발행**
 ```bash
 curl -X POST http://localhost:8080/api/logs \
   -H 'Content-Type: application/json' \
   -d '{
-    "channel": "my-app",
+    "channel": "orders",
     "level": "INFO",
-    "message": "애플리케이션이 시작되었습니다.",
+    "message": "{\"orderId\": \"ORD-123\", \"status\": \"CREATED\"}",
     "timestamp": "2025-09-25T05:00:00"
   }'
 ```
 
-**2. 배치 로그 전송**
+**2. 배치 이벤트 발행**
 ```bash
 curl -X POST http://localhost:8080/api/logs/batch \
   -H 'Content-Type: application/json' \
   -d '[
-    {
-      "channel": "my-app",
-      "level": "INFO",
-      "message": "첫 번째 로그"
-    },
-    {
-      "channel": "my-app",
-      "level": "ERROR",
-      "message": "두 번째 로그"
-    }
+    { "channel": "orders", "level": "INFO", "message": "First event" },
+    { "channel": "orders", "level": "INFO", "message": "Second event" }
   ]'
 ```
 
-**3. 로그 조회**
+**3. 이벤트 소비 (Consume)**
 ```bash
-# 전체 로그 조회
-curl http://localhost:8080/api/logs
+# 소비자 오프셋을 사용한 이벤트 소비 (안정적 소비)
+# consumerId를 제공하면 오프셋이 업데이트되어, 이미 처리한 이벤트를 중복해서 읽지 않습니다.
+curl "http://localhost:8080/api/logs/orders?consumerId=inventory-service&limit=10"
 
-# 채널별 로그 조회
-curl http://localhost:8080/api/logs/my-app?limit=50
-
-# Consumer Offset을 사용한 로그 조회 (안정적 소비)
-# consumerId를 제공하면 오프셋이 업데이트되어, 이미 읽은 로그를 중복해서 읽지 않습니다.
-curl "http://localhost:8080/api/logs/my-app?consumerId=consumer-1&limit=10"
+# 오프셋 업데이트 없이 이벤트 미리보기 (Peek)
+curl "http://localhost:8080/api/logs/orders?autoCommit=false&limit=5"
 ```
 
 #### REST API 엔드포인트

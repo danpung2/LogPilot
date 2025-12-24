@@ -1,12 +1,12 @@
 # LogPilot Client (Java)
 
-The Java client implementation for LogPilot, designed to send logs to the LogPilot Server reliably and efficiently.
+The Java SDK for LogPilot, providing high-performance tools for both **Producers** (event publishing) and **Consumers** (event processing).
 
 ## Features
-- **gRPC Based**: Uses high-performance gRPC for log transmission.
-- **Reliability**: Features a persistent local buffer (SQLite) to prevent data loss during network failures.
-- **Async Batching**: Sends logs in batches asynchronously to avoid blocking application threads.
-- **Automatic Retry**: Automatically retries failed transmissions.
+- **gRPC & REST**: Multi-protocol support for both publishing and consuming events.
+- **Reliability**: Integrated local buffer (SQLite) for Producers to prevent data loss during network failures.
+- **Kafka-style Consumption**: Consumer-side offset management for reliable message processing.
+- **Async Batching**: High-throughput event publishing with background batching.
 
 ## Installation
 

@@ -1,6 +1,6 @@
 # LogPilot Client Guide
 
-This guide explains how to integrate and use the LogPilot Client in your applications. It references the **Producer** (`logpilot-demo-produce`) and **Consumer** (`logpilot-demo-consume`) demo modules to demonstrate best practices.
+This guide explains how to integrate and use the LogPilot Client for **Event/Message Streaming**. It references the **Producer** (`logpilot-demo-produce`) and **Consumer** (`logpilot-demo-consume`) demo modules to demonstrate the Lightweight Kafka mechanism.
 
 > **⚠️ Prerequisite**: The **LogPilot Server** must be running before starting any client.
 >
@@ -37,12 +37,14 @@ LogPilot supports two communication protocols. Choose the one that best fits you
 | **Recommended For** | Simple logging, firewalls blocking non-80 ports | **High-volume Producers**, **Analytics Consumers** |
 
 ### 🚀 Recommendation
-*   **Use gRPC** for production environments, high-traffic services, and log consumers.
-*   **Use REST** for simple debugging, lightweight clients, or environments where gRPC is restricted.
+*   **Use gRPC** for production environments, high-traffic event streams, and real-time consumers.
+*   **Use REST** for simple debugging, lightweight producers, or environments where gRPC is restricted.
 
 ---
 
-## 2. Producer Integration (Logging)
+## 2. Producer Integration (Event Publishing)
+
+The **Producer** generates events or messages and sends them to the server. The easiest way to integrate for application logging is using the **Logback Appender**. For custom event streams, use the `LogPilotClient`.
 
 The **Producer** generates logs and sends them to the server. The easiest way to integrate is using the **Logback Appender**.
 
@@ -68,9 +70,9 @@ This module simulates a high-traffic recruitment site. It uses the `LogPilotAppe
 
 ---
 
-## 3. Consumer Integration (Analytics)
+## 3. Consumer Integration (Message Consumption)
 
-The **Consumer** retrieves logs from the server for processing or analysis. Direct use of the `LogPilotClient` is recommended.
+The **Consumer** retrieves messages from the server for processing or real-time action. LogPilot provides Kafka-style **Offset Management** to ensure each message is processed exactly once.
 
 ### Example: `logpilot-demo-consume`
 This module polls logs to calculate real-time recruiting statistics. It uses **gRPC** for efficient data retrieval.
@@ -80,16 +82,16 @@ This module polls logs to calculate real-time recruiting statistics. It uses **g
 // Initialize Client (gRPC Mode)
 LogPilotClient client = LogPilotClient.builder()
         .serverUrl("localhost:50051")
-        .clientType(LogPilotClient.ClientType.GRPC) // Explicitly choose gRPC
+        .clientType(LogPilotClient.ClientType.GRPC)
         .build();
 
-// Fetch Logs (Pagination support)
-// getLogs(channel, sinceId, limit)
-List<LogEntry> logs = client.getLogs("demo-app", lastLogId, 100);
+// Fetch Events with Consumer ID (Reliable Offset Tracking)
+// getLogs(channel, consumerId, limit)
+List<LogEntry> events = client.getLogs("orders", "inventory-service", 100);
 
-for (LogEntry log : logs) {
-    process(log);
-    lastLogId = log.getId(); // Update offset
+for (LogEntry event : events) {
+    process(event);
+    // Offset is automatically committed by default unless autoCommit=false
 }
 ```
 

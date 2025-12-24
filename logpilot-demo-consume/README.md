@@ -1,6 +1,6 @@
-# LogPilot Demo Consumer: Log Analytics Service
+# LogPilot Demo Consumer: Event Analytics Service
 
-This module demonstrates how to consume and process logs stored in LogPilot using the gRPC client.
+This module demonstrates how to **consume and process event streams** stored in LogPilot using the gRPC client.
 
 ## Overview
 

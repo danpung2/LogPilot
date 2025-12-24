@@ -1,6 +1,6 @@
 # LogPilot Kubernetes Deployment Guide
 
-This document provides a complete guide for deploying the LogPilot application to a Kubernetes cluster.
+This document provides a complete guide for deploying the **LogPilot Event Broker** to a Kubernetes cluster.
 
 ## Prerequisites
 

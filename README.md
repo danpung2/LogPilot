@@ -1,6 +1,6 @@
 # LogPilot
 
-**LogPilot is a lightweight, cloud-native Log Collection System** built with **Java 17** and **Spring Boot 3**. Designed for microservices and distributed systems, it provides enterprise-grade log aggregation with dual-protocol support (gRPC + REST), comprehensive observability, and zero-dependency deployment capabilities.
+**LogPilot is a lightweight, cloud-native Event Streaming Broker** built with **Java 17** and **Spring Boot 3**. Inspired by **Apache Kafka**, it provides a simplified yet powerful message delivery system with dual-protocol support (gRPC + REST), persistent storage, and reliable consumer offset management.
 
 > [!WARNING]
 > **Production Safety Warning**: The default `LOGPILOT_API_KEY` is set to an example value. **You MUST change this** before deploying to any shared or production environment to prevent unauthorized access.
@@ -17,29 +17,29 @@
 
 ### Why LogPilot?
 
-Traditional logging solutions like ELK Stack are powerful but come with significant operational overhead. LogPilot offers a **lightweight, self-contained alternative** that's ready to run in minutes, not days.
+Traditional event streaming platforms like **Apache Kafka** are powerful but extremely heavy to operate for small-to-medium projects. LogPilot offers a **lightweight, self-contained alternative** that's ready to run in minutes, not days. It's perfect for microservice event notification, lightweight audit logs, and distributed event pipelines.
 
 ```
-Traditional Stack          LogPilot
+Traditional Kafka            LogPilot
 ┌──────────────┐           ┌─────────────┐
-│ Logstash     │           │             │
+│ ZooKeeper    │           │             │
 ├──────────────┤           │  LogPilot   │
-│ Elasticsearch│    VS     │   Server    │
+│ Kafka Broker │    VS     │   Server    │
 ├──────────────┤           │             │
-│ Kibana       │           │  (All-in-1) │
+│ Schema Reg   │           │  (All-in-1) │
 └──────────────┘           └─────────────┘
-  ~2GB RAM                  ~256MB RAM
-  Complex Setup             Single Binary
+  ~4GB+ RAM                  ~256MB RAM
+  Complex Ops                Single Binary
 ```
 
 ### 🚀 Key Features (Currently Implemented)
 
-#### Production-Ready Architecture
+#### Event Streaming Engine
 - ✅ **Dual Protocol Support**: High-performance gRPC (50051) + REST API (8080)
-- ✅ **Pluggable Storage**: SQLite (embedded) or File System with interface-based design
-- ✅ **Batch Processing**: Optimized bulk ingestion with JDBC batch operations
-- ✅ **Consumer Offset Tracking**: Kafka-style offset management for reliable log consumption
-- ✅ **Comprehensive Testing**: 18 test files covering unit, integration, and performance scenarios
+- ✅ **Pluggable Storage**: SQLite (embedded) or Append-only File System
+- ✅ **Kafka-style Offset Tracking**: Reliable consumer offset management to ensure zero data loss
+- ✅ **Batch Ingestion**: Optimized bulk event publishing with JDBC batch operations
+- ✅ **Stream Navigation**: Support for `seek` (Earliest/Latest/Specific) to replay or skip events
 
 #### Cloud-Native & Observable
 - 📊 **Prometheus Metrics**: Built-in metrics for logs received, error rates, and latency
@@ -118,47 +118,36 @@ docker run -d \
 
 #### REST API Examples
 
-**1. Send a single log**
+**1. Publish a single event**
 ```bash
 curl -X POST http://localhost:8080/api/logs \
   -H 'Content-Type: application/json' \
   -d '{
-    "channel": "my-app",
+    "channel": "orders",
     "level": "INFO",
-    "message": "Application started successfully",
+    "message": "{\"orderId\": \"ORD-123\", \"status\": \"CREATED\"}",
     "timestamp": "2025-09-25T05:00:00"
   }'
 ```
 
-**2. Send batch logs**
+**2. Publish batch events**
 ```bash
 curl -X POST http://localhost:8080/api/logs/batch \
   -H 'Content-Type: application/json' \
   -d '[
-    {
-      "channel": "my-app",
-      "level": "INFO",
-      "message": "First log entry"
-    },
-    {
-      "channel": "my-app",
-      "level": "ERROR",
-      "message": "Second log entry"
-    }
+    { "channel": "orders", "level": "INFO", "message": "First event" },
+    { "channel": "orders", "level": "INFO", "message": "Second event" }
   ]'
 ```
 
-**3. Retrieve logs**
+**3. Consume events**
 ```bash
-# Get all logs
-curl http://localhost:8080/api/logs
+# Fetch events with Consumer Offset (Reliable consumption)
+# Providing consumerId updates the offset, so you don't read the same events twice.
+curl "http://localhost:8080/api/logs/orders?consumerId=inventory-service&limit=10"
 
-# Get logs by channel
-curl http://localhost:8080/api/logs/my-app?limit=50
-
-# Get logs by channel with Consumer Offset (Reliable consumption)
-# Providing consumerId updates the offset, so you don't read the same logs twice.
-curl "http://localhost:8080/api/logs/my-app?consumerId=consumer-1&limit=10"
+# Peek at events without updating offset
+curl "http://localhost:8080/api/logs/orders?autoCommit=false&limit=5"
 ```
 
 #### Option 2: Kubernetes

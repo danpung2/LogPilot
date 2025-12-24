@@ -1,6 +1,6 @@
 # LogPilot Monitoring Module
 
-Optional monitoring stack for LogPilot, featuring Prometheus and Grafana.
+Optional monitoring stack for the LogPilot **Event Broker**, featuring Prometheus and Grafana.
 
 ## 📋 Overview
 

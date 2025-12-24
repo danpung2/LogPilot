@@ -1,6 +1,6 @@
 # LogPilot Spring Boot Starter
 
-애플리케이션 설정을 기반으로 LogPilot Client를 자동으로 구성해주는 Spring Boot Starter입니다.
+애플리케이션 설정을 기반으로 LogPilot의 **Producer(발행)** 및 **Consumer(소비)** 클라이언트를 자동으로 구성해주는 Spring Boot Starter입니다.
 
 ## 주요 기능
 - **자동 구성 (Auto Configuration)**: 설정 속성이 존재하면 `LogPilotClient` 빈을 자동으로 등록합니다.

@@ -1,6 +1,6 @@
 # LogPilot Logback Appender
 
-A Logback Appender implementation that integrates your Java application with LogPilot.
+A Logback Appender that ships application logs as **Event Streams** to the LogPilot Broker.
 
 ## Features
 - **Seamless Integration**: Works directly with standard `logback.xml` configuration.

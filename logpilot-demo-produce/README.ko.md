@@ -1,6 +1,6 @@
-# LogPilot Demo Producer: 채용 사이트 시뮬레이션
+# LogPilot Demo Producer: 채용 이벤트 시뮬레이션
 
-이 모듈은 LogPilot의 로그 생성 및 수집 기능을 실제와 유사한 환경에서 테스트하기 위해, 고트래픽 "채용 사이트(Recruitment Site)"를 시뮬레이션합니다.
+이 모듈은 LogPilot의 **이벤트 발행(Event Publishing)** 기능을 실제와 유사한 환경에서 테스트하기 위해, 고트래픽 "채용 사이트"를 시뮬레이션합니다.
 
 ## 개요
 

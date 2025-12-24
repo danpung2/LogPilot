@@ -1,11 +1,11 @@
 # LogPilot Core
 
-The core module containing shared domain models, validatiors, and configuration classes for LogPilot.
+The core logic module containing shared domain models, storage abstractions, and messaging protocols for the LogPilot event broker.
 
 ## Features
-- **Configuration**: Manages `LogPilotProperties` for Type-safe configuration injection.
-- **Domain Models**: Defines core entities like `LogEvent`, `LogMessage` used across Client and Server.
-- **Utilities**: Common utility classes for validation and data processing.
+- **Storage Abstraction**: Defines pluggable storage interfaces (SQLite, File) for persistent message streams.
+- **Domain Models**: Defines core entities like `LogEntry` used across Producers and Consumers.
+- **Offset Management**: Logic for tracking and persisting consumer progress.
 
 ## Installation
 
