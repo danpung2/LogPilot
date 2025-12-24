@@ -26,9 +26,11 @@ public class AnalyticsService {
 
     private String lastLogId = "";
 
-    public AnalyticsService(@Value("${logpilot.server-url}") String serverUrl) {
+    public AnalyticsService(@Value("${logpilot.server-url}") String serverUrl,
+            @Value("${logpilot.api-key:logpilot-secret-key-123}") String apiKey) {
         this.logPilotClient = LogPilotClient.builder()
                 .serverUrl(serverUrl)
+                .apiKey(apiKey)
                 .clientType(LogPilotClient.ClientType.GRPC)
                 .build();
     }

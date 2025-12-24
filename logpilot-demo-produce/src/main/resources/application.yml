@@ -7,3 +7,4 @@ logpilot:
     enable-batching: true
     batch-size: 50
     flush-interval-millis: 2000
+    api-key: logpilot-secret-key-123

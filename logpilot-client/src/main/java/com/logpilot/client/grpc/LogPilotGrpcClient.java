@@ -12,6 +12,8 @@ import com.logpilot.grpc.proto.LogPilotProto.FetchLogsResponse;
 import com.logpilot.grpc.proto.LogServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,14 @@ public class LogPilotGrpcClient implements LogPilotClient {
     private final ExecutorService executorService;
     private final int maxRetries;
 
+    private static final Metadata.Key<String> API_KEY_METADATA_KEY = Metadata.Key.of("X-API-KEY",
+            Metadata.ASCII_STRING_MARSHALLER);
+
     public LogPilotGrpcClient(String serverUrl, int timeout, int maxRetries) {
+        this(serverUrl, timeout, maxRetries, null);
+    }
+
+    public LogPilotGrpcClient(String serverUrl, int timeout, int maxRetries, String apiKey) {
         this.maxRetries = maxRetries;
 
         String[] parts = serverUrl.replace("http://", "").replace("https://", "").split(":");
@@ -48,7 +57,17 @@ public class LogPilotGrpcClient implements LogPilotClient {
                 .keepAliveWithoutCalls(true)
                 .build();
 
-        this.blockingStub = LogServiceGrpc.newBlockingStub(channel);
+        LogServiceGrpc.LogServiceBlockingStub stub = LogServiceGrpc.newBlockingStub(channel);
+
+        if (apiKey != null && !apiKey.trim().isEmpty()) {
+            Metadata metadata = new Metadata();
+            metadata.put(API_KEY_METADATA_KEY, apiKey);
+            io.grpc.ClientInterceptor interceptor = MetadataUtils.newAttachHeadersInterceptor(metadata);
+            this.blockingStub = stub.withInterceptors(interceptor);
+        } else {
+            this.blockingStub = stub;
+        }
+
         this.executorService = Executors.newCachedThreadPool();
     }
 

@@ -3,3 +3,4 @@ server:
 
 logpilot:
   server-url: localhost:50051
+  api-key: logpilot-secret-key-123
