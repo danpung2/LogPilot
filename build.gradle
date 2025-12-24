@@ -9,7 +9,7 @@ plugins {
 
 allprojects {
     group = 'io.github.danpung2'
-    version = '1.0.0'
+    version = '1.0.1'
 
     repositories {
         mavenCentral()
@@ -51,7 +51,7 @@ configure(subprojects.findAll { it.name in ['logpilot-core', 'logpilot-client', 
 
         pom {
             name = project.name
-            description = 'LogPilot: A lightweight log collection system'
+            description = 'LogPilot: A lightweight event streaming broker'
             url = 'https://github.com/danpung2/LogPilot'
             licenses {
                 license {
