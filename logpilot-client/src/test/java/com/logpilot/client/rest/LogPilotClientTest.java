@@ -78,4 +78,41 @@ class LogPilotClientTest {
         // 실제로 flush()는 close()를 호출하는 스레드에서 호출됨.
         verify(httpClient, times(1)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
     }
+
+    @Test
+    void testSeekToBeginning() throws IOException, InterruptedException {
+        client = new LogPilotRestClient(serverUrl, httpClient, scheduler, false, 10, 3);
+        client.seekToBeginning("test-channel", "test-consumer");
+
+        ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
+
+        HttpRequest request = captor.getValue();
+        assert request.uri().toString().endsWith("/api/logs/seek");
+        assert request.method().equals("POST");
+    }
+
+    @Test
+    void testSeekToEnd() throws IOException, InterruptedException {
+        client = new LogPilotRestClient(serverUrl, httpClient, scheduler, false, 10, 3);
+        client.seekToEnd("test-channel", "test-consumer");
+
+        ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
+
+        HttpRequest request = captor.getValue();
+        assert request.uri().toString().endsWith("/api/logs/seek");
+    }
+
+    @Test
+    void testSeekToId() throws IOException, InterruptedException {
+        client = new LogPilotRestClient(serverUrl, httpClient, scheduler, false, 10, 3);
+        client.seekToId("test-channel", "test-consumer", 100L);
+
+        ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
+
+        HttpRequest request = captor.getValue();
+        assert request.uri().toString().endsWith("/api/logs/seek");
+    }
 }

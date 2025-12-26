@@ -183,6 +183,33 @@ public class LogPilotRestClient implements LogPilotClient {
         }
     }
 
+    @Override
+    public void seekToBeginning(String channel, String consumerId) {
+        seek(channel, consumerId, "EARLIEST", null);
+    }
+
+    @Override
+    public void seekToEnd(String channel, String consumerId) {
+        seek(channel, consumerId, "LATEST", null);
+    }
+
+    @Override
+    public void seekToId(String channel, String consumerId, long logId) {
+        seek(channel, consumerId, "SPECIFIC", logId);
+    }
+
+    private void seek(String channel, String consumerId, String operation, Long logId) {
+        try {
+            String json = String.format("{\"channel\":\"%s\",\"consumerId\":\"%s\",\"operation\":\"%s\"%s}",
+                    channel, consumerId, operation, logId != null ? ",\"logId\":" + logId : "");
+            String url = serverUrl + "/api/logs/seek";
+            makeRequest(json, url);
+        } catch (Exception e) {
+            logger.error("Failed to seek", e);
+            throw new RuntimeException("Failed to seek", e);
+        }
+    }
+
     private void sendLogRequest(LogEntry logEntry) throws Exception {
         String json = objectMapper.writeValueAsString(logEntry);
         String url = serverUrl + "/api/logs";

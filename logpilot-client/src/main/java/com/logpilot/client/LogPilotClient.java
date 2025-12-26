@@ -31,6 +31,12 @@ public interface LogPilotClient extends AutoCloseable {
 
     List<LogEntry> getAllLogs(int limit);
 
+    void seekToBeginning(String channel, String consumerId);
+
+    void seekToEnd(String channel, String consumerId);
+
+    void seekToId(String channel, String consumerId, long logId);
+
     @Override
     void close();
 

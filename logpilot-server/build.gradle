@@ -66,6 +66,10 @@ tasks.named('processTestAot') {
     enabled = false
 }
 
+tasks.named('processAot') {
+    enabled = false
+}
+
 sourceSets {
     main {
         java {

@@ -71,6 +71,15 @@ public class LogPilotGrpcClient implements LogPilotClient {
         this.executorService = Executors.newCachedThreadPool();
     }
 
+    // Constructor for testing
+    protected LogPilotGrpcClient(ManagedChannel channel, LogServiceGrpc.LogServiceBlockingStub blockingStub,
+            int maxRetries) {
+        this.channel = channel;
+        this.blockingStub = blockingStub;
+        this.maxRetries = maxRetries;
+        this.executorService = Executors.newCachedThreadPool();
+    }
+
     @Override
     public void log(String channel, LogLevel level, String message) {
         log(new LogEntry(channel, level, message));
@@ -210,6 +219,45 @@ public class LogPilotGrpcClient implements LogPilotClient {
         } catch (Exception e) {
             logger.error("Failed to get all logs via gRPC", e);
             throw new RuntimeException("Failed to get all logs via gRPC", e);
+        }
+    }
+
+    @Override
+    public void seekToBeginning(String channel, String consumerId) {
+        seek(channel, consumerId, "EARLIEST", 0);
+    }
+
+    @Override
+    public void seekToEnd(String channel, String consumerId) {
+        seek(channel, consumerId, "LATEST", 0);
+    }
+
+    @Override
+    public void seekToId(String channel, String consumerId, long logId) {
+        seek(channel, consumerId, "SPECIFIC", logId);
+    }
+
+    private void seek(String channel, String consumerId, String operation, long logId) {
+        try {
+            com.logpilot.grpc.proto.LogPilotProto.SeekRequest request = com.logpilot.grpc.proto.LogPilotProto.SeekRequest
+                    .newBuilder()
+                    .setChannel(channel)
+                    .setConsumerId(consumerId)
+                    .setOperation(operation)
+                    .setLogId(logId)
+                    .setStorage("sqlite")
+                    .build();
+
+            executeWithRetry(() -> {
+                com.logpilot.grpc.proto.LogPilotProto.SeekResponse response = blockingStub.seek(request);
+                if (!"success".equals(response.getStatus())) {
+                    throw new RuntimeException("Failed to seek: " + response.getMessage());
+                }
+                return null;
+            });
+        } catch (Exception e) {
+            logger.error("Failed to seek via gRPC", e);
+            throw new RuntimeException("Failed to seek via gRPC", e);
         }
     }
 

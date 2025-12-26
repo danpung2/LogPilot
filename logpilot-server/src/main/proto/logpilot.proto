@@ -10,6 +10,7 @@ service LogService {
   rpc SendLogs (SendLogsRequest) returns (SendLogsResponse); // LogPilot extension
   rpc ListLogs (ListLogsRequest) returns (ListLogsResponse);
   rpc FetchLogs (FetchLogsRequest) returns (FetchLogsResponse);
+  rpc Seek (SeekRequest) returns (SeekResponse);
 }
 
 message LogRequest {
@@ -56,6 +57,19 @@ message FetchLogsRequest {
 
 message FetchLogsResponse {
   repeated LogEntry logs = 1;
+}
+
+message SeekRequest {
+  string channel = 1;
+  string consumerId = 2;
+  string operation = 3; // EARLIEST, LATEST, SPECIFIC
+  int64 logId = 4; // Only for SPECIFIC
+  string storage = 5;
+}
+
+message SeekResponse {
+  string status = 1;
+  string message = 2;
 }
 
 message LogEntry {

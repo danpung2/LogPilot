@@ -168,6 +168,39 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
         }
     }
 
+    @Override
+    public void seek(LogPilotProto.SeekRequest request,
+            StreamObserver<LogPilotProto.SeekResponse> responseObserver) {
+        try {
+            switch (request.getOperation()) {
+                case "EARLIEST" -> logService.seekToBeginning(request.getChannel(), request.getConsumerId());
+                case "LATEST" -> logService.seekToEnd(request.getChannel(), request.getConsumerId());
+                case "SPECIFIC" ->
+                    logService.seekToId(request.getChannel(), request.getConsumerId(), request.getLogId());
+                default -> throw new IllegalArgumentException("Unknown seek operation: " + request.getOperation());
+            }
+
+            LogPilotProto.SeekResponse response = LogPilotProto.SeekResponse.newBuilder()
+                    .setStatus("success")
+                    .setMessage("Seek operation successful")
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+            logger.info("Seek operation {} performed for consumer: {} on channel: {}",
+                    request.getOperation(), request.getConsumerId(), request.getChannel());
+        } catch (Exception e) {
+            logger.error("Failed to perform seek operation", e);
+            LogPilotProto.SeekResponse response = LogPilotProto.SeekResponse.newBuilder()
+                    .setStatus("error")
+                    .setMessage("Failed to seek: " + e.getMessage())
+                    .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+    }
+
     private LogEntry convertLogRequestToLogEntry(LogPilotProto.LogRequest logRequest) {
         LogEntry logEntry = new LogEntry();
         logEntry.setChannel(logRequest.getChannel());
