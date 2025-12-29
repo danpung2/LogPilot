@@ -84,9 +84,14 @@ public class SqliteLogStorage implements LogStorage {
                 )
                 """;
 
+        // Seek(LATEST) 성능 최적화를 위한 인덱스 추가
+        // Add index for Seek(LATEST) performance optimization
+        String createLogsChannelIndex = "CREATE INDEX IF NOT EXISTS idx_logs_channel ON logs(channel);";
+
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createLogsTable);
             stmt.execute(createConsumerOffsetsTable);
+            stmt.execute(createLogsChannelIndex);
         }
     }
 
