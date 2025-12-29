@@ -53,6 +53,7 @@ message FetchLogsRequest {
   string channel = 2;
   int32 limit = 3;
   string storage = 4;
+  string consumerId = 5;
 }
 
 message FetchLogsResponse {

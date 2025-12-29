@@ -70,6 +70,14 @@ tasks.named('processAot') {
     enabled = false
 }
 
+tasks.named('compileAotJava') {
+    enabled = false
+}
+
+tasks.named('compileAotTestJava') {
+    enabled = false
+}
+
 sourceSets {
     main {
         java {

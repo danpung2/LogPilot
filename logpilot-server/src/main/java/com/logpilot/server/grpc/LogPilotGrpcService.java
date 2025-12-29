@@ -135,9 +135,15 @@ public class LogPilotGrpcService extends LogServiceGrpc.LogServiceImplBase {
 
             if (!request.getChannel().isEmpty()) {
                 if (request.getSince() != null && !request.getSince().isEmpty()) {
-                    // 특정 채널의 로그를 컨슈머 오프셋 기준으로 조회합니다.
-                    // Retrieve logs for a specific channel based on consumer offset.
+                    // 클라이언트 사이드 오프셋 전략 (timestamp를 consumerId 대신 사용하던 레거시 동작 지원)
+                    // Client-side offset strategy (supporting legacy behavior utilizing timestamp
+                    // as consumerId fallback)
                     logEntries = logService.getLogsForConsumer(request.getChannel(), request.getSince(),
+                            request.getLimit(), true);
+                } else if (request.getConsumerId() != null && !request.getConsumerId().isEmpty()) {
+                    // 서버 사이드 오프셋 전략
+                    // Server-side offset strategy
+                    logEntries = logService.getLogsForConsumer(request.getChannel(), request.getConsumerId(),
                             request.getLimit(), true);
                 } else {
                     // 채널만 지정된 경우 최신 로그를 조회합니다. (REST와 동일)
